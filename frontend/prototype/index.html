@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedNexus — Public Health Report Intelligence</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ============ HEADER ============ -->
+  <header class="site-header">
+    <div class="brand">
+      <div class="logo">M</div>
+      <div>
+        <div class="brand-name">MedNexus</div>
+        <div class="brand-sub">Public Health Intelligence</div>
+      </div>
+    </div>
+    <div class="badge badge-local">
+      <span class="dot"></span> Local AI Processing
+    </div>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <span class="eyebrow">Public Health Report Intelligence</span>
+    <h1>Turn public health reports into structured, actionable data</h1>
+    <p class="hero-sub">
+      Upload or paste a report from a hospital or health unit. MedNexus identifies the
+      report type, extracts the relevant fields, and prepares them for statistics and indicators.
+    </p>
+  </section>
+
+  <!-- ============ STEP 1: REPORT TYPE ============ -->
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>Report Type</h2>
+        <p class="panel-desc">Select the category that matches this document. This determines which fields MedNexus will look for.</p>
+      </div>
+      <div class="step-badge">1</div>
+    </div>
+
+    <div class="report-type-grid">
+      <button class="report-card" data-type="notifiable" aria-pressed="true">
+        <span class="report-icon" aria-hidden="true">&#9878;</span>
+        <span class="report-title">Notifiable Disease</span>
+        <span class="report-desc">Case reports for infectious diseases requiring mandatory reporting.</span>
+      </button>
+
+      <button class="report-card" data-type="immunization" aria-pressed="false">
+        <span class="report-icon" aria-hidden="true">&#128137;</span>
+        <span class="report-title">Immunization</span>
+        <span class="report-desc">Vaccination records, doses, lots, and coverage data.</span>
+      </button>
+
+      <button class="report-card" data-type="laboratory" aria-pressed="false">
+        <span class="report-icon" aria-hidden="true">&#129514;</span>
+        <span class="report-title">Laboratory</span>
+        <span class="report-desc">Test results feeding surveillance and case confirmation.</span>
+      </button>
+
+      <button class="report-card" data-type="syndromic" aria-pressed="false">
+        <span class="report-icon" aria-hidden="true">&#128200;</span>
+        <span class="report-title">Syndromic</span>
+        <span class="report-desc">Symptom-based reports for early outbreak detection.</span>
+      </button>
+
+      <button class="report-card" data-type="outbreak" aria-pressed="false">
+        <span class="report-icon" aria-hidden="true">&#9888;</span>
+        <span class="report-title">Outbreak / Cluster</span>
+        <span class="report-desc">Group-level reports covering a detected outbreak event.</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ============ STEP 2: INPUT ============ -->
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>Report Input</h2>
+        <p class="panel-desc">Paste the report text or select a file for local processing.</p>
+      </div>
+      <div class="step-badge">2</div>
+    </div>
+
+    <div class="input-tabs">
+      <button class="tab active" data-tab="paste">Paste report text</button>
+      <button class="tab" data-tab="upload">Upload a document</button>
+    </div>
+
+    <div class="tab-panel active" data-panel="paste">
+      <textarea placeholder="Paste the report content here..." rows="8"></textarea>
+    </div>
+
+    <div class="tab-panel" data-panel="upload">
+      <div class="dropzone">
+        <span>Drag a file here, or click to browse</span>
+        <span class="dropzone-hint">TXT, DOCX, PDF, CSV planned for prototype phase</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 3 + 4 ============ -->
+  <section class="panel-row">
+    <div class="panel panel-half">
+      <div class="panel-header">
+        <div>
+          <h2>Processing Request</h2>
+          <p class="panel-desc">Review the selected report type and input before extraction.</p>
+        </div>
+        <div class="step-badge">3</div>
+      </div>
+      <div class="request-summary">
+        <span id="summary-text">Notifiable Disease · Text input · Local processing</span>
+        <button class="btn-primary" id="extract-btn">Extract Report Data</button>
+      </div>
+    </div>
+
+    <div class="panel panel-half">
+      <div class="panel-header">
+        <div>
+          <h2>Extracted Result</h2>
+          <p class="panel-desc">Review structured fields before statistics or export.</p>
+        </div>
+        <div class="step-badge">4</div>
+      </div>
+      <div class="result-area" id="result-area">
+        <span class="placeholder-text">Extracted fields will appear here after processing.</span>
+      </div>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>

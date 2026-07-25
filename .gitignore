@@ -1,0 +1,18 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Downloaded model weights — reproducible via scripts/download_gliner_model.py,
+# not source code. Also far too large for a normal git repo (600MB+).
+backend/models/
+
+# Environment/secrets — never commit these
+.env
+*.env
+
+# Editor / OS clutter
+.vscode/
+.DS_Store
+Thumbs.db
