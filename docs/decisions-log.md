@@ -199,3 +199,27 @@ Egypt PDPL mapping, or any ministry-specific integration become separate,
 optional exporter/adapter modules added later — never a dependency of core
 extraction or normalization logic.
 
+### 2026-07-26 — Metabase set up (self-hosted, free) as step 3 of roadmap; first 4 indicators built
+Reasoning: Metabase Cloud only offers a 14-day free trial before requiring
+payment ($100/month Starter plan) — not a fit for a still-synthetic-data
+trial phase. Ran the Open Source edition instead: self-hosted locally via
+the standalone JAR file (no Docker needed), which is free indefinitely.
+- Required Java 21 (JDK 8, already installed locally, is too old — Metabase
+  dropped support for anything below 21). Installed Eclipse Temurin 21
+  separately; existing Java 8 left untouched.
+- Running from C:\metabase\metabase.jar via:
+  `java --add-opens java.base/java.nio=ALL-UNNAMED -jar metabase.jar`
+  Kept outside the mednexus-public-health repo entirely — it's a
+  standalone analytics tool, not project code, and isn't tracked in git.
+- Connected to the Render Postgres instance (external connection string,
+  SSL required) — sync found the single existing table,
+  notifiable_disease_records, as expected.
+- Built and saved 4 SQL questions, combined into one dashboard
+  ("Notifiable Disease Overview"): Cases by Disease, Cases by Region,
+  % Needing Review, Cases Over Time (weekly). All currently show 1 row —
+  only the single test record (id=1) exists in Render's Postgres so far.
+
+Follow-up: seed a handful more synthetic notifiable-disease records
+(varying disease, region, needed_review) so the dashboard actually shows
+shape before treating it as validated.
+

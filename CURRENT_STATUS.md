@@ -4,15 +4,20 @@ Last updated: 2026-07-26
 
 ## Where we are right now
 
-Render deployment (step 2 of the short-term roadmap) is complete and
-verified: backend + Postgres both live at
-https://mednexus-public-health-api.onrender.com, confirmed via `/health`
-(200 OK) and a successful `POST /reports/notifiable-disease/save` (wrote
-record id 1). Free tier, synthetic data only.
+All 3 steps of the short-term roadmap are now complete: data store →
+Render deploy → Metabase. Metabase (Open Source, self-hosted, free) runs
+locally from `C:\metabase\metabase.jar` via
+`java --add-opens java.base/java.nio=ALL-UNNAMED -jar metabase.jar`
+(needs Java 21+; not in git, not part of this repo), connected to the
+Render Postgres instance. Dashboard "Notifiable Disease Overview" has 4
+saved questions: Cases by Disease, Cases by Region, % Needing Review,
+Cases Over Time. All currently show 1 row — only the single test record
+(id=1) exists on Render so far.
 
-**Immediate next step**: step 3 of the roadmap — set up Metabase and
-connect it to the Render Postgres instance, then build the first 3-4
-indicators (case counts by disease, by region, % needing review).
+**Immediate next step**: seed a handful more synthetic notifiable-disease
+records (varying disease, region, needed_review) so the dashboard
+actually shows shape — then decide what's next: more report types
+(Immunization, etc.) or terminology normalization.
 
 ## What's already working (locally)
 
@@ -31,7 +36,7 @@ indicators (case counts by disease, by region, % needing review).
   exist in `backend/app/schemas/`, no extraction logic yet — reuse
   `entity_selection.py` and `confidence.py`, don't reimplement them).
 - Terminology normalization (ICD-10, LOINC, vaccine codes).
-- Metabase dashboard (next step after Render deploy is confirmed working).
+- Dashboard only has 1 real row so far — needs more seeded synthetic data.
 - Frontend is not yet pointed at the deployed Render URL — still hardcoded
   to `http://127.0.0.1:8001` in `frontend/prototype/app.js`.
 
