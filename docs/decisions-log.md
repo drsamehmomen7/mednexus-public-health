@@ -61,6 +61,66 @@ policy" error instead of the real cause. The global exception handler in
 main.py now keeps CORS headers on errors and prints the traceback. Check
 the server terminal, not the browser console, for the real error first.
 
+### 2026-07-25 — Project moved under Git version control, pushed to GitHub
+Motivation: a VSCode session closed mid-work and cost time re-establishing
+environment variables and running processes. Code itself was never lost
+only because nothing had been committed yet — that was luck, not process.
+Repository: https://github.com/drsamehmomen7/mednexus-public-health (private).
+`backend/models/` (downloaded GLiNER weights, 600MB+) and `venv/` are
+gitignored — reproducible via `scripts/download_gliner_model.py` and
+`requirements.txt`, not meant to live in source control.
+
+### 2026-07-26 — Messy real-note test caught 3 rule-based bugs; confidence badges worked as designed
+First test on non-clean clinical shorthand ("pt c/o fever x3d... hx of
+contact w/ confirmed case... results pending... 29yo") surfaced real gaps
+that the clean-sentence tests never would have:
+
+1. `diagnosis_status` and `lab_confirmed` matched the substring "confirmed"
+   anywhere in the text — including a mention of a CONTACT's confirmed
+   case, not the patient's own status — while ignoring "results pending"
+   for the patient's own test. Fixed: both now check for pending/awaiting
+   language first, before the confirmed/positive keyword scan.
+2. Date regex only handled 4-digit years (2026-07-01, 01/07/2026) — missed
+   the common clinical shorthand "15/6/26" (2-digit year). Added a third
+   pattern, assumed to be 2000s.
+3. Age regex only handled "34-year-old" / "34 years old" — missed the
+   shorthand "29yo". Extended the pattern to cover both.
+
+Validation: the confidence-badge feature (added earlier the same day)
+correctly flagged the wrong disease_name ("rash", 51%) as low-confidence
+on first run, which is exactly its intended job — catching model
+uncertainty before it reaches statistics or export.
+Regression tests for all three bugs added to test_extraction.py using the
+real note text verbatim, so future changes to the rule-based helpers
+cannot silently reintroduce them.
+
+### 2026-07-26 — Second messy-note test caught negation handling + 2 more parsing gaps
+Different failure mode this time — negation, not shorthand. Note: "Ruled
+out dengue based on negative rapid test. Suspected typhoid fever pending
+blood culture... age 45 yrs... presented on 26 Jun 2026."
+
+1. **Most important bug found so far**: disease_name extracted "dengue" —
+   the disease the text explicitly RULES OUT — instead of "typhoid", the
+   actual suspected diagnosis. The system had no concept of negation; it
+   just took the first NER-tagged disease entity. Fixed by adding
+   `start`/`end` character offsets to ExtractedEntity (GLiNER's
+   predict_entities already returns these) and checking a 40-character
+   window before each disease entity for negation cues ("ruled out",
+   "excluded", "negative for", "r/o", etc.) before selecting it. If a
+   negated mention was skipped, the confidence report now notes it
+   explicitly rather than silently disappearing.
+2. Date regex still only handled numeric formats — missed "26 Jun 2026"
+   (day + month name + year). Added two new patterns (day-month-year and
+   month-year-day orderings) using Python's `calendar` module for month
+   name/abbreviation lookup, not a hardcoded list.
+3. Age regex required "old" or "yo" — missed "age 45 yrs" (no "old"
+   suffix). Added a second pattern requiring an explicit "age"/"aged" cue
+   word before the number, to avoid false-positives like "3 years ago".
+
+Negation-aware selection is applied to disease_name only for now (highest
+clinical stakes). Region/facility do not get this yet — revisit if a real
+report surfaces a negated location/facility mention.
+
 ### 2026-07-23 — Core schemas stay system-agnostic; ministry-specific integrations are optional adapters
 Correction from stakeholder: MedNexus's public health module must work across
 any country's health system, not be built around one (Egypt, DHIS2, etc.).

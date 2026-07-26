@@ -13,12 +13,33 @@ Prototype phase — static UI only, no backend yet.
 
 ## Run the prototype locally
 
-No installation needed.
+No installation needed for the frontend by itself, but the full pipeline
+(extraction) needs both servers running at the same time, in two separate
+terminals.
 
-1. Open `frontend/prototype/index.html` directly in a browser
-   (double-click the file, or right-click → Open with → your browser).
+### Every time you reopen VSCode
 
-That's it — it's a static page, so there's no server to start yet.
+**Terminal 1 — backend (port 8001):**
+```powershell
+cd C:\mednexus-public-health\backend
+.\venv\Scripts\Activate.ps1
+python -m uvicorn app.main:app --reload --port 8001
+```
+
+**Terminal 2 — frontend (port 5500):**
+```powershell
+cd C:\mednexus-public-health\frontend\prototype
+python -m http.server 5500
+```
+
+Leave both running, then open `http://127.0.0.1:5500` in the browser.
+Do NOT open `index.html` directly as a `file://` path — the browser blocks
+requests from local files to localhost servers, so the extract button will
+silently fail.
+
+One-time setup (already done, listed here for reference): `python -m venv
+venv` inside `backend/`, then `pip install -r requirements.txt` and
+`pip install "openmed[gliner]"`, then `python scripts/download_gliner_model.py`.
 
 ## Project structure
 
