@@ -223,3 +223,13 @@ Follow-up: seed a handful more synthetic notifiable-disease records
 (varying disease, region, needed_review) so the dashboard actually shows
 shape before treating it as validated.
 
+### 2026-07-26 — Dashboard validated with seeded synthetic data
+Ran `backend/scripts/seed_synthetic_records.py` against the live Render
+`/save` endpoint — 6 new records (ids 2-7), varying disease, Kuwait
+governorate, and confidence level. Total 7 records. Confirmed all 4
+Metabase indicators now show real distribution, not a flat single row:
+6 distinct diseases, 6 distinct regions, 28.6% needing review (2/7, from
+the two seeded records given a deliberately low model confidence score),
+and a 5-week spread on the Cases Over Time trend. Metabase/roadmap step 3
+is now considered fully validated, not just "connected."
+

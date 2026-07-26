@@ -4,20 +4,23 @@ Last updated: 2026-07-26
 
 ## Where we are right now
 
-All 3 steps of the short-term roadmap are now complete: data store →
-Render deploy → Metabase. Metabase (Open Source, self-hosted, free) runs
-locally from `C:\metabase\metabase.jar` via
+All 3 steps of the short-term roadmap are complete AND validated: data
+store → Render deploy → Metabase. Metabase (Open Source, self-hosted,
+free) runs locally from `C:\metabase\metabase.jar` via
 `java --add-opens java.base/java.nio=ALL-UNNAMED -jar metabase.jar`
 (needs Java 21+; not in git, not part of this repo), connected to the
 Render Postgres instance. Dashboard "Notifiable Disease Overview" has 4
 saved questions: Cases by Disease, Cases by Region, % Needing Review,
-Cases Over Time. All currently show 1 row — only the single test record
-(id=1) exists on Render so far.
+Cases Over Time. Seeded with 6 synthetic records (`backend/scripts/
+seed_synthetic_records.py`, run against the live Render endpoint) on top
+of the original test row — 7 total, confirmed to show real distribution
+across disease/region/time and a non-zero needed_review percentage.
 
-**Immediate next step**: seed a handful more synthetic notifiable-disease
-records (varying disease, region, needed_review) so the dashboard
-actually shows shape — then decide what's next: more report types
-(Immunization, etc.) or terminology normalization.
+**Immediate next step**: not yet decided — options are (a) more report
+types (Immunization next, reusing entity_selection.py/confidence.py),
+(b) terminology normalization (ICD-10/LOINC/vaccine codes), or (c)
+something else the user prioritizes. Ask at the start of the next session
+rather than assuming.
 
 ## What's already working (locally)
 
@@ -36,7 +39,6 @@ actually shows shape — then decide what's next: more report types
   exist in `backend/app/schemas/`, no extraction logic yet — reuse
   `entity_selection.py` and `confidence.py`, don't reimplement them).
 - Terminology normalization (ICD-10, LOINC, vaccine codes).
-- Dashboard only has 1 real row so far — needs more seeded synthetic data.
 - Frontend is not yet pointed at the deployed Render URL — still hardcoded
   to `http://127.0.0.1:8001` in `frontend/prototype/app.js`.
 
