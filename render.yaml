@@ -1,0 +1,28 @@
+# Render Blueprint — defines the backend web service and its Postgres
+# database together, so both get created from one "Deploy Blueprint" action
+# instead of manual dashboard clicks. Docs: https://render.com/docs/blueprint-spec
+#
+# Note: /reports/notifiable-disease/extract will return 503 here — the
+# GLiNER model files are intentionally not in git (see backend/.gitignore).
+# This trial deployment is to validate the infrastructure (service + DB +
+# save endpoint), not to re-run extraction. /health and /save work as-is.
+
+services:
+  - type: web
+    name: mednexus-public-health-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mednexus-public-health-db
+          property: connectionString
+
+databases:
+  - name: mednexus-public-health-db
+    databaseName: mednexus_public_health
+    plan: free
