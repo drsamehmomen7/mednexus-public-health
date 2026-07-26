@@ -4,14 +4,15 @@ Last updated: 2026-07-26
 
 ## Where we are right now
 
-Deploying the backend to Render for the first time (trial only — synthetic
-data, free tier). Just clicked "Deploy Blueprint" using `render.yaml` at
-the repo root, which creates:
-- `mednexus-public-health-db` (Postgres, free)
-- `mednexus-public-health-api` (web service, free)
+Render deployment (step 2 of the short-term roadmap) is complete and
+verified: backend + Postgres both live at
+https://mednexus-public-health-api.onrender.com, confirmed via `/health`
+(200 OK) and a successful `POST /reports/notifiable-disease/save` (wrote
+record id 1). Free tier, synthetic data only.
 
-**Immediate next step**: check the deploy logs on Render, confirm the
-service comes up healthy at `/health`, and confirm the database connects.
+**Immediate next step**: step 3 of the roadmap — set up Metabase and
+connect it to the Render Postgres instance, then build the first 3-4
+indicators (case counts by disease, by region, % needing review).
 
 ## What's already working (locally)
 

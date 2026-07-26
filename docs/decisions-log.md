@@ -166,6 +166,28 @@ First step of the agreed short-term roadmap (data store → Render → Metabase)
   before sending it to /save — manual correction now actually persists,
   not just displays.
 
+### 2026-07-26 — Backend deployed successfully to Render (trial, synthetic data)
+Second step of the short-term roadmap complete. `render.yaml` Blueprint
+created both the web service and Postgres database together.
+
+One issue hit and fixed: the first deploy failed because Render's default
+Python runtime (3.14) has no prebuilt wheel for `pydantic-core==2.23.4`,
+so pip fell back to building it from source via Rust/maturin — which
+failed due to a read-only filesystem restriction in Render's build
+environment. Fixed by pinning `PYTHON_VERSION: 3.12.7` as an env var in
+render.yaml, matching a version with prebuilt wheels for every dependency.
+
+Verified end-to-end: `/health` returns 200 from the live URL
+(https://mednexus-public-health-api.onrender.com), and
+`POST /reports/notifiable-disease/save` successfully wrote a record to
+the Render Postgres instance (confirmed via the FastAPI /docs UI).
+
+Not tested on Render yet: `/extract` — the GLiNER model weights are
+intentionally not in git, so this endpoint will 503 there until/unless a
+model-download step is added to the build. Not needed for this trial;
+the goal was validating the deployment + persistence chain, not
+re-running extraction remotely.
+
 ### 2026-07-23 — Core schemas stay system-agnostic; ministry-specific integrations are optional adapters
 Correction from stakeholder: MedNexus's public health module must work across
 any country's health system, not be built around one (Egypt, DHIS2, etc.).
