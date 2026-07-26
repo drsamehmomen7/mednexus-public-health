@@ -40,3 +40,24 @@ def rule_based_confidence() -> dict:
     that isn't there.
     """
     return {"source": "rule_based", "score": None}
+
+
+LOW_CONFIDENCE_THRESHOLD = 0.6
+
+
+def needs_review(confidence: dict, threshold: float = LOW_CONFIDENCE_THRESHOLD) -> bool:
+    """
+    True if any model-derived field is missing, or scored below
+    `threshold`. Rule-based fields (score is always None by design) never
+    trigger this on their own — only actual low-confidence model output
+    does. This is the single source of truth for the "needed_review" flag
+    stored alongside every saved record, so the frontend badge logic and
+    the database flag can never silently drift apart.
+    """
+    for entry in confidence.values():
+        if entry.get("source") != "model":
+            continue
+        score = entry.get("score")
+        if score is None or score < threshold:
+            return True
+    return False

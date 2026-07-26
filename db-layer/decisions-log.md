@@ -143,6 +143,29 @@ No behavior changed — 36 tests pass (was 21; 15 new, all for rule_based.py
 directly). Next report type (Immunization) should import from
 entity_selection.py and confidence.py rather than reimplementing them.
 
+### 2026-07-26 — Persistence layer added: PostgreSQL store for reviewed records
+First step of the agreed short-term roadmap (data store → Render → Metabase).
+- SQLAlchemy models in `db_models.py`, engine/session setup in `db.py`,
+  connection read from `DATABASE_URL` env var (defaults to a local
+  Postgres URL; Render will supply this automatically once a Postgres
+  instance is attached).
+- `POST /reports/notifiable-disease/save` persists a record AFTER human
+  review — this table is the "reviewed and trusted" store a BI tool reads
+  from, not a raw extraction log.
+- `needed_review` is computed once at save time (via a shared
+  `needs_review()` helper in confidence.py) and stored as a plain boolean
+  column, denormalized on purpose — so Metabase can filter/aggregate on it
+  without parsing the JSON confidence blob in every query.
+- The full confidence report is still stored as JSON alongside, for audit.
+- Tested in this sandbox using SQLite as a stand-in (no Postgres server
+  available here) — confirmed inserts and the needed_review computation
+  work correctly. Real Postgres setup happens locally before this is
+  trusted end-to-end.
+- Frontend: added a "Save reviewed record" button that overlays whatever
+  the reviewer edited in the input boxes onto the last extraction result
+  before sending it to /save — manual correction now actually persists,
+  not just displays.
+
 ### 2026-07-23 — Core schemas stay system-agnostic; ministry-specific integrations are optional adapters
 Correction from stakeholder: MedNexus's public health module must work across
 any country's health system, not be built around one (Egypt, DHIS2, etc.).
