@@ -14,13 +14,19 @@ and its tests, do not require the real OpenMed/GLiNER install to run.
 """
 
 from datetime import date
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional, Tuple
 
 from app.schemas.notifiable_disease import DiagnosisStatus, NotifiableDiseaseCase
 from app.services.ner_client import ExtractedEntity, extract_entities
 from app.services.rule_based import extract_age, extract_first_date
 
 NER_LABELS = ["disease", "region", "facility"]
+
+# Fields not in this dict were derived by fixed rules (dates, age, keyword
+# matching), not a probabilistic model — there is no "confidence score" for
+# those in the same sense, so the API reports them as "rule_based" rather
+# than inventing a fake number.
+RULE_BASED_FIELDS = {"report_date", "patient_age", "diagnosis_status", "lab_confirmed"}
 
 _STATUS_KEYWORDS = {
     DiagnosisStatus.CONFIRMED: ["confirmed", "positive", "lab-confirmed"],
@@ -29,15 +35,23 @@ _STATUS_KEYWORDS = {
 }
 
 
-def _first_entity_text(entities: List[ExtractedEntity], label: str) -> Optional[str]:
+def _first_entity(entities: List[ExtractedEntity], label: str) -> Optional[ExtractedEntity]:
     for entity in entities:
         if entity.label == label:
-            return entity.text
+            return entity
     return None
 
 
 def _infer_diagnosis_status(text: str) -> DiagnosisStatus:
     lowered = text.lower()
+
+    # A pending or awaited result means the patient's OWN case is not yet
+    # confirmed — this must be checked before the keyword scan below,
+    # because a report can say "confirmed" only about a contact's case
+    # ("contact w/ confirmed case"), not the patient being described.
+    if any(kw in lowered for kw in ["pending", "awaiting result", "results awaited"]):
+        return DiagnosisStatus.SUSPECTED
+
     for status, keywords in _STATUS_KEYWORDS.items():
         if any(keyword in lowered for keyword in keywords):
             return status
@@ -47,6 +61,71 @@ def _infer_diagnosis_status(text: str) -> DiagnosisStatus:
     return DiagnosisStatus.SUSPECTED
 
 
+def _infer_lab_confirmed(text: str) -> bool:
+    lowered = text.lower()
+    if "pending" in lowered:
+        # A test that was sent but not resulted yet is not a lab
+        # confirmation, even if "PCR" or "confirmed" appear elsewhere
+        # in the same sentence (e.g. describing a contact's case).
+        return False
+    return "confirmed" in lowered or "pcr" in lowered
+
+
+def extract_notifiable_disease_with_confidence(
+    text: str,
+    ner_fn: Callable[..., List[ExtractedEntity]] = extract_entities,
+) -> Tuple[NotifiableDiseaseCase, Dict[str, dict]]:
+    """
+    Extract a NotifiableDiseaseCase, plus a per-field confidence report.
+
+    The confidence report exists for exactly one reason: a human reviewer
+    should be able to see which fields the model is unsure about (and which
+    fields are not model-derived at all) before the record is trusted for
+    statistics or export. This is not optional polish — see the project's
+    de-identification tool discussion on human-in-the-loop review.
+    """
+    entities = ner_fn(text, labels=NER_LABELS, domain="biomedical")
+
+    disease_entity = _first_entity(entities, "disease")
+    region_entity = _first_entity(entities, "region")
+    facility_entity = _first_entity(entities, "facility")
+
+    report_date = extract_first_date(text)
+    patient_age = extract_age(text)
+
+    case = NotifiableDiseaseCase(
+        disease_name=(disease_entity.text if disease_entity else "Unknown"),
+        diagnosis_status=_infer_diagnosis_status(text),
+        report_date=report_date or date.today(),
+        patient_age=patient_age,
+        region=(region_entity.text if region_entity else "Unknown"),
+        facility_name=(facility_entity.text if facility_entity else None),
+        lab_confirmed=_infer_lab_confirmed(text),
+        source_excerpt=text[:200],
+    )
+
+    confidence = {
+        "disease_name": (
+            {"source": "model", "score": disease_entity.score}
+            if disease_entity else {"source": "model", "score": None, "note": "not found in text"}
+        ),
+        "region": (
+            {"source": "model", "score": region_entity.score}
+            if region_entity else {"source": "model", "score": None, "note": "not found in text"}
+        ),
+        "facility_name": (
+            {"source": "model", "score": facility_entity.score}
+            if facility_entity else {"source": "model", "score": None, "note": "not found in text"}
+        ),
+        "report_date": {"source": "rule_based", "score": None},
+        "patient_age": {"source": "rule_based", "score": None},
+        "diagnosis_status": {"source": "rule_based", "score": None},
+        "lab_confirmed": {"source": "rule_based", "score": None},
+    }
+
+    return case, confidence
+
+
 def extract_notifiable_disease(
     text: str,
     ner_fn: Callable[..., List[ExtractedEntity]] = extract_entities,
@@ -54,26 +133,9 @@ def extract_notifiable_disease(
     """
     Extract a NotifiableDiseaseCase from raw report text.
 
-    Fields that cannot be found (e.g. no region mentioned) fall back to
-    sane defaults or raise via pydantic validation — this function does
-    not invent data that is not supported by the text.
+    Thin wrapper kept for backwards compatibility (existing tests and
+    callers use this signature). For confidence scores per field, use
+    extract_notifiable_disease_with_confidence instead.
     """
-    entities = ner_fn(text, labels=NER_LABELS, domain="biomedical")
-
-    disease_name = _first_entity_text(entities, "disease") or "Unknown"
-    region = _first_entity_text(entities, "region") or "Unknown"
-    facility_name = _first_entity_text(entities, "facility")
-
-    report_date = extract_first_date(text)
-    patient_age = extract_age(text)
-
-    return NotifiableDiseaseCase(
-        disease_name=disease_name,
-        diagnosis_status=_infer_diagnosis_status(text),
-        report_date=report_date or date.today(),
-        patient_age=patient_age,
-        region=region,
-        facility_name=facility_name,
-        lab_confirmed="confirmed" in text.lower() or "pcr" in text.lower(),
-        source_excerpt=text[:200],
-    )
+    case, _confidence = extract_notifiable_disease_with_confidence(text, ner_fn=ner_fn)
+    return case

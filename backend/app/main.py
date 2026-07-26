@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.schemas.notifiable_disease import NotifiableDiseaseCase
-from app.services.extraction import extract_notifiable_disease
+from app.services.extraction import extract_notifiable_disease_with_confidence
 from app.services.ner_client import NerBackendUnavailable
 
 app = FastAPI(title="MedNexus Public Health API", version="0.1.0")
@@ -65,15 +65,18 @@ def validate_notifiable_disease_case(case: NotifiableDiseaseCase):
 @app.post("/reports/notifiable-disease/extract")
 def extract_notifiable_disease_report(request: ExtractRequest):
     """
-    Extracts a structured NotifiableDiseaseCase from raw report text.
+    Extracts a structured NotifiableDiseaseCase from raw report text, plus
+    a per-field confidence report so a human reviewer can see which fields
+    were model-derived (with a score) versus rule-derived (dates, age),
+    and which fields were not found in the text at all.
 
     Returns a clear 503 (not a generic 500) if OpenMed's zero-shot NER
     extras are not installed on this machine yet, so the frontend can
     show a helpful message instead of a stack trace.
     """
     try:
-        case = extract_notifiable_disease(request.text)
+        case, confidence = extract_notifiable_disease_with_confidence(request.text)
     except NerBackendUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
-    return {"extracted": case}
+    return {"extracted": case, "confidence": confidence}
 
