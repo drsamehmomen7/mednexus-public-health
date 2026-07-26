@@ -34,12 +34,56 @@ _STATUS_KEYWORDS = {
     DiagnosisStatus.SUSPECTED: ["suspected", "possible", "query"],
 }
 
+# Phrases that mean "the following diagnosis does NOT apply" — a disease
+# mention immediately after one of these must never be treated as the
+# patient's diagnosis. This was a real bug: "Ruled out dengue... Suspected
+# typhoid" extracted "dengue" (the excluded disease) as disease_name.
+_NEGATION_CUES = [
+    "ruled out", "rule out", "r/o", "no evidence of", "excluded",
+    "negative for", "denies", "not consistent with",
+]
+_NEGATION_WINDOW_CHARS = 40
+
 
 def _first_entity(entities: List[ExtractedEntity], label: str) -> Optional[ExtractedEntity]:
     for entity in entities:
         if entity.label == label:
             return entity
     return None
+
+
+def _is_negated(text: str, entity: ExtractedEntity) -> bool:
+    """
+    Check whether `entity` is immediately preceded by a negation cue
+    (e.g. "ruled out dengue"). Requires the entity's character offset —
+    if the NER backend didn't provide start/end, this conservatively
+    returns False (no info means we cannot claim it's negated).
+    """
+    if entity.start is None:
+        return False
+    window_start = max(0, entity.start - _NEGATION_WINDOW_CHARS)
+    preceding = text[window_start:entity.start].lower()
+    return any(cue in preceding for cue in _NEGATION_CUES)
+
+
+def _first_non_negated_entity(
+    entities: List[ExtractedEntity], label: str, text: str
+) -> Tuple[Optional[ExtractedEntity], int]:
+    """
+    Return the first entity of `label` that is NOT preceded by a negation
+    cue, plus a count of how many matching entities were skipped because
+    they WERE negated (surfaced in the confidence report so a reviewer
+    can see a ruled-out mention existed, rather than it silently vanishing).
+    """
+    skipped = 0
+    for entity in entities:
+        if entity.label != label:
+            continue
+        if _is_negated(text, entity):
+            skipped += 1
+            continue
+        return entity, skipped
+    return None, skipped
 
 
 def _infer_diagnosis_status(text: str) -> DiagnosisStatus:
@@ -86,7 +130,11 @@ def extract_notifiable_disease_with_confidence(
     """
     entities = ner_fn(text, labels=NER_LABELS, domain="biomedical")
 
-    disease_entity = _first_entity(entities, "disease")
+    # Disease name specifically uses negation-aware selection: picking a
+    # "ruled out" disease as the diagnosis is a clinically dangerous error,
+    # not just a display inconvenience. Region/facility don't get this yet
+    # (negation is far rarer for those) — see decisions log.
+    disease_entity, negated_disease_count = _first_non_negated_entity(entities, "disease", text)
     region_entity = _first_entity(entities, "region")
     facility_entity = _first_entity(entities, "facility")
 
@@ -104,11 +152,18 @@ def extract_notifiable_disease_with_confidence(
         source_excerpt=text[:200],
     )
 
+    disease_confidence = (
+        {"source": "model", "score": disease_entity.score}
+        if disease_entity else {"source": "model", "score": None, "note": "not found in text"}
+    )
+    if negated_disease_count:
+        disease_confidence["note"] = (
+            f"{negated_disease_count} mention(s) excluded as negated "
+            "(e.g. 'ruled out') — review original text"
+        )
+
     confidence = {
-        "disease_name": (
-            {"source": "model", "score": disease_entity.score}
-            if disease_entity else {"source": "model", "score": None, "note": "not found in text"}
-        ),
+        "disease_name": disease_confidence,
         "region": (
             {"source": "model", "score": region_entity.score}
             if region_entity else {"source": "model", "score": None, "note": "not found in text"}

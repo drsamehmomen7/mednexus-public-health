@@ -128,3 +128,66 @@ def test_yo_age_abbreviation_is_parsed():
     """'29yo' (clinical shorthand) must be parsed the same as '29-year-old'."""
     case = extract_notifiable_disease(MESSY_NOTE, ner_fn=fake_ner)
     assert case.patient_age == 29
+
+
+# --- Regression tests from the second messy-text test (2026-07-26) ---
+# Real note: "...Ruled out dengue based on negative rapid test. Suspected
+# typhoid fever pending blood culture...age 45 yrs...presented on 26 Jun
+# 2026..." — this surfaced negation handling and two more parsing gaps.
+
+MESSY_NOTE_2 = (
+    "Female patient, age 45 yrs, presented on 26 Jun 2026. Ruled out dengue "
+    "based on negative rapid test. Suspected typhoid fever pending blood "
+    "culture. Seen at Adan Hospital, Mubarak Al-Kabeer."
+)
+
+
+def fake_ner_with_negated_disease(text, labels, domain="biomedical"):
+    """
+    Returns TWO disease entities, in the same order GLiNER returned them
+    for the real note: "dengue" (which the text explicitly rules out)
+    before "typhoid" (the actual suspected diagnosis) — with correct
+    character offsets, since negation checking depends on them.
+    """
+    dengue_start = text.index("dengue")
+    typhoid_start = text.index("typhoid")
+    return [
+        ExtractedEntity(
+            label="disease", text="dengue", score=0.99,
+            start=dengue_start, end=dengue_start + len("dengue"),
+        ),
+        ExtractedEntity(
+            label="disease", text="typhoid", score=0.95,
+            start=typhoid_start, end=typhoid_start + len("typhoid"),
+        ),
+        ExtractedEntity(label="facility", text="Adan Hospital", score=0.98),
+    ]
+
+
+def test_ruled_out_disease_is_not_selected_as_diagnosis():
+    """
+    'Ruled out dengue... Suspected typhoid' must extract typhoid, not the
+    excluded disease — picking a ruled-out diagnosis is a clinically
+    dangerous error, not a cosmetic one.
+    """
+    case = extract_notifiable_disease(MESSY_NOTE_2, ner_fn=fake_ner_with_negated_disease)
+    assert case.disease_name == "typhoid"
+
+
+def test_confidence_report_notes_the_excluded_negated_mention():
+    _case, confidence = extract_notifiable_disease_with_confidence(
+        MESSY_NOTE_2, ner_fn=fake_ner_with_negated_disease
+    )
+    assert "negated" in confidence["disease_name"].get("note", "").lower()
+
+
+def test_month_name_date_is_parsed():
+    """'26 Jun 2026' (day, month name, year) must resolve to 2026-06-26."""
+    case = extract_notifiable_disease(MESSY_NOTE_2, ner_fn=fake_ner_with_negated_disease)
+    assert str(case.report_date) == "2026-06-26"
+
+
+def test_age_with_prefix_and_no_old_suffix_is_parsed():
+    """'age 45 yrs' (no 'old' suffix) must still resolve to 45."""
+    case = extract_notifiable_disease(MESSY_NOTE_2, ner_fn=fake_ner_with_negated_disease)
+    assert case.patient_age == 45

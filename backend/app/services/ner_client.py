@@ -29,6 +29,8 @@ class ExtractedEntity:
     label: str
     text: str
     score: float
+    start: Optional[int] = None
+    end: Optional[int] = None
 
 
 class NerBackendUnavailable(RuntimeError):
@@ -117,6 +119,8 @@ def extract_entities(
             label=item["label"],
             text=item["text"],
             score=float(item.get("score", 0.0)),
+            start=item.get("start"),
+            end=item.get("end"),
         )
         for item in predictions
     ]
