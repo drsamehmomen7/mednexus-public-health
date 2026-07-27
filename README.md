@@ -23,8 +23,17 @@ terminals.
 ```powershell
 cd C:\mednexus-public-health\backend
 .\venv\Scripts\Activate.ps1
+$env:DATABASE_URL = "<Render external Postgres connection string>"
 python -m uvicorn app.main:app --reload --port 8001
 ```
+The `DATABASE_URL` line points the local backend at the same Render
+Postgres instance Metabase reads from, so anything saved locally through
+the review UI shows up on the dashboard immediately. Without it, the
+backend falls back to a local Postgres URL that isn't set up, and saves
+fail. This only lasts for the life of the terminal — set it again each
+time you open a new Terminal 1. (Connection string omitted here
+deliberately — it contains a password; keep it out of anything committed
+to git.)
 
 **Terminal 2 — frontend (port 5500):**
 ```powershell

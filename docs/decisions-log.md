@@ -233,3 +233,43 @@ the two seeded records given a deliberately low model confidence score),
 and a 5-week spread on the Cases Over Time trend. Metabase/roadmap step 3
 is now considered fully validated, not just "connected."
 
+### 2026-07-26 — Notifiable Disease domain, phase 2: live sync + dashboard breakdowns
+Three items requested before moving to the next report type: (1) confirm
+the frontend/backend flow writes straight into the same store Metabase
+reads, (2) file upload (docx) for reports — deferred, see below, (3)
+dashboard redesign inspired by an external notifiable-disease dashboard
+(PHF Science / ESR, NZ) — cases + rate per 100k nationally and by region,
+broken down by age/sex/ethnicity.
+
+1. **Live sync confirmed, no new code needed.** Metabase already reads
+   directly from the same Postgres Render uses — any record saved via the
+   "Save reviewed record" button appears on refresh with no separate ETL
+   step. The actual gap was that the local backend's default
+   `DATABASE_URL` points at a local Postgres instance that doesn't exist
+   yet locally, not Render. Fix: set `$env:DATABASE_URL` to the Render
+   external connection string before starting uvicorn locally — now part
+   of the local dev routine (see README, Terminal 1). Verified
+   end-to-end: extracted a synthetic dengue case locally, saved it,
+   confirmed it appeared in Metabase (id 8, 7→8 rows) after a refresh.
+2. **Dashboard redesign — partial, matched to what the schema supports.**
+   Added two new SQL questions: Cases by Sex (`patient_sex` grouping) and
+   Cases by Age Group (age bucketed into 0-4/5-14/15-24/25-44/45-64/65+
+   via CASE, with a sort_key column to force numeric-not-alphabetic
+   ordering — sort_key must stay excluded from the visualization itself,
+   only used for row ordering). Converted existing questions to proper
+   chart types instead of raw tables: Cases by Disease → bar, Cases by
+   Region → bar, Cases by Sex → pie/donut, Cases by Age Group → bar
+   (order-preserving), Cases Over Time → line. % Needing Review stays a
+   plain number.
+   Explicitly NOT replicating the reference dashboard's ethnicity
+   breakdown or per-disease dropdown filter yet — ethnicity is a
+   sensitive attribute this project deliberately does not collect (see
+   system-agnostic/no-ministry-specific-logic ground rule), and "rate per
+   100,000" needs a population-by-region reference table we don't have
+   yet (a separate, deliberate follow-up if wanted, not built here).
+3. **Docx file upload — not started.** Real feature, needs a new backend
+   endpoint (extract text from an uploaded .docx via python-docx, then
+   reuse the existing extraction pipeline) plus a file input on the
+   frontend. Agreed order: live-sync fix (done) → dashboard breakdowns
+   (done) → docx upload (next).
+

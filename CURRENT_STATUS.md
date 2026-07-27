@@ -9,18 +9,27 @@ store → Render deploy → Metabase. Metabase (Open Source, self-hosted,
 free) runs locally from `C:\metabase\metabase.jar` via
 `java --add-opens java.base/java.nio=ALL-UNNAMED -jar metabase.jar`
 (needs Java 21+; not in git, not part of this repo), connected to the
-Render Postgres instance. Dashboard "Notifiable Disease Overview" has 4
-saved questions: Cases by Disease, Cases by Region, % Needing Review,
-Cases Over Time. Seeded with 6 synthetic records (`backend/scripts/
-seed_synthetic_records.py`, run against the live Render endpoint) on top
-of the original test row — 7 total, confirmed to show real distribution
-across disease/region/time and a non-zero needed_review percentage.
+Render Postgres instance.
 
-**Immediate next step**: not yet decided — options are (a) more report
-types (Immunization next, reusing entity_selection.py/confidence.py),
-(b) terminology normalization (ICD-10/LOINC/vaccine codes), or (c)
-something else the user prioritizes. Ask at the start of the next session
-rather than assuming.
+Beyond the roadmap, phase 2 of the Notifiable Disease domain is also
+done: the local backend now points at Render Postgres via
+`$env:DATABASE_URL` (see Local dev routine below) — so any record saved
+locally through the review UI appears in Metabase immediately, no manual
+sync step. The dashboard ("Notifiable Disease Overview") now has 6
+questions: Cases by Disease (bar), Cases by Region (bar), Cases by Sex
+(pie), Cases by Age Group (bar, ordered 0-4→65+), Cases Over Time (line),
+% Needing Review (number). 8 total records in Render Postgres (7 seeded
+synthetic + 1 saved live through the local UI during testing).
+
+**Immediate next step**: docx file upload for Notifiable Disease reports
+— a new backend endpoint to extract text from an uploaded .docx (via
+python-docx) and feed it into the existing extraction pipeline, plus a
+file input on the frontend. Agreed but not started yet.
+
+Also still undecided beyond that: (a) more report types (Immunization
+next, reusing entity_selection.py/confidence.py), (b) terminology
+normalization (ICD-10/LOINC/vaccine codes). Ask which once docx upload
+is done, rather than assuming.
 
 ## What's already working (locally)
 
@@ -42,10 +51,16 @@ rather than assuming.
 - Frontend is not yet pointed at the deployed Render URL — still hardcoded
   to `http://127.0.0.1:8001` in `frontend/prototype/app.js`.
 
-## Local dev routine (two terminals, every session)
+## Local dev routine (three terminals, every session)
 
-See `README.md` — backend on port 8001, frontend static server on 5500,
-never open `index.html` as a `file://` path (CORS/private-network blocking).
+See `README.md`. Terminal 1 (backend, port 8001) now needs
+`$env:DATABASE_URL` set to the Render external connection string before
+starting uvicorn, so local saves land in the same Postgres Metabase
+reads from — otherwise it falls back to a local Postgres URL that
+doesn't exist. Terminal 2: frontend static server, port 5500. Terminal 3:
+Metabase, port 3000 (optional — only needed to view/update the
+dashboard). Never open `index.html` as a `file://` path (CORS/private-
+network blocking).
 
 ## Key ground rules established (see docs/decisions-log.md for full reasoning)
 
