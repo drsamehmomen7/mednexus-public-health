@@ -4,7 +4,7 @@ future report type reusing extract_first_date / extract_age can trust
 these without re-testing through a full extraction pipeline.
 """
 
-from app.services.rule_based import extract_age, extract_first_date
+from app.services.rule_based import extract_age, extract_first_date, extract_sex
 
 
 # --- Dates ---
@@ -71,3 +71,25 @@ def test_age_out_of_plausible_range_is_ignored():
 
 def test_no_age_returns_none():
     assert extract_age("No age mentioned in this text.") is None
+
+
+# --- Sex (added 2026-07-27) ---
+
+def test_sex_word_form_female():
+    assert extract_sex("54-year-old female, presented today.") == "female"
+
+
+def test_sex_word_form_male():
+    assert extract_sex("8-year-old male, presented today.") == "male"
+
+
+def test_sex_shorthand_form_male():
+    assert extract_sex("33yo M, c/o cough x12d.") == "male"
+
+
+def test_sex_shorthand_form_female():
+    assert extract_sex("9yo F, c/o fever.") == "female"
+
+
+def test_no_sex_returns_none():
+    assert extract_sex("No sex mentioned in this text.") is None

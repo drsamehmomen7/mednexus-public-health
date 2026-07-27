@@ -53,6 +53,7 @@ EXTRACTED_FIELDS = [
     "diagnosis_status",
     "report_date",
     "patient_age",
+    "patient_sex",
     "region",
     "facility_name",
     "lab_confirmed",
@@ -60,7 +61,6 @@ EXTRACTED_FIELDS = [
 
 NOT_YET_EXTRACTED = [
     "onset_date",
-    "patient_sex",
     "occupation",
     "travel_related",
     "travel_country",

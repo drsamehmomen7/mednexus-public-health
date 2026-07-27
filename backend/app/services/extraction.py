@@ -23,7 +23,7 @@ and its tests, do not require the real OpenMed/GLiNER install to run.
 from datetime import date
 from typing import Callable, Dict, List, Optional, Tuple
 
-from app.schemas.notifiable_disease import DiagnosisStatus, NotifiableDiseaseCase
+from app.schemas.notifiable_disease import DiagnosisStatus, NotifiableDiseaseCase, PatientSex
 from app.services.confidence import model_confidence, rule_based_confidence
 from app.services.entity_selection import (
     first_entity,
@@ -32,11 +32,11 @@ from app.services.entity_selection import (
 )
 from app.services.gazetteer import Gazetteer
 from app.services.ner_client import ExtractedEntity, extract_entities
-from app.services.rule_based import extract_age, extract_first_date
+from app.services.rule_based import extract_age, extract_first_date, extract_sex
 
 NER_LABELS = ["disease", "region", "facility"]
 
-RULE_BASED_FIELDS = ("report_date", "patient_age", "diagnosis_status", "lab_confirmed")
+RULE_BASED_FIELDS = ("report_date", "patient_age", "patient_sex", "diagnosis_status", "lab_confirmed")
 
 _STATUS_KEYWORDS = {
     DiagnosisStatus.CONFIRMED: ["confirmed", "positive", "lab-confirmed"],
@@ -126,6 +126,7 @@ def extract_notifiable_disease_with_confidence(
 
     report_date = extract_first_date(text)
     patient_age = extract_age(text)
+    patient_sex = extract_sex(text)
 
     case = NotifiableDiseaseCase(
         disease_name=(
@@ -134,6 +135,7 @@ def extract_notifiable_disease_with_confidence(
         diagnosis_status=_infer_diagnosis_status(text),
         report_date=report_date or date.today(),
         patient_age=patient_age,
+        patient_sex=(PatientSex(patient_sex) if patient_sex else PatientSex.UNKNOWN),
         region=(gazetteer_region or (region_entity.text if region_entity else "Unknown")),
         facility_name=(facility_entity.text if facility_entity else None),
         lab_confirmed=_infer_lab_confirmed(text),
