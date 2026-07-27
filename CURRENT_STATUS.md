@@ -9,10 +9,14 @@ measured accuracy figure. Pipeline: raw text -> GLiNER NER + gazetteer +
 rule-based fields -> confidence report -> editable review UI -> Render
 Postgres -> dashboard.
 
-**Extraction accuracy is 100% on all seven extracted fields** (20-report
-sample, exact match against known ground truth). It was disease_name 80%,
-region 85%, diagnosis_status 80% before the fixes described in the
-2026-07-27 decisions-log entries.
+**Extraction accuracy is confirmed 100% on all seven extracted fields
+across the FULL 500-report run** (real GLiNER pipeline, exact match
+against ground truth) — not just a 20-report sample. disease_name had
+actually dropped to 84.8% at 500-report scale before today's fix (the
+100% figure from the 20-report sample didn't hold up); see the
+2026-07-27 decisions-log entry for the two bugs that caused it and how
+they were fixed (a disease gazetteer, plus a sentence-boundary bug in
+negation-checking).
 
 **Dashboard is a custom page in our own frontend, not Metabase.**
 `frontend/prototype/dashboard.html` (Chart.js, reuses `style.css`), fed by
@@ -22,27 +26,26 @@ charts plus four summary metrics. Metabase was tried and dropped — see the
 2026-07-27 decisions-log entry.
 
 **IMMEDIATE NEXT STEP — this is the one thing to do first:**
-500 synthetic reports have been generated but NOT yet loaded into the
-database. The database still holds only the original 8 records. Run:
-
-    cd C:\mednexus-public-health\backend
-    python -m scripts.load_synthetic_reports
-
-Takes roughly 20-30 minutes (GLiNER runs per report, plus a round trip to
-Render per batch). It prints per-field accuracy at the end. Once it
-finishes, open the dashboard — it should show the measles outbreak the
-generator built into the data.
-
-After that, open questions in rough priority order:
+The 500 synthetic reports are now loaded and confirmed at 100% accuracy.
+Open questions in rough priority order:
 1. Extraction doesn't attempt seven fields the reports DO contain:
    onset_date, patient_sex, occupation, travel_related, travel_country,
    vaccination_status, outcome. The loader prints this gap list every run.
    onset_date matters most — epidemic curves should use symptom onset,
    not report date.
-2. "Flagged as needing human review" came back 0% on clean samples. Either
-   the model is genuinely confident or the threshold is too permissive.
-   Check against the full 500 before trusting it.
-3. Only then: more report types (Immunization next, reusing
+2. ~~"Flagged as needing human review" came back 0% on clean samples~~ —
+   RESOLVED: it's 0% (0/500) on the full run too, and that's expected —
+   every disease in the 500 reports is in the known 10-item gazetteer
+   vocabulary (backend/data/notifiable_diseases.json). A report naming a
+   disease outside that list would still fall back to NER and could
+   trigger review, so this reflects a closed test set, not a broken
+   review mechanism.
+3. No dedicated pytest regression tests yet for the disease gazetteer path
+   or the sentence-boundary fix in `is_negated()` added today (the
+   existing 69 tests all still pass, since the new parameter is optional
+   and defaults to None) — worth adding before reusing this pattern for
+   another report type.
+4. Only then: more report types (Immunization next, reusing
    entity_selection.py / confidence.py / gazetteer.py), or terminology
    normalization (ICD-10 / LOINC).
 
@@ -58,8 +61,12 @@ free-text only, no file upload, no live hospital system integration.
 - Negation-aware extraction in BOTH directions ("ruled out dengue" and
   "dengue was ruled out"), bounded to the sentence so a negation can't leak
   onto a neighbouring diagnosis.
-- Closed-vocabulary matching for region via a data-driven gazetteer —
-  regions come from population_strata, never hardcoded in extraction.
+- Closed-vocabulary matching for BOTH region and disease name via
+  data-driven gazetteers — regions come from population_strata, diseases
+  from `backend/data/notifiable_diseases.json` (seeded from the synthetic
+  ground truth via `scripts/build_disease_vocabulary.py`, a placeholder
+  until a real deployment supplies its own reportable-disease list).
+  Neither is hardcoded in extraction.
 - 500 synthetic free-text reports + ground_truth.json in
   `backend/data/synthetic_reports/` (regenerate with
   `python scripts/generate_synthetic_reports.py --count 500`).
@@ -78,11 +85,12 @@ free-text only, no file upload, no live hospital system integration.
   free-text only (see Where we are right now).
 - Frontend is not yet pointed at the deployed Render URL — still hardcoded
   to `http://127.0.0.1:8001` in both `app.js` and `dashboard.html`.
-- The 500 generated reports are NOT loaded into the database yet — it
-  still holds 8 records. See "immediate next step" above.
 - Seven fields present in report text that extraction doesn't attempt yet
   (onset_date, patient_sex, occupation, travel_*, vaccination_status,
   outcome).
+- No pytest regression tests yet for the disease gazetteer or the
+  sentence-boundary negation fix added 2026-07-27 (existing tests all
+  still pass, but the new behaviour itself isn't directly covered).
 - Dashboard refresh takes 3-4s: ~12 separate queries against Render's
   free-tier Postgres in Oregon. Latency, not a code problem.
 

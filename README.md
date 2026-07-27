@@ -9,7 +9,12 @@ de-identification tool.
 
 ## Current status
 
-Prototype phase — static UI only, no backend yet.
+Notifiable Disease report type is end-to-end complete and measured:
+extraction (GLiNER + gazetteers + rule-based fields), confidence
+reporting, editable review UI, save to Postgres, and a custom
+indicators dashboard — all backed by 69 passing tests and a confirmed
+100% field accuracy across a 500-report synthetic run. See
+`CURRENT_STATUS.md` for exactly where things stand and what's next.
 
 ## Run the prototype locally
 
@@ -59,9 +64,9 @@ venv` inside `backend/`, then `pip install -r requirements.txt` and
 
 ```
 docs/                  Living architecture docs, decisions log, report type definitions
-frontend/prototype/    Static UI prototype (HTML/CSS/JS, no build step)
-backend/               Not started yet
-tests/                 Not started yet
+frontend/prototype/    Static UI prototype (HTML/CSS/JS, no build step) + dashboard
+backend/               FastAPI app, extraction pipeline, gazetteers, scripts, tests
+backend/tests/         69 pytest tests covering extraction, negation, gazetteers, schema
 ```
 
 ## Documentation

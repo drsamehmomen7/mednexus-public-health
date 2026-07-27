@@ -466,3 +466,70 @@ score they didn't come from.
 
 Same pattern should be reused for any future closed vocabulary (facility
 lists, vaccine names) rather than reaching for the model.
+
+### 2026-07-27 — Disease gazetteer added, closing the gap the 500-report run exposed
+Loading all 500 reports through the real pipeline (not the 20-report
+sample the previous entry measured) told a different story: disease_name
+was actually 84.8% (424/500), not 100% — the smaller sample simply hadn't
+surfaced the failures yet. Worth remembering alongside the generator-bug
+lesson above: a 20-report sample can look perfect and still be wrong.
+
+Sample mismatches showed two distinct failure modes, both plausible-
+looking: GLiNER sometimes labelled a symptom or clinical sign ("myalgia",
+"posterior cervical lymphadenopathy") as `disease`, and sometimes returned
+no disease entity at all ("Unknown") even when one was clearly stated.
+
+Disease name is exactly as closed a vocabulary as region — a deployment
+reports on a known, fixed list of notifiable diseases — so the same
+architecture applies: `services/vocabularies.py::load_disease_gazetteer()`
+now builds a `Gazetteer` from `data/notifiable_diseases.json` (10
+diseases), seeded via `scripts/build_disease_vocabulary.py` from the
+distinct disease names in the synthetic ground truth. This is a
+placeholder, the same way population_strata is the real thing for
+region: nothing stops a real deployment swapping in its own reportable-
+disease list later, and extraction logic doesn't change either way.
+
+Unlike region, disease selection has to stay negation-aware — a
+gazetteer match inside "ruled out X" is not evidence of X. `Gazetteer.find()`
+normalizes text internally (lowers, collapses whitespace) to make matching
+forgiving, which means its match offsets are into the NORMALIZED string,
+not the original — useless for the negation-window check, which needs
+real character offsets. Rather than change `Gazetteer` (region still
+depends on its current behaviour), `entity_selection.py` gained
+`first_non_negated_gazetteer_term()`: it matches vocabulary terms directly
+against the ORIGINAL text (case-insensitive, whole-word, longest-first),
+wraps each hit in a small `_GazetteerHit` stand-in exposing the same
+`.start`/`.end`/`.label` shape as `ExtractedEntity`, and reuses `is_negated()`
+unchanged rather than duplicating its window logic.
+
+Testing that against real report text (not hand-written examples) surfaced
+a second, independent bug — one that predates the disease gazetteer and
+also affects the NER path: `is_negated()`'s PRECEDING-cue check had no
+sentence boundary, only the TRAILING check did. "Dengue fever was ruled
+out on negative testing. Influenza confirmed by PCR." read the previous
+sentence's "ruled out" as negating the confirmed Influenza in the next
+one, because "ruled out" fell inside Influenza's 40-character preceding
+window with nothing to stop it at the sentence break. Fixed symmetrically
+to the existing trailing-window bound (`_text_before_entity_in_same_sentence`,
+mirroring `_text_after_entity_in_same_sentence`). Not separately measured
+on the NER-only path, but the same phrasing pattern ("X ruled out. Y
+confirmed.") is common in the generated reports, so it likely accounted
+for some of the original 84.8%, not just gazetteer misses.
+
+Wired into both call sites that already had `region_gazetteer` —
+`app/main.py`'s `/extract` endpoint and `scripts/load_synthetic_reports.py`
+— as an equally optional `disease_gazetteer` parameter, so behaviour is
+unchanged when it isn't supplied.
+
+Result on the full 500-report re-run: disease_name 84.8% → 100%, all
+seven fields now at 100%. Flagged-for-review dropped from 33 (6.6%) to 0
+(0.0%) — expected, not a red flag: every disease in this synthetic set is
+in the 10-item gazetteer, so nothing falls through to the lower-confidence
+NER path that review-flagging depends on. A disease outside that list
+still falls back to NER and can flag for review same as before.
+
+Not yet done: no pytest regression tests cover the new gazetteer path or
+the preceding-window fix specifically (the existing 69 all still pass
+unchanged, since the new parameter defaults to None). Add tests mirroring
+`test_entity_selection.py`'s structure before reusing this pattern for
+Immunization or another report type.
