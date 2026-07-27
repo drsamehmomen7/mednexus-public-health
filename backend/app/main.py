@@ -17,6 +17,7 @@ from app.schemas.notifiable_disease import NotifiableDiseaseCase
 from app.services.confidence import needs_review
 from app.services.extraction import extract_notifiable_disease_with_confidence
 from app.services.ner_client import NerBackendUnavailable
+from app.services.vocabularies import load_region_gazetteer
 from sqlalchemy import text
 
 app = FastAPI(title="MedNexus Public Health API", version="0.1.0")
@@ -85,7 +86,10 @@ def validate_notifiable_disease_case(case: NotifiableDiseaseCase):
 
 
 @app.post("/reports/notifiable-disease/extract")
-def extract_notifiable_disease_report(request: ExtractRequest):
+def extract_notifiable_disease_report(
+    request: ExtractRequest,
+    db: Session = Depends(get_db),
+):
     """
     Extracts a structured NotifiableDiseaseCase from raw report text, plus
     a per-field confidence report so a human reviewer can see which fields
@@ -97,7 +101,13 @@ def extract_notifiable_disease_report(request: ExtractRequest):
     show a helpful message instead of a stack trace.
     """
     try:
-        case, confidence = extract_notifiable_disease_with_confidence(request.text)
+        # Region is a closed vocabulary for any given deployment, so it's
+        # matched against the configured region list rather than guessed by
+        # the model. The list is data (see services/vocabularies.py), so no
+        # country-specific values enter the extraction logic itself.
+        case, confidence = extract_notifiable_disease_with_confidence(
+            request.text, region_gazetteer=load_region_gazetteer(db)
+        )
     except NerBackendUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
     return {"extracted": case, "confidence": confidence}

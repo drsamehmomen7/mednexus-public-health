@@ -8,6 +8,11 @@ __pycache__/
 # not source code. Also far too large for a normal git repo (600MB+).
 backend/models/
 
+# Generated synthetic reports — reproducible with a fixed seed via
+# scripts/generate_synthetic_reports.py, so committing 500 text files plus
+# ground_truth.json would just be noise in every diff.
+backend/data/synthetic_reports/
+
 # Environment/secrets — never commit these
 .env
 *.env

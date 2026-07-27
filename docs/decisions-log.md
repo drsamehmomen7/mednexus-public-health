@@ -359,3 +359,110 @@ use vs external presentation — before choosing the tool that produces it.
 Two days of tool work were spent before that question surfaced, and it
 surfaced from the user, not from me.
 
+
+### 2026-07-27 — Schema extended to match standard reporting forms
+Reviewed how notifiable disease reporting is actually done — CDC/NNDSS,
+WHO IDSR, and UKHSA's current paper form (v3, Dec 2025). They converge on
+a common structure, and our schema was missing several near-universal
+fields. Added: onset_date (epidemic curves are drawn by symptom onset, not
+by when paperwork arrived — this matters more than report_date),
+vaccination_status, travel_related + travel_country (separates imported
+from locally-acquired cases), occupation (drives contact-tracing priority
+for food handlers, healthcare and childcare workers), and outcome (needed
+for case fatality rate). Also wired up icd10_code and lab_test_type, which
+existed in the schema but were never persisted.
+
+Two things NOT adopted from the reference forms: patient name/DOB/address
+(the schema is deliberately de-identified) and ethnicity (a sensitive
+attribute this project does not collect — same reasoning as the dashboard
+decision).
+
+`init_db()` uses create_all, which creates missing TABLES but never alters
+existing ones, so scripts/add_extended_case_columns.py adds the columns to
+the deployed table. Stopgap — switch to Alembic before real data exists.
+
+### 2026-07-27 — 500 synthetic reports generated, and what running them found
+Docx upload was descoped, but the underlying need — realistic volume — was
+real. 8 records proved the pipeline worked and demonstrated nothing.
+
+scripts/generate_synthetic_reports.py writes reports as FREE TEXT in four
+clinician "voices" (structured template, prose note, clinic shorthand, and
+one that includes a ruled-out differential), because generating structured
+records would test nothing — extracting structure from messy prose is the
+whole product. It also builds actual epidemiology rather than noise: a
+measles outbreak in one governorate over six weeks with a proper epidemic
+curve, background sporadic cases, disease-specific age profiles,
+seasonality, and regional counts proportional to population. It emits
+ground_truth.json alongside, so extraction accuracy is measurable as a
+number per field instead of eyeballed.
+
+scripts/load_synthetic_reports.py runs the REAL pipeline over them and
+reports per-field accuracy. Deliberately not a shortcut: loading
+ground_truth.json straight into the database would have been far faster
+and would have tested only the dashboard.
+
+Running it surfaced four bugs that hand-written single-note tests had not,
+all of which produced plausible-looking wrong answers:
+
+1. **Pending result overrode an explicit classification.** "probable case,
+   results pending" returned suspected, because the pending check ran
+   before the keyword scan. Fixed so pending only blocks CONFIRMED — the
+   direction where over-claiming is dangerous — and leaves an explicitly
+   stated probable/suspected alone.
+2. **lab_confirmed matched only the literal word "confirmed".** Real notes
+   write "confirming X", "culture +ve", "serology positive". Broadened,
+   with negated phrases ("non-reactive", "not confirmed", "negative")
+   stripped FIRST since several contain a positive marker as a substring.
+3. **Negation cues after the entity were missed entirely.** The negation
+   work in the 26 July entry only checked text BEFORE a disease mention
+   ("ruled out dengue"). Reports equally often write "Hepatitis A was
+   ruled out" — so the excluded disease was extracted as the diagnosis,
+   the same clinically dangerous error in mirror image. Trailing cues are
+   now checked too, bounded to the entity's own sentence: without that
+   bound, "Measles confirmed. Rubella negative." would negate Measles.
+4. **Region was extracted by zero-shot NER despite being a closed
+   vocabulary.** Reports write "Ardiya Clinic, Farwaniya" and the model
+   frequently attributed the whole phrase to the facility, returning no
+   region ~15% of the time. See the next entry.
+
+Accuracy went from disease_name 80% / region 85% / diagnosis_status 80%
+to 100% across all seven extracted fields on a 20-report sample.
+
+One "failure" turned out to be the generator's fault, not the pipeline's:
+the shorthand voice wrote "?X. Labs pending." for probable AND suspected
+cases alike, so the text carried no signal distinguishing them — the
+extraction was reading it correctly and being scored wrong. Fixed in the
+generator, and there is now a check that every report's text contains a
+cue for its true status. Worth remembering: when a measurement disagrees
+with the system, the measurement can be the thing that's broken.
+
+Test count went 41 -> 69, all new ones regressions for the above.
+
+### 2026-07-27 — Closed-vocabulary matching, without breaking system-agnosticism
+Region is a CLOSED vocabulary — a deployment has a fixed list of regions.
+Zero-shot NER is the right tool for open vocabularies (disease names,
+facility names, where new values appear constantly) and the wrong one here:
+asking a model to guess when the six valid answers are already known throws
+away information.
+
+The tension: the ground rule says no country-specific logic in extraction,
+and a hardcoded governorate list would violate it. Resolved by separating
+three concerns so no layer holds knowledge that belongs to another:
+- services/gazetteer.py knows HOW to match a vocabulary. Contains no
+  country, ministry, or deployment values whatsoever.
+- services/vocabularies.py knows WHERE a deployment's vocabulary lives —
+  it reads regions from population_strata, which already has to list every
+  region for rate-per-100k. One place to declare regions, no chance of two
+  lists drifting apart.
+- services/extraction.py knows neither. The gazetteer arrives as an
+  optional parameter; when absent, behaviour is unchanged and it falls back
+  to NER, so a fresh install with no reference data still works.
+
+Matching is conservative on purpose: exact whole-token matches plus
+optional aliases, never fuzzy. Assigning a case to the wrong region is
+worse than leaving it Unknown for a human to fill in. Gazetteer hits are
+reported in the confidence report as source "gazetteer", not as a model
+score they didn't come from.
+
+Same pattern should be reused for any future closed vocabulary (facility
+lists, vaccine names) rather than reaching for the model.

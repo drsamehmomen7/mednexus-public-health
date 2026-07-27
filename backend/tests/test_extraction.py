@@ -6,6 +6,8 @@ tests run instantly and do not require any model download.
 """
 
 from app.services.extraction import (
+    _infer_diagnosis_status,
+    _infer_lab_confirmed,
     extract_notifiable_disease,
     extract_notifiable_disease_with_confidence,
 )
@@ -191,3 +193,78 @@ def test_age_with_prefix_and_no_old_suffix_is_parsed():
     """'age 45 yrs' (no 'old' suffix) must still resolve to 45."""
     case = extract_notifiable_disease(MESSY_NOTE_2, ner_fn=fake_ner_with_negated_disease)
     assert case.patient_age == 45
+
+
+# --- Regressions found by running 500 generated reports through the real
+# --- pipeline and comparing against known ground truth (2026-07-27).
+# --- Both were silent: they produced plausible-looking wrong answers, and
+# --- would not have surfaced from hand-written single-note tests.
+
+def test_explicit_probable_survives_a_pending_lab_result():
+    """
+    'probable case, results pending' is a PROBABLE case. The pending-result
+    rule exists to stop a contact's confirmed status leaking onto the
+    patient — it must not overwrite a classification the clinician stated
+    outright. This scored 80% across 500 reports before the fix.
+    """
+    assert _infer_diagnosis_status("Laboratory: probable case, results pending.") \
+        == DiagnosisStatus.PROBABLE
+
+
+def test_pending_still_blocks_confirmed_from_a_contacts_case():
+    """The original protection must survive the fix above."""
+    text = "pt c/o fever, hx of contact w/ confirmed case, results pending"
+    assert _infer_diagnosis_status(text) == DiagnosisStatus.SUSPECTED
+
+
+def test_lab_confirmed_recognises_confirming_phrasing():
+    """
+    'confirming Influenza' does not contain the literal word 'confirmed',
+    so substring-matching that word alone dropped real confirmations.
+    """
+    assert _infer_lab_confirmed(
+        "Rapid influenza antigen returned positive, confirming Influenza."
+    ) is True
+
+
+def test_lab_confirmed_recognises_plus_ve_shorthand():
+    """Clinic shorthand writes '+ve', never 'confirmed by laboratory'."""
+    assert _infer_lab_confirmed("blood culture +ve -> Typhoid fever confirmed.") is True
+
+
+def test_lab_confirmed_is_false_when_a_positive_marker_is_negated():
+    """'negative rapid test' contains 'negative', which contains no positive
+    marker — but 'non-reactive' and 'not confirmed' do. Guard against those."""
+    assert _infer_lab_confirmed("Serology non-reactive, not confirmed.") is False
+
+
+def test_lab_confirmed_is_false_while_results_are_awaited():
+    assert _infer_lab_confirmed(
+        "Measles is suspected; laboratory results are still awaited."
+    ) is False
+
+
+TEMPLATED_CONFIRMED_REPORT = """NOTIFIABLE DISEASE REPORT
+Reporting facility: Western General Hospital, Farwaniya
+Date of report: 29/01/2025
+
+Patient: 22-year-old male
+Suspected condition: Rubella.
+Laboratory: PCR positive. Diagnosis confirmed.
+Outcome at time of reporting: recovered."""
+
+
+def test_form_heading_is_not_read_as_a_classification():
+    """
+    Structured templates print 'Suspected condition:' as a heading on every
+    report, confirmed ones included. Reading that heading as the diagnosis
+    status made every templated confirmed case come back as suspected.
+    """
+    assert _infer_diagnosis_status(TEMPLATED_CONFIRMED_REPORT) == DiagnosisStatus.CONFIRMED
+
+
+def test_genuine_suspected_wording_still_returns_suspected():
+    """The heading fix must not stop real 'suspected' wording from working."""
+    assert _infer_diagnosis_status(
+        "Measles is suspected; laboratory results are still awaited."
+    ) == DiagnosisStatus.SUSPECTED
