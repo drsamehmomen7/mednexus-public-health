@@ -533,3 +533,41 @@ the preceding-window fix specifically (the existing 69 all still pass
 unchanged, since the new parameter defaults to None). Add tests mirroring
 `test_entity_selection.py`'s structure before reusing this pattern for
 Immunization or another report type.
+
+### 2026-07-27 — patient_sex added; regression tests written for today's fixes
+Two follow-ups from the disease gazetteer entry above, done the same day.
+
+**Regression tests.** The gazetteer/negation fixes above had no dedicated
+tests — `test_entity_selection.py` gained four: a gazetteer term selected
+when not negated, one skipped when ruled out, and the sentence-boundary
+fix verified on both the gazetteer path and the original NER-entity path
+(same bug, same fix, both paths now covered independently). 69 → 73 tests.
+
+**patient_sex.** Noticed because the dashboard's "Cases by sex" chart
+showed 100% "unknown" — expected, since patient_sex is one of the seven
+fields extraction never attempted (see the gap list `load_synthetic_reports.py`
+prints every run). It had looked populated before, during the Metabase
+phase, only because `scripts/seed_synthetic_records.py` hand-typed
+`"patient_sex": "female"` etc. directly into ~6 test records posted
+straight to `/save` — bypassing extraction entirely. Nothing to do with
+the real pipeline.
+
+Sex is exactly as rule-based as age: checked all 500 report texts first,
+and every single one is covered by one of two phrasings — clinical
+shorthand ("33yo M") or prose ("54-year-old female") — zero exceptions.
+`rule_based.py` gained `extract_sex()`, mirroring `extract_age()`: two
+regexes, returns a plain "male"/"female"/None string (kept free of the
+PatientSex enum, same reasoning as extract_age returning a plain int) —
+`extraction.py` wraps it in `PatientSex(...)` at the call site, falling
+back to `PatientSex.UNKNOWN` when nothing is found. Added to
+`RULE_BASED_FIELDS` for confidence reporting, and moved from
+`NOT_YET_EXTRACTED` to `EXTRACTED_FIELDS` in the accuracy script.
+
+Result: 100% on all 500 reports, confirmed both via the raw function
+directly and through the full extraction call. 73 → 78 tests. Dashboard
+reloaded and confirmed visually: "Cases by sex" now shows a real
+male/female split instead of a single "unknown" slice.
+
+Next planned session: `onset_date` extraction (same rule-based approach),
+plus purely cosmetic dashboard polish (colors, animation) — no functional
+changes intended alongside that.
