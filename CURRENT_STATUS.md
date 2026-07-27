@@ -11,25 +11,34 @@ free) runs locally from `C:\metabase\metabase.jar` via
 (needs Java 21+; not in git, not part of this repo), connected to the
 Render Postgres instance.
 
-Beyond the roadmap, phase 2 of the Notifiable Disease domain is also
-done: the local backend now points at Render Postgres via
-`$env:DATABASE_URL` (see Local dev routine below) — so any record saved
-locally through the review UI appears in Metabase immediately, no manual
-sync step. The dashboard ("Notifiable Disease Overview") now has 6
-questions: Cases by Disease (bar), Cases by Region (bar), Cases by Sex
-(pie), Cases by Age Group (bar, ordered 0-4→65+), Cases Over Time (line),
-% Needing Review (number). 8 total records in Render Postgres (7 seeded
-synthetic + 1 saved live through the local UI during testing).
+Beyond the roadmap, the Notifiable Disease domain has had two extra
+phases of work, both driven by the user pushing back that a working
+pipeline isn't the same as a decision-ready one:
 
-**Immediate next step**: docx file upload for Notifiable Disease reports
-— a new backend endpoint to extract text from an uploaded .docx (via
-python-docx) and feed it into the existing extraction pipeline, plus a
-file input on the frontend. Agreed but not started yet.
+- **Phase 2 (live sync)**: local backend now points at Render Postgres
+  via `$env:DATABASE_URL` (see Local dev routine below) — any record
+  saved locally through the review UI appears in Metabase immediately.
+- **Phase 3 (dashboard v2)**: dashboard "Notifiable Disease Overview" now
+  has 7 questions with real chart types (bar/pie/line, not flat tables):
+  Cases by Disease, Cases by Region, Cases by Sex, Cases by Age Group,
+  Cases Over Time, % Needing Review, and Rate per 100k by Region (joined
+  against a new `region_population` reference table — real public 2025
+  Kuwait governorate population estimates, not synthetic). A
+  dashboard-level "Disease" filter cross-filters 6 of the 7 questions at
+  once. Explicitly not attempted: ethnicity breakdown (sensitive
+  attribute, deliberately uncollected) or a region choropleth map
+  (Metabase has no native support for custom Kuwait boundaries).
 
-Also still undecided beyond that: (a) more report types (Immunization
-next, reusing entity_selection.py/confidence.py), (b) terminology
-normalization (ICD-10/LOINC/vaccine codes). Ask which once docx upload
-is done, rather than assuming.
+Docx file upload — previously the agreed next step — was **descoped
+entirely**, not deferred: the user confirmed the real workflow is
+free-text only (a clinician types or pastes a report, extracts, saves),
+with no file upload and no live hospital system integration.
+
+**Open question, not yet decided**: is the Notifiable Disease domain now
+mature enough to be worth showing a decision-maker, justifying a move to
+more report types (Immunization next) — or does it need further
+depth first? Ask at the start of the next session rather than assuming
+either way.
 
 ## What's already working (locally)
 
@@ -48,6 +57,8 @@ is done, rather than assuming.
   exist in `backend/app/schemas/`, no extraction logic yet — reuse
   `entity_selection.py` and `confidence.py`, don't reimplement them).
 - Terminology normalization (ICD-10, LOINC, vaccine codes).
+- File upload of any kind — deliberately out of scope; workflow is
+  free-text only (see Where we are right now).
 - Frontend is not yet pointed at the deployed Render URL — still hardcoded
   to `http://127.0.0.1:8001` in `frontend/prototype/app.js`.
 

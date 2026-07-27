@@ -267,9 +267,43 @@ broken down by age/sex/ethnicity.
    system-agnostic/no-ministry-specific-logic ground rule), and "rate per
    100,000" needs a population-by-region reference table we don't have
    yet (a separate, deliberate follow-up if wanted, not built here).
-3. **Docx file upload — not started.** Real feature, needs a new backend
-   endpoint (extract text from an uploaded .docx via python-docx, then
-   reuse the existing extraction pipeline) plus a file input on the
-   frontend. Agreed order: live-sync fix (done) → dashboard breakdowns
-   (done) → docx upload (next).
+3. **Docx file upload — descoped.** User confirmed the real workflow is
+   free-text only (doctor types/pastes a report, extracts, saves) — no
+   file upload, no integration with any live hospital system. Dropped
+   from the plan entirely, not just deferred.
+
+### 2026-07-26 — Dashboard v2: population reference, chart types, cross-filter
+Explicit user pushback led here: before adding more report types
+(breadth), the single working report type needed to look decision-ready,
+not just technically functional. Concretely:
+- Added `backend/scripts/create_population_reference.py` — creates
+  `region_population` (6 rows, real public 2025 governorate population
+  estimates, not synthetic — this is public demographic reference data,
+  not patient data, so real figures are fine and more useful than
+  placeholders). New question "Rate per 100k by Region" joins this
+  against case counts.
+- Converted flat-table questions into real chart types: Cases by Disease
+  (bar), Cases by Region (bar), Cases by Sex (pie/donut), Cases by Age
+  Group (bar), Cases Over Time (line). % Needing Review stays a number.
+- Added a single dashboard-level filter ("Disease", Text/Category, Is
+  operator) cross-filtering Cases by Disease, Cases by Region, Cases by
+  Sex, Cases by Age Group, Cases Over Time, and % Needing Review all at
+  once. Each underlying SQL question needed a `{{disease}}` Field Filter
+  variable mapped to `notifiable_disease_records.disease_name` — mapping
+  it to the wrong column (e.g. Region on the Cases by Region question)
+  silently pollutes the dropdown with mismatched values and needs fixing
+  per-question, not just at the dashboard filter level.
+- Gotcha worth remembering: a table created directly in Postgres (e.g.
+  via a script using the SQLAlchemy engine) does not appear in Metabase
+  until a manual "Sync database schema now" is triggered from Admin →
+  Databases — Metabase does not auto-detect new tables on its own
+  schedule immediately.
+- Explicitly not replicated from the reference dashboard: ethnicity
+  breakdown (sensitive attribute, deliberately not collected) and a
+  region choropleth map (Metabase has no native support for custom
+  Kuwait-governorate boundaries; a bar chart substitutes for this).
+
+Not yet decided: whether this is now "decision-ready" enough to move on
+to more report types, or whether further dashboard maturation is still
+needed first — open question for the next session.
 
