@@ -10,6 +10,7 @@ showed the second one was silently unhandled.
 
 from app.services.entity_selection import (
     first_non_negated_entity,
+    first_non_negated_gazetteer_term,
     is_negated,
 )
 from app.services.ner_client import ExtractedEntity
@@ -95,3 +96,41 @@ def test_entity_without_offsets_is_never_assumed_negated():
     text = "Ruled out dengue. Suspected typhoid."
     no_offsets = ExtractedEntity(label="disease", text="dengue", score=0.9)
     assert is_negated(text, no_offsets) is False
+
+
+# --- Gazetteer-based negation (added 2026-07-27 with the disease gazetteer) -
+
+def test_gazetteer_term_is_selected_when_not_negated():
+    text = "Onset 2025-03-04 with fever, fatigue. Influenza confirmed by PCR."
+    term, skipped = first_non_negated_gazetteer_term(text, ["Influenza", "Measles"])
+    assert term == "Influenza"
+    assert skipped == 0
+
+
+def test_gazetteer_term_is_skipped_when_ruled_out():
+    text = "Dengue fever was ruled out on negative testing. Influenza confirmed by PCR."
+    term, skipped = first_non_negated_gazetteer_term(text, ["Dengue fever", "Influenza"])
+    assert term == "Influenza"
+    assert skipped == 1
+
+
+def test_gazetteer_preceding_negation_does_not_leak_across_a_sentence():
+    """
+    Real bug found by testing against actual synthetic report text: the
+    un-bounded preceding-cue check read "ruled out" (describing the
+    PREVIOUS sentence's disease) as negating the confirmed diagnosis in
+    the NEXT sentence, purely because it fell inside the 40-char window.
+    """
+    text = "Salmonellosis was ruled out on negative testing. Influenza confirmed by PCR."
+    term, skipped = first_non_negated_gazetteer_term(text, ["Salmonellosis", "Influenza"])
+    assert term == "Influenza"
+    assert skipped == 1
+
+
+def test_ner_entity_preceding_negation_does_not_leak_across_a_sentence():
+    """Same sentence-boundary bug, on the original NER-entity path."""
+    text = "Measles was ruled out on negative testing. Rubella confirmed by PCR."
+    entities = [entity_in(text, "Measles"), entity_in(text, "Rubella")]
+    selected, skipped = first_non_negated_entity(entities, "disease", text)
+    assert selected.text == "Rubella"
+    assert skipped == 1
