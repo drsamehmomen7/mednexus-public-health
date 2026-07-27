@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedNexus — Notifiable Disease Dashboard</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  /* Dashboard-specific styles. Colours reuse the shared palette in
+     style.css so this page stays visually part of the same product. */
+  .dash-wrap { max-width: 1180px; margin: 0 auto; padding: 24px 28px 56px; }
+
+  .dash-head {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 20px;
+  }
+  .dash-title { margin: 0; font-size: 22px; font-weight: 700; color: var(--ink); }
+  .dash-sub { margin: 4px 0 0; font-size: 13px; color: var(--ink-soft); }
+  .data-note {
+    font-size: 12px; color: var(--ink-soft);
+    background: var(--success-bg); border-radius: 999px; padding: 5px 12px;
+  }
+
+  .controls {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin-bottom: 22px;
+  }
+  .control label {
+    display: block; font-size: 12px; color: var(--ink-soft); margin-bottom: 5px;
+  }
+  .control select {
+    width: 100%; padding: 9px 11px; font-size: 14px; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; font-family: inherit; cursor: pointer;
+  }
+  .control select:focus { outline: none; border-color: var(--brand-teal); }
+
+  .metrics {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px; margin-bottom: 22px;
+  }
+  .metric { background: var(--success-bg); border-radius: var(--radius); padding: 15px 17px; }
+  .metric-label { font-size: 12px; color: var(--success-ink); margin: 0 0 6px; }
+  .metric-value { font-size: 26px; font-weight: 700; color: var(--ink); margin: 0; line-height: 1.1; }
+
+  .chart-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px;
+  }
+  .chart-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 18px 12px;
+  }
+  .chart-card h3 { margin: 0 0 2px; font-size: 14px; font-weight: 700; color: var(--ink); }
+  .chart-card .chart-sub { margin: 0 0 12px; font-size: 12px; color: var(--ink-soft); }
+  .chart-box { position: relative; height: 230px; }
+
+  .dash-state {
+    padding: 40px 0; text-align: center; font-size: 14px; color: var(--ink-soft);
+  }
+  .dash-state.error { color: #a3312c; }
+  .back-link {
+    display: inline-block; margin-bottom: 14px; font-size: 13px;
+    color: var(--brand-blue); text-decoration: none;
+  }
+  .back-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="brand">
+      <div class="logo">M</div>
+      <div>
+        <div class="brand-name">MedNexus</div>
+        <div class="brand-sub">Public Health Intelligence</div>
+      </div>
+    </div>
+    <div class="badge badge-local">
+      <span class="dot"></span> Local AI Processing
+    </div>
+  </header>
+
+  <div class="dash-wrap">
+    <a class="back-link" href="index.html">&larr; Back to report extraction</a>
+
+    <div class="dash-head">
+      <div>
+        <h1 class="dash-title">Notifiable disease overview</h1>
+        <p class="dash-sub">Reviewed and saved records only — not raw extractions.</p>
+      </div>
+      <span class="data-note">Synthetic data</span>
+    </div>
+
+    <div class="controls">
+      <div class="control">
+        <label for="f-disease">Disease</label>
+        <select id="f-disease"><option value="">All diseases</option></select>
+      </div>
+      <div class="control">
+        <label for="f-year">Year</label>
+        <select id="f-year"><option value="">All years</option></select>
+      </div>
+      <div class="control">
+        <label for="f-region">Region</label>
+        <select id="f-region"><option value="">All regions</option></select>
+      </div>
+      <div class="control">
+        <label for="f-measure">Measure</label>
+        <select id="f-measure">
+          <option value="count">Case count</option>
+          <option value="rate">Rate per 100,000</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="dash-state" class="dash-state">Loading…</div>
+
+    <div id="dash-body" hidden>
+      <div class="metrics">
+        <div class="metric">
+          <p class="metric-label">Total cases</p>
+          <p class="metric-value" id="m-total">—</p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">Rate per 100,000</p>
+          <p class="metric-value" id="m-rate">—</p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">Needing review</p>
+          <p class="metric-value" id="m-review">—</p>
+        </div>
+        <div class="metric">
+          <p class="metric-label">Regions reporting</p>
+          <p class="metric-value" id="m-regions">—</p>
+        </div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-card">
+          <h3>Cases by disease</h3>
+          <p class="chart-sub" id="sub-disease"></p>
+          <div class="chart-box"><canvas id="c-disease"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Cases by region</h3>
+          <p class="chart-sub" id="sub-region"></p>
+          <div class="chart-box"><canvas id="c-region"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Cases over time</h3>
+          <p class="chart-sub" id="sub-time"></p>
+          <div class="chart-box"><canvas id="c-time"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Cases by age group</h3>
+          <p class="chart-sub" id="sub-age"></p>
+          <div class="chart-box"><canvas id="c-age"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <h3>Cases by sex</h3>
+          <p class="chart-sub" id="sub-sex"></p>
+          <div class="chart-box"><canvas id="c-sex"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const API_BASE = "http://127.0.0.1:8001";
+const ENDPOINT = API_BASE + "/reports/notifiable-disease/dashboard-data";
+
+const GREEN_DARK = "#146c43";
+const GREEN_LEAF = "#4d9d3f";
+const GREEN_SOFT = "#8fc47a";
+const GREY_SOFT  = "#c6d3c7";
+const GRID       = "#e6efe6";
+const INK_SOFT   = "#5c6b60";
+
+const charts = {};
+let optionsLoaded = false;
+
+function measureLabel() {
+  return document.getElementById("f-measure").value === "rate"
+    ? "Rate per 100,000 population"
+    : "Number of cases";
+}
+
+function baseOptions({ horizontal = false, hideLegend = true } = {}) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: horizontal ? "y" : "x",
+    plugins: {
+      legend: { display: !hideLegend, position: "right",
+                labels: { boxWidth: 12, font: { size: 12 }, color: INK_SOFT } },
+      tooltip: { backgroundColor: "#17241b", padding: 10, cornerRadius: 6 }
+    },
+    scales: horizontal === null ? {} : {
+      x: { grid: { display: horizontal, color: GRID }, border: { display: false },
+           ticks: { color: INK_SOFT, font: { size: 11 } } },
+      y: { grid: { display: !horizontal, color: GRID }, border: { display: false },
+           beginAtZero: true, ticks: { color: INK_SOFT, font: { size: 11 }, precision: 0 } }
+    }
+  };
+}
+
+function render(id, config) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id), config);
+}
+
+function fillSelect(el, values, currentValue) {
+  const first = el.options[0];
+  el.innerHTML = "";
+  el.appendChild(first);
+  values.forEach(v => {
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.textContent = v;
+    el.appendChild(opt);
+  });
+  if (currentValue) el.value = currentValue;
+}
+
+async function load() {
+  const disease = document.getElementById("f-disease").value;
+  const year    = document.getElementById("f-year").value;
+  const region  = document.getElementById("f-region").value;
+  const measure = document.getElementById("f-measure").value;
+
+  const params = new URLSearchParams({ measure });
+  if (disease) params.set("disease", disease);
+  if (year)    params.set("year", year);
+  if (region)  params.set("region", region);
+
+  const state = document.getElementById("dash-state");
+  const body  = document.getElementById("dash-body");
+
+  try {
+    const res = await fetch(ENDPOINT + "?" + params.toString());
+    if (!res.ok) throw new Error("Server returned " + res.status);
+    const data = await res.json();
+
+    if (!optionsLoaded) {
+      fillSelect(document.getElementById("f-disease"), data.options.diseases, disease);
+      fillSelect(document.getElementById("f-year"),    data.options.years,    year);
+      fillSelect(document.getElementById("f-region"),  data.options.regions,  region);
+      optionsLoaded = true;
+    }
+
+    draw(data);
+    state.hidden = true;
+    body.hidden = false;
+  } catch (err) {
+    body.hidden = true;
+    state.hidden = false;
+    state.className = "dash-state error";
+    state.textContent =
+      "Couldn't load dashboard data: " + err.message +
+      ". Check that the backend is running on port 8001.";
+  }
+}
+
+function draw(data) {
+  const s = data.summary;
+  document.getElementById("m-total").textContent   = s.total_cases;
+  document.getElementById("m-rate").textContent    = s.rate_per_100k ?? "—";
+  document.getElementById("m-review").textContent  =
+    s.pct_needing_review === null ? "—" : s.pct_needing_review + "%";
+  document.getElementById("m-regions").textContent = s.regions_reporting;
+
+  const unit = measureLabel();
+  ["disease", "region", "time", "age", "sex"].forEach(k => {
+    document.getElementById("sub-" + k).textContent = unit;
+  });
+
+  const values = rows => rows.map(r => r.value ?? 0);
+  const labels = rows => rows.map(r => r.label);
+
+  render("c-disease", {
+    type: "bar",
+    data: { labels: labels(data.cases_by_disease),
+            datasets: [{ data: values(data.cases_by_disease),
+                         backgroundColor: GREEN_DARK, borderRadius: 4, maxBarThickness: 46 }] },
+    options: baseOptions()
+  });
+
+  render("c-region", {
+    type: "bar",
+    data: { labels: labels(data.cases_by_region),
+            datasets: [{ data: values(data.cases_by_region),
+                         backgroundColor: GREEN_LEAF, borderRadius: 4, maxBarThickness: 22 }] },
+    options: baseOptions({ horizontal: true })
+  });
+
+  render("c-time", {
+    type: "line",
+    data: { labels: labels(data.cases_over_time),
+            datasets: [{ data: values(data.cases_over_time),
+                         borderColor: GREEN_DARK, backgroundColor: "rgba(20,108,67,0.08)",
+                         borderWidth: 2.5, fill: true, tension: 0.3,
+                         pointRadius: 3, pointBackgroundColor: GREEN_DARK }] },
+    options: baseOptions()
+  });
+
+  render("c-age", {
+    type: "bar",
+    data: { labels: labels(data.cases_by_age_group),
+            datasets: [{ data: values(data.cases_by_age_group),
+                         backgroundColor: GREEN_LEAF, borderRadius: 4, maxBarThickness: 46 }] },
+    options: baseOptions()
+  });
+
+  render("c-sex", {
+    type: "doughnut",
+    data: { labels: labels(data.cases_by_sex),
+            datasets: [{ data: values(data.cases_by_sex),
+                         backgroundColor: [GREEN_DARK, GREEN_SOFT, GREY_SOFT],
+                         borderWidth: 2, borderColor: "#ffffff" }] },
+    options: { ...baseOptions({ horizontal: null, hideLegend: false }), cutout: "58%" }
+  });
+}
+
+["f-disease", "f-year", "f-region", "f-measure"].forEach(id => {
+  document.getElementById(id).addEventListener("change", load);
+});
+
+load();
+</script>
+</body>
+</html>

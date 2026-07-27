@@ -29,6 +29,31 @@ class PatientSex(str, Enum):
     UNKNOWN = "unknown"
 
 
+class VaccinationStatus(str, Enum):
+    """
+    Vaccination status against the disease being reported (not vaccination
+    in general). Standard forms ask this explicitly because it changes case
+    interpretation — a measles case in a fully vaccinated patient is a very
+    different signal from one in an unvaccinated patient.
+    """
+    VACCINATED = "vaccinated"
+    PARTIALLY_VACCINATED = "partially_vaccinated"
+    NOT_VACCINATED = "not_vaccinated"
+    UNKNOWN = "unknown"
+
+
+class CaseOutcome(str, Enum):
+    """
+    Outcome at the time of reporting. Needed to compute case fatality rate,
+    which is one of the few indicators decision-makers ask for immediately.
+    """
+    RECOVERED = "recovered"
+    RECOVERING = "recovering"
+    HOSPITALIZED = "hospitalized"
+    DIED = "died"
+    UNKNOWN = "unknown"
+
+
 class NotifiableDiseaseCase(BaseModel):
     """One structured case record extracted from a notifiable disease report."""
 
@@ -45,7 +70,12 @@ class NotifiableDiseaseCase(BaseModel):
 
     # --- Dates ---
     onset_date: Optional[date] = Field(
-        None, description="Date symptoms began, if stated in the report"
+        None,
+        description=(
+            "Date symptoms began. Epidemiologically this matters more than "
+            "report_date — epidemic curves are drawn by onset, not by when "
+            "paperwork reached the authority."
+        ),
     )
     report_date: date = Field(
         ..., description="Date the case was reported to the health authority"
@@ -56,6 +86,14 @@ class NotifiableDiseaseCase(BaseModel):
         None, ge=0, le=120, description="Age in years, if stated"
     )
     patient_sex: PatientSex = PatientSex.UNKNOWN
+    occupation: Optional[str] = Field(
+        None,
+        description=(
+            "Recorded when relevant to transmission risk — food handling, "
+            "healthcare, childcare, education. Standard forms ask for it "
+            "because it drives contact tracing priority, not for demographics."
+        ),
+    )
 
     # --- Location and facility ---
     region: str = Field(
@@ -64,6 +102,23 @@ class NotifiableDiseaseCase(BaseModel):
     facility_name: Optional[str] = Field(
         None, description="Reporting hospital or health unit name"
     )
+
+    # --- Travel history ---
+    travel_related: Optional[bool] = Field(
+        None,
+        description=(
+            "Whether recent travel is considered relevant to this case. "
+            "Separates imported from locally-acquired cases — a core "
+            "surveillance classification. None means not stated."
+        ),
+    )
+    travel_country: Optional[str] = Field(
+        None, description="Country travelled to, if travel_related is true"
+    )
+
+    # --- Immunization and outcome ---
+    vaccination_status: VaccinationStatus = VaccinationStatus.UNKNOWN
+    outcome: CaseOutcome = CaseOutcome.UNKNOWN
 
     # --- Laboratory confirmation ---
     lab_confirmed: bool = Field(

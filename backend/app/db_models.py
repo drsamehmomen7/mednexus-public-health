@@ -18,13 +18,30 @@ class NotifiableDiseaseRecord(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
     disease_name: Mapped[str] = mapped_column(String, nullable=False)
+    icd10_code: Mapped[str] = mapped_column(String, nullable=True)
     diagnosis_status: Mapped[str] = mapped_column(String, nullable=False)
+
+    # onset_date is nullable because reports often omit it, but where present
+    # it's the better basis for an epidemic curve than report_date.
+    onset_date: Mapped[date] = mapped_column(Date, nullable=True)
     report_date: Mapped[date] = mapped_column(Date, nullable=False)
+
     patient_age: Mapped[int] = mapped_column(Integer, nullable=True)
     patient_sex: Mapped[str] = mapped_column(String, nullable=False, default="unknown")
+    occupation: Mapped[str] = mapped_column(String, nullable=True)
+
     region: Mapped[str] = mapped_column(String, nullable=False)
     facility_name: Mapped[str] = mapped_column(String, nullable=True)
+
+    # None = not stated in the report, which is different from "no travel".
+    travel_related: Mapped[bool] = mapped_column(Boolean, nullable=True)
+    travel_country: Mapped[str] = mapped_column(String, nullable=True)
+
+    vaccination_status: Mapped[str] = mapped_column(String, nullable=False, default="unknown")
+    outcome: Mapped[str] = mapped_column(String, nullable=False, default="unknown")
+
     lab_confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    lab_test_type: Mapped[str] = mapped_column(String, nullable=True)
     source_excerpt: Mapped[str] = mapped_column(String, nullable=True)
 
     # Full confidence report kept for audit — lets anyone re-check exactly

@@ -307,3 +307,55 @@ Not yet decided: whether this is now "decision-ready" enough to move on
 to more report types, or whether further dashboard maturation is still
 needed first — open question for the next session.
 
+### 2026-07-27 — Metabase replaced by a custom in-app dashboard page
+Reversal of the 2026-07-26 Metabase decision, for a reason that should
+have been established BEFORE picking a BI tool: the dashboard is meant to
+be shown to decision-makers, not just used internally by the team. That
+requirement was never asked about up front, and it's the one that decides
+the tool. Metabase OSS gives essentially no control over visual identity
+(colours, typography, layout, card design) — fine for internal
+exploration, wrong for anything presented externally. Also only supports
+one filter widget per variable comfortably, and can't match the product's
+green brand.
+
+What actually transferred, and what didn't — worth being precise, because
+the Metabase work was NOT wasted:
+- Transferred as-is: the database schema, the Render connection, every
+  indicator definition (the SQL for cases by disease/region/sex/age/time,
+  the % needing review computation, the rate-per-100k join), and the
+  cross-filtering model. That's the hard part and it was already correct.
+- Discarded: only the rendering layer — i.e. Metabase drawing the charts.
+
+New implementation:
+- `GET /reports/notifiable-disease/dashboard-data` in main.py returns the
+  whole dashboard payload in one response: summary numbers, all five
+  breakdowns, and the available filter options (so the frontend never
+  hardcodes disease/region/year lists).
+- Four controls, all combining with AND: disease, year, region, and
+  `measure` (count vs rate per 100,000). Measure applies to EVERY
+  breakdown, not just the regional one — each row carries a precomputed
+  `value` field so the frontend doesn't need to know which measure is
+  active.
+- That required population stratified by region x age group x sex:
+  `scripts/create_population_strata.py` builds `population_strata`
+  (72 rows). Governorate totals are real 2025 estimates; the age/sex
+  split within each governorate applies national proportions because
+  governorate-level stratification isn't published anywhere public. This
+  is a documented approximation — good for comparable rates, NOT quotable
+  as official statistics. The older `region_population` table is now
+  redundant but left in place.
+- `frontend/prototype/dashboard.html` — single self-contained page using
+  Chart.js from CDN, reusing the existing `style.css` palette so it looks
+  like part of the same product. Linked from the extraction page.
+
+Known limitation, accepted for now: each filter change fires ~12 separate
+queries against Render's free-tier Postgres in Oregon, so a refresh takes
+3-4 seconds from Kuwait. Not a code problem — it's round-trip latency.
+Options if it becomes annoying: collapse the queries into fewer round
+trips, or run Postgres locally for development and keep Render for demos.
+
+Process lesson (the important one): ask what the artifact is FOR — internal
+use vs external presentation — before choosing the tool that produces it.
+Two days of tool work were spent before that question surfaced, and it
+surfaced from the user, not from me.
+

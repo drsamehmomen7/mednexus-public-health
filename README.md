@@ -41,17 +41,12 @@ cd C:\mednexus-public-health\frontend\prototype
 python -m http.server 5500
 ```
 
-**Terminal 3 — Metabase (port 3000, analytics dashboard):**
-```powershell
-cd C:\metabase
-java --add-opens java.base/java.nio=ALL-UNNAMED -jar metabase.jar
-```
-Not part of this repo (lives in `C:\metabase`, not tracked in git) and
-not required for the extraction pipeline itself — only needed when you
-want to view/update the indicators dashboard. Requires Java 21+ (`java
--version` to check). Once running, open `http://localhost:3000`.
+Leave both running, then open `http://127.0.0.1:5500` in the browser for
+the extraction page, or `http://127.0.0.1:5500/dashboard.html` for the
+indicators dashboard.
 
-Leave both running, then open `http://127.0.0.1:5500` in the browser.
+(Metabase was used briefly and dropped in favour of the custom dashboard
+page — see `docs/decisions-log.md`, 2026-07-27. No third terminal needed.)
 Do NOT open `index.html` directly as a `file://` path — the browser blocks
 requests from local files to localhost servers, so the extract button will
 silently fail.
