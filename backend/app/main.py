@@ -17,7 +17,7 @@ from app.schemas.notifiable_disease import NotifiableDiseaseCase
 from app.services.confidence import needs_review
 from app.services.extraction import extract_notifiable_disease_with_confidence
 from app.services.ner_client import NerBackendUnavailable
-from app.services.vocabularies import load_region_gazetteer
+from app.services.vocabularies import load_disease_gazetteer, load_region_gazetteer
 from sqlalchemy import text
 
 app = FastAPI(title="MedNexus Public Health API", version="0.1.0")
@@ -101,12 +101,15 @@ def extract_notifiable_disease_report(
     show a helpful message instead of a stack trace.
     """
     try:
-        # Region is a closed vocabulary for any given deployment, so it's
-        # matched against the configured region list rather than guessed by
-        # the model. The list is data (see services/vocabularies.py), so no
-        # country-specific values enter the extraction logic itself.
+        # Region and disease name are both closed vocabularies for any given
+        # deployment, so they're matched against the configured lists rather
+        # than guessed by the model. The lists are data (see
+        # services/vocabularies.py), so no country-specific values enter the
+        # extraction logic itself.
         case, confidence = extract_notifiable_disease_with_confidence(
-            request.text, region_gazetteer=load_region_gazetteer(db)
+            request.text,
+            region_gazetteer=load_region_gazetteer(db),
+            disease_gazetteer=load_disease_gazetteer(),
         )
     except NerBackendUnavailable as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc

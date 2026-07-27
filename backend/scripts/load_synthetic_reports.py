@@ -39,7 +39,7 @@ from app.db_models import NotifiableDiseaseRecord
 from app.services.confidence import needs_review
 from app.services.extraction import extract_notifiable_disease_with_confidence
 from app.services.ner_client import NerBackendUnavailable
-from app.services.vocabularies import load_region_gazetteer
+from app.services.vocabularies import load_disease_gazetteer, load_region_gazetteer
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "synthetic_reports"
 GROUND_TRUTH = DATA_DIR / "ground_truth.json"
@@ -135,6 +135,15 @@ def main():
     else:
         print("No region vocabulary found — falling back to the NER model.\n")
 
+    # Same rationale as region, added after this script's own 500-report
+    # run showed disease_name at 84.8% vs 100% for every gazetteer-backed
+    # field — see docs/decisions-log.md.
+    disease_gazetteer = load_disease_gazetteer()
+    if disease_gazetteer:
+        print(f"Disease vocabulary loaded: {len(disease_gazetteer)} diseases.\n")
+    else:
+        print("No disease vocabulary found — falling back to the NER model.\n")
+
     db = None if args.no_save else SessionLocal()
 
     try:
@@ -144,7 +153,9 @@ def main():
 
             try:
                 case, confidence = extract_notifiable_disease_with_confidence(
-                    text, region_gazetteer=region_gazetteer
+                    text,
+                    region_gazetteer=region_gazetteer,
+                    disease_gazetteer=disease_gazetteer,
                 )
             except NerBackendUnavailable as exc:
                 print(f"\nGLiNER unavailable: {exc}")
