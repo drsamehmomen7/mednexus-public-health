@@ -8,7 +8,7 @@ and auditable than asking an NER model to guess them.
 
 import calendar
 import re
-from datetime import date
+from datetime import date, timedelta
 from typing import Optional
 
 _MONTH_NAME_TO_NUM = {
@@ -147,5 +147,49 @@ def extract_sex(text: str) -> Optional[str]:
     abbrev_match = _SEX_PATTERN_ABBREVIATION.search(text)
     if abbrev_match:
         return "male" if abbrev_match.group(1).upper() == "M" else "female"
+
+    return None
+
+
+# Anchors the three phrasings prose reports use for onset: "Onset 25/1/26",
+# "Symptoms began on 14 February 2025", "Date of symptom onset: 23/4/26".
+_ONSET_KEYWORD_PATTERN = re.compile(
+    r"(?:date of symptom onset|onset|symptoms?\s+began on)\s*:?\s*",
+    re.IGNORECASE,
+)
+# Clinical shorthand expresses onset as a duration instead of a date:
+# "c/o cough x12d" means symptoms have been present for 12 days as of the
+# report date, not a stated onset date.
+_DURATION_PATTERN = re.compile(r"x\s*(\d+)\s*d\b", re.IGNORECASE)
+
+
+def extract_onset_date(text: str, report_date: Optional[date] = None) -> Optional[date]:
+    """
+    Return the date symptoms began, or None if not determinable.
+
+    Two phrasings cover all 500 synthetic reports, verified directly
+    against ground truth (naively reusing extract_first_date on the whole
+    text matched 0/500 — onset_date and report_date are both present, in
+    different formats/positions, so an unanchored scan can't tell them
+    apart):
+
+    1. Prose reports state it directly, anchored by a keyword ("Onset",
+       "Symptoms began on", "Date of symptom onset") — reuses
+       extract_first_date's format parsing on the text just after the
+       keyword, rather than duplicating it.
+    2. Clinical shorthand states a DURATION instead ("c/o cough x12d") —
+       onset = report_date minus that many days. Requires report_date to
+       already be known; returns None if it isn't passed in.
+    """
+    keyword_match = _ONSET_KEYWORD_PATTERN.search(text)
+    if keyword_match:
+        window = text[keyword_match.end():keyword_match.end() + 30]
+        found = extract_first_date(window)
+        if found:
+            return found
+
+    duration_match = _DURATION_PATTERN.search(text)
+    if duration_match and report_date:
+        return report_date - timedelta(days=int(duration_match.group(1)))
 
     return None

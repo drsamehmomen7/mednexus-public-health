@@ -571,3 +571,87 @@ male/female split instead of a single "unknown" slice.
 Next planned session: `onset_date` extraction (same rule-based approach),
 plus purely cosmetic dashboard polish (colors, animation) — no functional
 changes intended alongside that.
+
+### 2026-07-28 — Render free-tier database reset; stale-table schema mismatch
+Dashboard suddenly failed with "Failed to fetch" on port 8001, and the
+backend logged `relation "population_strata" does not exist` on the very
+first query after restarting uvicorn. `population_strata` isn't created by
+`init_db()` — it's a separate one-off script (`create_population_strata.py`),
+so its absence meant the connected database had never had project setup
+run against it. `notifiable_disease_records` had exactly 2 rows (not 500,
+not 0), confirming this wasn't the same database the 500-report runs had
+been using all along.
+
+Root cause: not fully confirmed. Render's free PostgreSQL tier hard-deletes
+a database 30 days after creation (44 days including the grace period to
+upgrade), with no backups — the initial hypothesis here — but flagged
+after the fact that the project's active history doesn't obviously span
+that long, so this is left open rather than settled. The mitigation is the
+same regardless of cause: either upgrade the Render instance to paid, or
+treat a reset as routine and re-run setup (documented in
+CURRENT_STATUS.md's ground rules now).
+
+Recovery attempt 1: `python -m scripts.create_population_strata` (worked,
+72 rows) then `python -m scripts.load_synthetic_reports` — this got 20
+reports in before crashing: `column "icd10_code" of relation
+"notifiable_disease_records" does not exist`. Checked `db_models.py`
+directly — it already correctly defines `icd10_code` and every other
+extended field (onset_date, patient_sex, travel_*, vaccination_status,
+outcome, lab_test_type). The model was never wrong. The issue is that
+`Base.metadata.create_all()` (what `init_db()` calls on every startup)
+only creates tables that don't exist — it never alters an existing one to
+add columns a changed model now expects. The `notifiable_disease_records`
+table that existed on the reset database predated `icd10_code` being
+added to the model at some point, and `create_all()` had been silently
+leaving it un-migrated ever since, invisible until an INSERT finally tried
+to write to that specific column.
+
+Fix: dropped the stale table outright (`DROP TABLE IF EXISTS
+notifiable_disease_records`) and called `init_db()` directly to recreate
+it from the current model — safe here only because all data is synthetic.
+Re-ran `load_synthetic_reports` clean: all 500 processed, all eight fields
+(including patient_sex) at 100%, 0 flagged for review.
+
+This is a known, accepted limitation of `create_all()`-based schema
+management (already flagged in `db.py`'s own docstring: "switch to Alembic
+migrations once real data exists"). Noted here as the concrete failure
+mode it eventually produces, for the next time a schema field is added:
+a fresh database will get it right automatically; an existing one won't,
+and needs either a manual `ALTER TABLE` or a table drop-and-recreate (only
+acceptable pre-production, with synthetic data).
+
+### 2026-07-28 — onset_date added, closing out the core field set
+Last of the fields planned alongside patient_sex. Checked all 500 reports
+first (same discipline as disease/sex): two phrasings, not one.
+
+Prose reports state onset directly, anchored by one of three keywords —
+"Onset", "Symptoms began on", "Date of symptom onset" — followed by a
+date in one of the formats `extract_first_date` already parses. Clinical
+shorthand reports don't state a date at all: "c/o cough x12d" means
+symptoms have been present for 12 days as of the report date, so
+onset_date has to be computed as `report_date - 12 days` rather than
+parsed from text directly.
+
+Confirmed by testing before writing anything: naively reusing
+`extract_first_date` for onset_date (no keyword anchor) matched 0/500 —
+report_date and onset_date are both present in the same report, in
+different formats or positions, and an unanchored scan can't tell them
+apart. `rule_based.py` gained `extract_onset_date(text, report_date)`:
+tries the keyword-anchored date first (reusing `extract_first_date` on
+the text just after the keyword, not duplicating its format parsing),
+falls back to the duration-from-report_date calculation. Requires
+`report_date` to already be computed, since the shorthand path depends on
+it — `extraction.py` now computes `report_date` before calling it.
+
+Result: 100% on all 500 reports, confirmed via the raw function and the
+full extraction pipeline. 78 → 84 tests. All nine extracted fields
+(disease_name, diagnosis_status, onset_date, report_date, patient_age,
+patient_sex, region, facility_name, lab_confirmed) now at 100% on the
+full 500-report run; 0% flagged for review.
+
+Remaining gap fields (occupation, travel_related, travel_country,
+vaccination_status, outcome) are lower priority — none are needed for the
+charts currently on the dashboard. Next planned work: dashboard visual
+polish (cosmetic only), then likely the Immunization report type — the
+real Kuwait MOH 2025 childhood immunization schedule is on hand as the
+vaccine-name source, the same role notifiable_diseases.json plays here.

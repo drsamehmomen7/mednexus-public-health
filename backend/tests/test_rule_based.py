@@ -4,7 +4,7 @@ future report type reusing extract_first_date / extract_age can trust
 these without re-testing through a full extraction pipeline.
 """
 
-from app.services.rule_based import extract_age, extract_first_date, extract_sex
+from app.services.rule_based import extract_age, extract_first_date, extract_onset_date, extract_sex
 
 
 # --- Dates ---
@@ -93,3 +93,33 @@ def test_sex_shorthand_form_female():
 
 def test_no_sex_returns_none():
     assert extract_sex("No sex mentioned in this text.") is None
+
+
+# --- Onset date (added 2026-07-28) ---
+
+def test_onset_date_from_onset_keyword():
+    assert str(extract_onset_date("Onset 2025-03-04 with fever, fatigue.")) == "2025-03-04"
+
+
+def test_onset_date_from_symptoms_began_on():
+    assert str(extract_onset_date("Symptoms began on 14 February 2025 with cough.")) == "2025-02-14"
+
+
+def test_onset_date_from_date_of_symptom_onset_label():
+    assert str(extract_onset_date("Date of symptom onset: 23/4/26\nPresenting symptoms: itching.")) == "2026-04-23"
+
+
+def test_onset_date_from_shorthand_duration():
+    from datetime import date
+    assert extract_onset_date(
+        "33yo M, c/o cough x12d. Seen 26/1/25.", report_date=date(2025, 1, 26)
+    ) == date(2025, 1, 14)
+
+
+def test_onset_date_shorthand_needs_report_date():
+    # Duration alone, with no report_date supplied, can't resolve to a date.
+    assert extract_onset_date("c/o cough x12d. Seen 26/1/25.", report_date=None) is None
+
+
+def test_no_onset_date_returns_none():
+    assert extract_onset_date("No onset information in this text.") is None

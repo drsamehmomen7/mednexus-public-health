@@ -32,11 +32,11 @@ from app.services.entity_selection import (
 )
 from app.services.gazetteer import Gazetteer
 from app.services.ner_client import ExtractedEntity, extract_entities
-from app.services.rule_based import extract_age, extract_first_date, extract_sex
+from app.services.rule_based import extract_age, extract_first_date, extract_onset_date, extract_sex
 
 NER_LABELS = ["disease", "region", "facility"]
 
-RULE_BASED_FIELDS = ("report_date", "patient_age", "patient_sex", "diagnosis_status", "lab_confirmed")
+RULE_BASED_FIELDS = ("report_date", "onset_date", "patient_age", "patient_sex", "diagnosis_status", "lab_confirmed")
 
 _STATUS_KEYWORDS = {
     DiagnosisStatus.CONFIRMED: ["confirmed", "positive", "lab-confirmed"],
@@ -127,12 +127,14 @@ def extract_notifiable_disease_with_confidence(
     report_date = extract_first_date(text)
     patient_age = extract_age(text)
     patient_sex = extract_sex(text)
+    onset_date = extract_onset_date(text, report_date=report_date or date.today())
 
     case = NotifiableDiseaseCase(
         disease_name=(
             gazetteer_disease or (disease_entity.text if disease_entity else "Unknown")
         ),
         diagnosis_status=_infer_diagnosis_status(text),
+        onset_date=onset_date,
         report_date=report_date or date.today(),
         patient_age=patient_age,
         patient_sex=(PatientSex(patient_sex) if patient_sex else PatientSex.UNKNOWN),

@@ -51,6 +51,7 @@ GROUND_TRUTH = DATA_DIR / "ground_truth.json"
 EXTRACTED_FIELDS = [
     "disease_name",
     "diagnosis_status",
+    "onset_date",
     "report_date",
     "patient_age",
     "patient_sex",
@@ -60,7 +61,6 @@ EXTRACTED_FIELDS = [
 ]
 
 NOT_YET_EXTRACTED = [
-    "onset_date",
     "occupation",
     "travel_related",
     "travel_country",

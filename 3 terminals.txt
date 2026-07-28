@@ -1,0 +1,33 @@
+we must open 3 terminals at the same time  :
+
+1-
+(venv) PS C:\mednexus-public-health\backend> $env:DATABASE_URL = "postgresql://mednexus_public_health_user:X8N85J2MswwWjw54zLXVhYd4WhmL88Fh@dpg-d9iu2u741pts73bqta50-a.oregon-postgres.render.com/mednexus_public_health"
+>> python -m uvicorn app.main:app --reload --port 8001
+
+
+INFO:     Will watch for changes in these directories: ['C:\\mednexus-public-health\\backend']
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [22932] using WatchFiles
+INFO:     Started server process [28920]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+
+
+2-
+(venv) PS C:\mednexus-public-health\backend> cd C:\mednexus-public-health\frontend\prototype              
+>> python -m http.server 5500                                                      
+
+(venv) PS C:\mednexus-public-health\backend> cd C:\mednexus-public-health\frontend\prototype              
+>> python -m http.server 5500                                                                             
+Serving HTTP on :: port 5500 (http://[::]:5500/) ...
+
+
+http://127.0.0.1:5500/         >>>>>>>>>>>>> url for the server لازم الامرين اللى فوق يكونوا شغالين فى ال Terminal
+
+3-
+cd C:\metabase
+java --add-opens java.base/java.nio=ALL-UNNAMED -jar metabase.jar
+
+http://localhost:3000 >>>>>>>>>>>>> url for the server(metabase)
+
+
