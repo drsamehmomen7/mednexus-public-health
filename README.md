@@ -11,12 +11,14 @@ de-identification tool.
 
 Notifiable Disease AND Immunization report types are both end-to-end
 complete and measured: extraction (GLiNER + gazetteers + rule-based
-fields), confidence reporting, save to Postgres — all backed by 107
-passing tests and a confirmed 100% field accuracy across each type's own
-500-report synthetic run. Notifiable Disease also has an editable review
-UI and a custom indicators dashboard; Immunization has the extraction/
-save API but no dashboard yet. See `CURRENT_STATUS.md` for exactly where
-things stand and what's next.
+fields), confidence reporting, save to Postgres, each with its own
+dashboard — all backed by 120 passing tests and a confirmed 100% field
+accuracy across each type's own 500-report synthetic run. The frontend
+also has real document upload (DOCX/TXT) with automatic report-type
+detection, a batch/cohort system for grouping saved records, JSON/CSV
+export, and a full visual redesign (brand identity, landing page,
+both dashboards). See `CURRENT_STATUS.md` for exactly where things
+stand and what's next.
 
 ## Run the prototype locally
 

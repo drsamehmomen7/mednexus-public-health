@@ -741,3 +741,104 @@ Next planned work: dashboard visual polish (Notifiable Disease) and
 making the project's landing page more visually engaging with more
 explanation of what it does — both purely cosmetic/presentation, no new
 extraction logic.
+
+### 2026-07-29 — Frontend redesign, document upload, batches, export
+A long session covering several linked pieces of work, in the order they
+were actually built.
+
+**Frontend redesign.** app.js was fixed to route Extract/Save to the
+correct backend endpoint based on the selected report-type card — it had
+always called the notifiable-disease endpoints regardless, so Immunization
+never actually worked in the UI despite the card being selectable. A
+separate Immunization dashboard was built
+(`immunization-dashboard.html` + `GET /reports/immunization/dashboard-data`)
+with charts specific to the data's shape rather than reused verbatim from
+Notifiable Disease — notably an age-BAND breakdown (birth-2mo, 3-6mo,
+7-18mo, then 2-3y/3-9y/10-15y/16-18y) instead of the disease dashboard's
+0-4/5-14/... buckets, since nearly the whole immunization schedule
+happens before age 2 and those buckets would put almost everything in
+one bin. Both dashboards then got a shared visual pass: an extended
+accent palette (slate/amber/rust/rose) so each chart has its own
+identity, soft card shadows instead of flat borders, a real one-line
+description per chart, and a thin animated "pulse line" as the one
+deliberate signature flourish — restraint everywhere else, per the
+"spend your boldness in one place" principle. The landing page
+(`index.html`) was rebuilt with a hero illustration (original inline SVG,
+not stock photography — avoids both a copyright question and a broken
+hotlink), a "How it works" section, and a "Report types" section marking
+Notifiable Disease/Immunization as Live and the rest as Coming next.
+Brand identity: wordmark "Med" (light) + "Nexus" (bold green) in a
+Fraunces display face, slogan "Every report, counted.", and — after two
+earlier attempts (a converging-lines abstraction, then a medical cross)
+were rejected as unclear or wrong — a logo mark showing loose incoming
+report cards resolving into one structured record, no container tile.
+Attribution was moved out of the header into the footer only, worded
+carefully after a revision: "Built by Dr. Sameh Momen" alone, then a
+disclosure that MedNexus is built over open-source biomedical models
+"developed with an AI engineering collaborator" (no vendor name) and
+that extraction logic, schemas, and clinical decisions are
+human-designed and human-reviewed — accurate rather than either
+overstating or omitting the AI's role.
+
+**Document upload + report-type detection.** The "Upload a document"
+dropzone had been a non-functional placeholder since the prototype's
+first version. `services/document_parsing.py` extracts text from
+DOCX (python-docx) and TXT; `services/report_type_detection.py` guesses
+which report type the text is by reusing the SAME disease/vaccine
+gazetteers extraction already depends on, plus a handful of structural
+keywords per type ("notifiable"/"diagnosis" vs "vaccine"/"dose") — no
+separate model, and tested 100% correct against all 1000 real synthetic
+reports (500 of each type) before shipping. Always surfaced as a
+suggestion the reviewer confirms or overrides, never applied silently —
+a real uploaded document can legitimately mention a disease name inside
+an immunization report or vice versa, so this heuristic is not a
+certainty. Testing the parser against generated documents surfaced a
+real bug: `extract_text_from_docx` grouped all paragraphs before all
+tables instead of true document order, which put a footer paragraph
+(written after a field table) ahead of the table's content in the
+extracted text. It happened not to break extraction on the specific
+documents tested, but was a real latent risk on any document that
+interleaves paragraphs and tables — which describes most real reporting
+forms. Fixed by walking `document.element.body` directly instead of
+python-docx's separate `.paragraphs` and `.tables` collections.
+
+**Batch/cohort system.** Triggered by a concrete ask: being able to
+save a set of reports (e.g. one region/period) into its own named group,
+view it on its own dashboard, and start a fresh one without disturbing
+the baseline data. Implemented as a nullable `batch_label` column on
+both `notifiable_disease_records` and `immunization_records` — NULL
+means "original bulk data," never explicitly batched, which is what the
+existing 500+500 rows are and stay. New `GET .../batches` endpoints list
+existing batches with counts; both dashboards gained a Batch filter;
+the save flow gained a "Save to" selector (existing batch, or type a new
+name). Non-destructive by design — no data is ever deleted or moved
+between batches automatically. Same `create_all()` limitation as the
+icd10_code incident applied again: adding a column to an EXISTING table
+needs a manual `ALTER TABLE ... ADD COLUMN`, not a drop-and-recreate,
+since the existing rows are worth keeping this time (real data was
+starting to accumulate, not just synthetic).
+
+**Export.** Batches have no separate backup — they live in the same
+tables as the synthetic bulk data. The synthetic 500+500 are always
+regenerable from the same seed if the Render database resets again the
+way it did on 2026-07-28; anything saved by hand (a real upload, a
+manually corrected record) is not, unless exported first. Both
+dashboards gained Export JSON (full-fidelity, every column) and Export
+CSV (drops the nested `confidence` blob, keeps `needed_review`) buttons,
+respecting whichever batch filter is active. Upgrading the Render
+instance to a paid tier would remove the recurring-reset risk entirely;
+noted as an option, not yet decided.
+
+**3 realistic DOCX demo files** were built with docx-js (Kuwait MOH
+letterhead, a 2-column field table, a signature-line footer) from three
+real, already-tested synthetic reports (one Meningococcal disease case,
+one Tdap dose with a mild AEFI, one newborn Hepatitis B dose) —
+specifically chosen from the "structured voice" reports whose phrasing
+the extraction pipeline was already tuned around. Verified 100% correct
+extraction on every field for all three, using the real
+`document_parsing.py` + extraction pipeline, before delivering them —
+these exist so the full upload -> detect -> extract -> save-to-batch
+flow can be demonstrated to decision-makers against documents that look
+like real official forms, not plain pasted text.
+
+120 tests passing by the end of the session (up from 107).

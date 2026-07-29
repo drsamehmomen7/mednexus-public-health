@@ -67,3 +67,27 @@ def test_extract_text_dispatches_txt_by_extension():
 def test_unsupported_extension_raises():
     with pytest.raises(UnsupportedDocumentType):
         extract_text("report.pdf", b"whatever")
+
+
+def test_preserves_true_reading_order_across_paragraphs_and_tables():
+    """
+    Real bug found while testing generated case-report forms: grouping
+    all paragraphs before all tables put a footer paragraph (written
+    AFTER the table in the document) ahead of the table's field data in
+    the extracted text — disorienting even though it happened not to
+    break extraction in that case. A letterhead paragraph, then a
+    table, then a footer paragraph must come out in that order.
+    """
+    doc = Document()
+    doc.add_paragraph("LETTERHEAD")
+    table = doc.add_table(rows=1, cols=2)
+    table.rows[0].cells[0].text = "Field"
+    table.rows[0].cells[1].text = "Value"
+    doc.add_paragraph("FOOTER")
+
+    buf = BytesIO()
+    doc.save(buf)
+    text = extract_text_from_docx(buf.getvalue())
+
+    lines = [l for l in text.split("\n") if l]
+    assert lines == ["LETTERHEAD", "Field Value", "FOOTER"]

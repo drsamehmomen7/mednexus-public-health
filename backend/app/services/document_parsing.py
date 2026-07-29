@@ -14,6 +14,8 @@ from io import BytesIO
 from typing import Optional
 
 from docx import Document
+from docx.table import Table
+from docx.text.paragraph import Paragraph
 
 
 class UnsupportedDocumentType(Exception):
@@ -22,20 +24,35 @@ class UnsupportedDocumentType(Exception):
 
 def extract_text_from_docx(file_bytes: bytes) -> str:
     """
-    Return the document's text content, in reading order: paragraphs
-    first, then any tables (row by row, cells joined with a space) —
-    covers both a prose-style report and a form-style one with labelled
-    fields laid out in a table, which real reporting forms often use.
+    Return the document's text content in TRUE reading order — paragraphs
+    and tables interleaved exactly as they appear in the document body,
+    not all paragraphs followed by all tables.
+
+    This matters for any real form that has a letterhead paragraph, then
+    a field table, then a signature-line footer paragraph (the common
+    shape of an official reporting form): grouping by element type would
+    put the footer text ahead of the table content it actually follows,
+    which is disorienting to review even though it happened not to
+    break extraction in testing. python-docx doesn't expose body order
+    directly, so this walks the underlying XML body children instead.
     """
     document = Document(BytesIO(file_bytes))
+    parts = []
 
-    parts = [p.text for p in document.paragraphs if p.text.strip()]
+    for child in document.element.body.iterchildren():
+        tag = child.tag.rsplit("}", 1)[-1]
 
-    for table in document.tables:
-        for row in table.rows:
-            cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
-            if cells:
-                parts.append(" ".join(cells))
+        if tag == "p":
+            paragraph = Paragraph(child, document)
+            if paragraph.text.strip():
+                parts.append(paragraph.text)
+
+        elif tag == "tbl":
+            table = Table(child, document)
+            for row in table.rows:
+                cells = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                if cells:
+                    parts.append(" ".join(cells))
 
     return "\n".join(parts)
 

@@ -1,15 +1,85 @@
 # Current Status — read this first in any new chat
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Where we are right now
 
 Notifiable Disease AND Immunization are both end-to-end complete, each
 with a measured 100% field-accuracy figure on their own full 500-report
-run. Same pipeline shape for both: raw text -> GLiNER NER + gazetteer(s)
-+ rule-based fields -> confidence report -> save to Postgres. Notifiable
-Disease also has a custom dashboard; Immunization doesn't yet (see
-immediate next step).
+run, PLUS a working document-upload pipeline with automatic report-type
+detection, a batch/cohort system, data export, and a fully redesigned
+frontend (landing page, both dashboards, brand identity). Same
+extraction pipeline shape for both report types: raw text -> GLiNER NER
++ gazetteer(s) + rule-based fields -> confidence report -> save to
+Postgres.
+
+**Document upload + auto-detection (2026-07-29).** The "Upload a
+document" button is no longer a placeholder — `POST
+/reports/parse-document` extracts text from DOCX/TXT (python-docx;
+PDF/CSV still not built), and `POST /reports/detect-type` guesses which
+report type it is by reusing the SAME gazetteers extraction already
+relies on (disease vs vaccine vocabulary + a few structural keywords) —
+no separate model. Tested 100% correct on all 1000 real synthetic
+reports (500 disease + 500 immunization). The frontend shows the
+detected type, auto-selects the matching report-type card, and displays
+the extracted text for review before Extract runs — a suggestion the
+reviewer confirms, never a silent decision. `services/document_parsing.py`
+walks the DOCX body in TRUE reading order (paragraphs and tables
+interleaved as they actually appear) — an earlier version grouped all
+paragraphs before all tables, which misplaced a footer behind the field
+table it followed.
+
+**Batch/cohort system (2026-07-29).** At save time, a reviewer picks
+"Original data" or a new/existing named batch (e.g. "Farwaniya Q1 2026
+outbreak"). Both dashboards gained a Batch filter. Non-destructive: a
+new `batch_label` column (nullable) was added to both tables via a
+manual `ALTER TABLE` (NOT a full reset — `create_all()` doesn't add
+columns to existing tables, same lesson as the icd10_code incident) —
+existing 500+500 rows keep `batch_label = NULL`, meaning "original bulk
+data," the default dashboard view.
+
+**Export (2026-07-29).** Both dashboards have Export JSON / Export CSV
+buttons, respecting the active batch filter. This exists because batches
+have no separate backup — they live in the same tables as everything
+else. If Render resets the database again, the synthetic 500+500 are
+regenerable from the same seed, but anything saved by hand (real
+uploads, manual corrections) is not, unless it was exported first.
+Upgrading the Render instance to a paid tier would remove the
+recurring-reset risk entirely; not yet decided.
+
+**Frontend fully redesigned (2026-07-29).** Brand identity: wordmark
+"Med" (light) + "Nexus" (bold green) in the Fraunces display face,
+slogan "Every report, counted.", and a custom logo mark (loose incoming
+report cards resolving into one structured record, no container tile).
+Attribution lives in the footer only: "Built by Dr. Sameh Momen", then a
+disclosure that MedNexus is built over open-source biomedical models
+"developed with an AI engineering collaborator" (no vendor name), and
+that extraction logic, schemas, and clinical decisions are
+human-designed and human-reviewed. Landing page (`index.html`) gained a
+hero illustration (original SVG, not stock photography — copyright-safe
+and on-brand), a "How it works" section, and a "Report types" section
+showing Notifiable Disease/Immunization as Live and Laboratory/
+Syndromic/Outbreak as Coming next. Both dashboards got a shared visual
+refresh: extended accent palette (slate/amber/rust/rose) so each chart
+has its own identity instead of defaulting to green everywhere, soft
+card shadows instead of flat borders, a real one-line description per
+chart (not just a repeated unit label), and a thin animated "pulse line"
+as the one deliberate signature flourish.
+
+**Immunization got its own dashboard (2026-07-29).**
+`frontend/prototype/immunization-dashboard.html` +
+`GET /reports/immunization/dashboard-data` — doses by vaccine/region/
+time, an age-BAND breakdown specific to immunization (birth-2mo, 3-6mo,
+7-18mo, then 2-3y/3-9y/10-15y/16-18y, since nearly the whole schedule
+happens before age 2 and the disease dashboard's 0-4/5-14/... buckets
+would be nearly useless here), and adverse-events-by-severity.
+
+**3 realistic Kuwait MOH-letterhead DOCX demo files exist**
+(`Notifiable_Disease_Report_Meningococcal`, `Immunization_Record_Tdap_AEFI`,
+`Immunization_Record_HepB_Newborn`) — built with docx-js, verified 100%
+correct extraction on every field before delivery, for demoing the full
+upload -> detect -> extract -> save-to-batch flow to decision-makers
+with documents that look like real official forms, not plain text.
 
 **Immunization report type completed 2026-07-28.** vaccine_name and
 region via gazetteers (vaccine_name doesn't need negation-awareness,
@@ -23,72 +93,42 @@ schema decisions made along the way: `InjectionRoute` gained
 `INTRADERMAL` (BCG genuinely uses it, the enum didn't have it), and
 `ImmunizationRecord` gained `patient_age_months` (0-24, optional)
 alongside `patient_age`, because most of the schedule (birth through 18
-months) is naturally stated in months, not years. New endpoints:
-`POST /reports/immunization/extract` and `/save`, plus
-`scripts/load_immunization_reports.py`. **Result on the real GLiNER
-pipeline: 100% on all 11 attempted fields, 500/500, 0% flagged for
-review** — first run measured facility_name at 99.0% (GLiNER's
+months) is naturally stated in months, not years. **Result on the real
+GLiNER pipeline: 100% on all 11 attempted fields, 500/500, 0% flagged
+for review** — first run measured facility_name at 99.0% (GLiNER's
 "facility" label was swallowing a trailing ", <region>" on
 comma-separated lines), fixed with a post-extraction cleanup
-(`_strip_trailing_region` in `immunization_extraction.py`) and confirmed
-back to 100% on re-run. vaccine_code and lot_number aren't attempted yet.
-107 tests passing.
+(`_strip_trailing_region`) and confirmed back to 100% on re-run.
+vaccine_code and lot_number aren't attempted yet.
 
 **Extraction accuracy is confirmed 100% on all NINE Notifiable Disease
 fields across the FULL 500-report run** (real GLiNER pipeline, exact
-match against ground truth), including onset_date and patient_sex — not
-just a 20-report sample. disease_name had actually dropped to 84.8% at
-500-report scale before the 2026-07-27 fix (the 100% figure from the
-20-report sample didn't hold up); see that day's decisions-log entries
-for the two bugs that caused it and how they were fixed (a disease
-gazetteer, plus a sentence-boundary bug in negation-checking).
+match against ground truth), including onset_date and patient_sex. See
+2026-07-27's decisions-log entries for the disease gazetteer and the
+sentence-boundary negation-checking bug.
 
-**The Render Postgres database reset (2026-07-28)** — cause not fully
-confirmed. Free-tier Render Postgres databases are hard-deleted 30 days
-after creation + a 14-day grace period, no backups; that was the initial
-hypothesis, but the project's active history doesn't obviously span that
-long, so it may have been something else (a manual reset, a
-misconfigured connection string, etc.) — left as an open question rather
-than a settled cause. What IS confirmed: `population_strata` was missing
-entirely, and `notifiable_disease_records` existed but with a STALE
-schema (missing `icd10_code` and other newer columns), because
-`Base.metadata.create_all()` only creates tables that don't exist yet —
-it never alters an existing table to match a changed model. Recovery:
-drop the stale table, let `init_db()` recreate it from the current
-`db_models.py`, re-run `create_population_strata` and
-`load_synthetic_reports`. All fields confirmed back to 100% afterward. If
-it recurs, the same recovery steps apply regardless of root cause — see
-the ground rules section below.
+**The Render Postgres database reset once already (2026-07-28)** —
+cause not fully confirmed (the project's active history didn't obviously
+span the 30-day free-tier window that was the initial hypothesis).
+Recovery steps documented in the ground rules below; the same steps
+apply regardless of root cause if it recurs — and now there's an Export
+button to reduce what a repeat would cost.
 
-**Dashboard is a custom page in our own frontend, not Metabase.**
-`frontend/prototype/dashboard.html` (Chart.js, reuses `style.css`), fed by
-`GET /reports/notifiable-disease/dashboard-data`. Four controls combining
-with AND: disease, year, region, measure (count vs rate per 100,000). Five
-charts plus four summary metrics. Metabase was tried and dropped — see the
-2026-07-27 decisions-log entry. **Immunization has no dashboard yet** —
-the save endpoint and table exist, but nothing reads from them visually.
+120 backend tests passing.
 
-**IMMEDIATE NEXT STEP — this is the one thing to do first:**
-Two things planned together, purely cosmetic/presentation — no new
-extraction logic:
-1. **Dashboard visual polish** — colors, animations/transitions on the
-   existing Notifiable Disease dashboard.
-2. **Landing page** (the project's overall entry page) needs more
-   creativity/visual impact and more explanation of what the project
-   does — flagged as needing "ابهار" (more impressive/polished) and more
-   detail, not just a functional page.
-
-After that, open questions in rough priority order:
+**IMMEDIATE NEXT STEP:** None fixed — the four originally-planned steps
+(app.js routing, Immunization dashboard, visual redesign, landing page)
+plus the upload/detection/batch/export/DOCX work triggered by testing
+are ALL done as of today. Open questions, rough priority order:
 1. Lower-priority fields still not extracted: Notifiable Disease's
    occupation/travel_related/travel_country/vaccination_status/outcome,
    and Immunization's vaccine_code/lot_number.
-2. An Immunization dashboard (mirroring the Notifiable Disease one) —
-   not started.
-3. More report types (Laboratory, Syndromic, Outbreak — schemas exist,
+2. More report types (Laboratory, Syndromic, Outbreak — schemas exist,
    no extraction logic), or terminology normalization (ICD-10 / LOINC).
-
-Docx file upload is **descoped entirely**, not deferred — the workflow is
-free-text only, no file upload, no live hospital system integration.
+3. PDF/CSV document upload (currently DOCX/TXT only).
+4. Point the frontend at the deployed Render URL instead of
+   `http://127.0.0.1:8001` (still hardcoded in `app.js` and both
+   dashboards).
 
 ## What's already working (locally)
 
@@ -98,13 +138,22 @@ free-text only, no file upload, no live hospital system integration.
 - Full extraction pipeline for **Immunization** report type: raw text →
   GLiNER NER + vaccine/region gazetteers + rule-based fields (dose
   number, route, adverse event, patient_age_months) → confidence report
-  → save to Postgres. No review UI or dashboard yet, just the API.
-- 107 backend tests passing (`pytest tests/ -v` from `backend/`).
+  → save to Postgres, plus its own dashboard.
+- **Document upload**: DOCX/TXT parsing (`services/document_parsing.py`)
+  + automatic report-type detection (`services/report_type_detection.py`,
+  100% correct on all 1000 real synthetic reports) — the frontend
+  dropzone is fully wired, not a placeholder.
+- **Batch/cohort system**: save-time batch selection, per-dashboard batch
+  filter, non-destructive (existing data untouched, `batch_label` is
+  nullable).
+- **Export**: JSON/CSV download per batch (or everything) on both
+  dashboards — the safety net for manually-saved records with no other
+  backup.
+- 120 backend tests passing (`pytest tests/ -v` from `backend/`).
 - Negation-aware extraction in BOTH directions ("ruled out dengue" and
   "dengue was ruled out"), bounded to the sentence so a negation can't leak
   onto a neighbouring diagnosis — applies to both NER entities and
-  gazetteer matches. Immunization's vaccine_name doesn't need this (see
-  "Where we are right now").
+  gazetteer matches. Immunization's vaccine_name doesn't need this.
 - Closed-vocabulary matching via data-driven gazetteers for region,
   disease name, AND vaccine name — regions come from population_strata,
   diseases from `backend/data/notifiable_diseases.json` (synthetic
@@ -119,34 +168,30 @@ free-text only, no file upload, no live hospital system integration.
   with `python -m scripts.generate_synthetic_reports --count 500`) and
   `backend/data/immunization_reports/` (Immunization, regenerate with
   `python -m scripts.generate_immunization_reports --count 500`).
-- Frontend prototype (static HTML/CSS/JS) at `frontend/prototype/`,
-  green-themed, distinct from the sibling de-identification tool.
-- Custom dashboard at `frontend/prototype/dashboard.html` — four combined
-  filters, five Chart.js charts, count/rate toggle, confirmed visually
-  showing correct disease/region/time/age/sex breakdowns. **Notifiable
-  Disease only** — Immunization has no dashboard yet.
+- Fully redesigned frontend at `frontend/prototype/` — brand identity
+  (MedNexus wordmark, logo mark, slogan), landing page with a hero
+  illustration/how-it-works/report-types sections, both dashboards
+  visually refreshed with a shared design language. Distinct from the
+  sibling de-identification tool (shares only the base green palette).
+- Custom dashboards at `frontend/prototype/dashboard.html` (Notifiable
+  Disease) and `immunization-dashboard.html` — combined filters
+  including Batch, Chart.js charts, count/rate toggle, Export buttons.
 
 ## What's not built yet
 
 - Laboratory, Syndromic, Outbreak report types (schemas exist in
   `backend/app/schemas/`, no extraction logic yet — reuse
   `entity_selection.py` and `confidence.py`, don't reimplement them).
-  Immunization is DONE as of 2026-07-28 (see above).
 - Terminology normalization (ICD-10, LOINC, vaccine codes) — includes
   Immunization's vaccine_code and lot_number fields, not attempted.
-- File upload of any kind — deliberately out of scope; workflow is
-  free-text only (see Where we are right now).
+- PDF and CSV document upload — only DOCX and TXT are parsed today.
 - Frontend is not yet pointed at the deployed Render URL — still hardcoded
-  to `http://127.0.0.1:8001` in both `app.js` and `dashboard.html`.
-- Lower-priority fields present in report text that extraction doesn't
-  attempt yet: Notifiable Disease's occupation/travel_related/
-  travel_country/vaccination_status/outcome, Immunization's
-  vaccine_code/lot_number.
-- An Immunization dashboard and review UI — the extract/save API exists,
-  nothing visual reads from it yet.
-- Dashboard visual polish (colors, animations/transitions) AND the
-  project's landing page needing more creativity/explanation — both next
-  planned, purely cosmetic/presentation.
+  to `http://127.0.0.1:8001` in `app.js` and both dashboard pages.
+- Lower-priority extraction fields: Notifiable Disease's
+  occupation/travel_related/travel_country/vaccination_status/outcome,
+  Immunization's vaccine_code/lot_number.
+- A separate backup store for batches — right now Export (JSON/CSV) is
+  the only safety net; nothing automatic yet.
 - Dashboard refresh takes 3-4s: ~12 separate queries against Render's
   free-tier Postgres in Oregon. Latency, not a code problem.
 
