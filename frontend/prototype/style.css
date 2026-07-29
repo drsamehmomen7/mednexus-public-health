@@ -50,18 +50,20 @@ body {
 
 .brand { display: flex; align-items: center; gap: 13px; }
 
-/* The mark: scattered report lines on the left converging into one
-   solid node — a literal nexus, and a picture of what the product does
-   (many unstructured reports in, one point of intelligence out). Sits
-   directly on the page with no container tile, so the shape itself has
-   to carry the identity. Inline SVG, no icon-font dependency. */
+/* The mark: a fan of loose incoming reports resolving into one clean
+   structured record at the front. The cards behind carry plain grey
+   text lines (unstructured input); the front card's rows are colour-
+   coded the way extracted fields are elsewhere in the UI — so the mark
+   shows the product's actual job rather than symbolising it abstractly.
+   Sits directly on the page with no container tile, so the silhouette
+   has to carry the identity. Inline SVG, no icon-font dependency. */
 .logo {
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.logo svg { width: 46px; height: 42px; display: block; }
+.logo svg { width: 48px; height: 42px; display: block; }
 
 /* Wordmark: display serif, with the two halves weighted differently so
    "Nexus" carries the emphasis — the connection is the product, the
