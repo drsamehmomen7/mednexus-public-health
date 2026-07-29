@@ -312,6 +312,9 @@ def export_notifiable_disease(
 ):
     """Downloads a batch (or everything, if `batch` is omitted) as JSON or CSV."""
     return _export_records(db, "notifiable_disease_records", batch, format)
+
+
+@app.post("/reports/immunization/extract")
 def extract_immunization_report(
     request: ExtractRequest,
     db: Session = Depends(get_db),
