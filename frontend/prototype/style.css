@@ -48,23 +48,50 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-.brand { display: flex; align-items: center; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 13px; }
 
+/* The mark: a central node branching to four, which reads as a network
+   nexus and as a medical cross at the same time — the two ideas the
+   product actually sits between. Kept as inline SVG rather than a font
+   glyph so it scales cleanly and carries no dependency. */
 .logo {
   width: 44px;
   height: 44px;
-  border-radius: 10px;
+  border-radius: 11px;
   background: var(--brand-gradient);
-  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 18px;
+  flex-shrink: 0;
+}
+.logo svg { width: 26px; height: 26px; display: block; }
+
+/* Wordmark: display serif, with the two halves weighted differently so
+   "Nexus" carries the emphasis — the connection is the product, the
+   "Med" is the domain it operates in. */
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 23px;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.brand-name .mark-med { font-weight: 400; }
+.brand-name .mark-nexus { font-weight: 700; color: var(--brand-blue); }
+
+.brand-sub {
+  font-size: 12px;
+  color: var(--ink-soft);
+  letter-spacing: 0.01em;
+  margin-top: 2px;
 }
 
-.brand-name { font-size: 20px; font-weight: 700; color: var(--ink); }
-.brand-sub { font-size: 13px; color: var(--ink-soft); }
+.header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 7px; }
+.header-links { display: flex; align-items: center; gap: 20px; }
+.header-links a { font-size: 13px; color: var(--ink-soft); text-decoration: none; font-weight: 600; }
+.header-links a:hover { color: var(--brand-blue); }
+.byline { font-size: 11.5px; color: var(--ink-soft); letter-spacing: 0.01em; }
+.byline strong { font-weight: 600; color: var(--ink); }
 
 .badge {
   display: flex;
@@ -86,14 +113,25 @@ body {
 }
 
 .eyebrow {
-  display: inline-block;
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--brand-blue);
   background: #e9f4e5;
-  padding: 4px 12px;
-  border-radius: 6px;
-  margin-bottom: 16px;
+  border: 1px solid #cfe6c6;
+  padding: 7px 15px 7px 12px;
+  border-radius: 999px;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+.eyebrow::before {
+  content: "";
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--brand-teal);
+  flex-shrink: 0;
 }
 
 .hero h1 {
