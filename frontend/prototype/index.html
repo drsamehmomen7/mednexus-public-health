@@ -260,10 +260,12 @@
     </div>
 
     <div class="tab-panel" data-panel="upload">
-      <div class="dropzone">
+      <div class="dropzone" id="dropzone">
         <span>Drag a file here, or click to browse</span>
-        <span class="dropzone-hint">TXT, DOCX, PDF, CSV planned for prototype phase</span>
+        <span class="dropzone-hint">DOCX and TXT supported. PDF and CSV planned for a later phase.</span>
       </div>
+      <input type="file" id="file-input" accept=".docx,.txt" hidden>
+      <div id="upload-status" style="margin-top:10px; font-size:13px;"></div>
     </div>
   </section>
 

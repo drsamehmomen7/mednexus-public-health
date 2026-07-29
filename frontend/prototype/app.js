@@ -208,6 +208,114 @@ extractBtn.addEventListener("click", async () => {
   }
 });
 
+// ---------- Upload a document: parse, detect type, hand off to Extract ----------
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("file-input");
+const uploadStatus = document.getElementById("upload-status");
+
+const TYPE_LABELS_FOR_DETECTION = {
+  notifiable: "Notifiable Disease",
+  immunization: "Immunization",
+  unknown: null,
+};
+
+function selectReportCard(type) {
+  const card = document.querySelector(`.report-card[data-type="${type}"]`);
+  if (!card) return;
+  reportCards.forEach((c) => c.setAttribute("aria-pressed", "false"));
+  card.setAttribute("aria-pressed", "true");
+  selectedType = type;
+  updateSummary();
+}
+
+function switchToTab(tabName) {
+  tabs.forEach((t) => t.classList.toggle("active", t.dataset.tab === tabName));
+  panels.forEach((p) => p.classList.toggle("active", p.dataset.panel === tabName));
+  inputMode = tabName;
+  updateSummary();
+}
+
+async function handleUploadedFile(file) {
+  uploadStatus.style.color = "var(--ink-soft)";
+  uploadStatus.textContent = `Reading ${file.name}...`;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const parseRes = await fetch(`${API_BASE}/reports/parse-document`, {
+      method: "POST",
+      body: formData,
+    });
+    const parseData = await parseRes.json();
+
+    if (!parseRes.ok) {
+      uploadStatus.style.color = "#8a3a1f";
+      uploadStatus.textContent = parseData.detail || "Could not read that file.";
+      return;
+    }
+
+    const extractedText = parseData.text;
+
+    // Show the extracted text on the paste tab immediately — the person
+    // should see exactly what MedNexus will work from, and can edit it,
+    // before anything is classified or extracted.
+    document.querySelector('.tab-panel[data-panel="paste"] textarea').value = extractedText;
+
+    uploadStatus.textContent = "Detecting report type...";
+
+    const detectRes = await fetch(`${API_BASE}/reports/detect-type`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: extractedText }),
+    });
+    const detectData = await detectRes.json();
+    const detectedType = detectData.detected_type;
+    const detectedLabel = TYPE_LABELS_FOR_DETECTION[detectedType];
+
+    switchToTab("paste");
+
+    if (detectedLabel) {
+      selectReportCard(detectedType);
+      uploadStatus.style.color = "#4d7a2f";
+      uploadStatus.textContent =
+        `Detected: ${detectedLabel}. Selected automatically — pick a different ` +
+        `card above if that's wrong, then Extract Report Data.`;
+    } else {
+      uploadStatus.style.color = "var(--ink-soft)";
+      uploadStatus.textContent =
+        "Couldn't confidently detect the report type — text loaded below. " +
+        "Pick the right card above, then Extract Report Data.";
+    }
+  } catch (err) {
+    uploadStatus.style.color = "#8a3a1f";
+    uploadStatus.textContent = `Could not reach the backend at ${API_BASE}.`;
+  }
+}
+
+dropzone.addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", () => {
+  if (fileInput.files.length) handleUploadedFile(fileInput.files[0]);
+});
+
+["dragover", "dragenter"].forEach((evt) =>
+  dropzone.addEventListener(evt, (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = "var(--brand-teal)";
+  })
+);
+["dragleave", "drop"].forEach((evt) =>
+  dropzone.addEventListener(evt, (e) => {
+    e.preventDefault();
+    dropzone.style.borderColor = "";
+  })
+);
+dropzone.addEventListener("drop", (e) => {
+  const file = e.dataTransfer.files[0];
+  if (file) handleUploadedFile(file);
+});
+
 // ---------- Save button: persists the (possibly edited) record ----------
 async function saveRecord() {
   const config = ENDPOINTS[selectedType];

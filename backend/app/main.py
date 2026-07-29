@@ -5,7 +5,7 @@ Minimal FastAPI entry point.
 import traceback
 from typing import Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -16,9 +16,11 @@ from app.db_models import NotifiableDiseaseRecord, SavedImmunizationRecord
 from app.schemas.immunization import ImmunizationRecord
 from app.schemas.notifiable_disease import NotifiableDiseaseCase
 from app.services.confidence import needs_review
+from app.services.document_parsing import UnsupportedDocumentType, extract_text
 from app.services.extraction import extract_notifiable_disease_with_confidence
 from app.services.immunization_extraction import extract_immunization_with_confidence
 from app.services.ner_client import NerBackendUnavailable
+from app.services.report_type_detection import detect_report_type
 from app.services.vocabularies import (
     load_disease_gazetteer,
     load_region_gazetteer,
@@ -67,6 +69,10 @@ class ExtractRequest(BaseModel):
     text: str
 
 
+class DetectTypeRequest(BaseModel):
+    text: str
+
+
 class SaveNotifiableDiseaseRequest(BaseModel):
     case: NotifiableDiseaseCase
     # Optional: pass the confidence report back from the extract step so
@@ -85,6 +91,47 @@ class SaveImmunizationRequest(BaseModel):
 def health_check():
     """Simple endpoint to confirm the server is running."""
     return {"status": "ok", "service": "mednexus-public-health"}
+
+
+@app.post("/reports/parse-document")
+async def parse_document(file: UploadFile = File(...)):
+    """
+    Extracts plain text from an uploaded document (DOCX/TXT today), so
+    the frontend can feed the result into the same extract flow it
+    already uses for pasted text. Deliberately does NOT extract
+    structured fields or guess the report type here — one endpoint, one
+    job. Call /reports/detect-type next with the returned text.
+    """
+    file_bytes = await file.read()
+    try:
+        extracted_text = extract_text(file.filename, file_bytes)
+    except UnsupportedDocumentType as exc:
+        raise HTTPException(status_code=415, detail=str(exc)) from exc
+
+    if not extracted_text.strip():
+        raise HTTPException(
+            status_code=422,
+            detail="No readable text found in that document.",
+        )
+
+    return {"text": extracted_text}
+
+
+@app.post("/reports/detect-type")
+def detect_type(request: DetectTypeRequest):
+    """
+    Guesses which report type a piece of text is, using the SAME
+    gazetteers extraction already relies on (see
+    services/report_type_detection.py for why this isn't a separate
+    model). Always a suggestion for the reviewer to confirm, never
+    applied silently — the frontend shows this before running extraction.
+    """
+    detected_type, scores = detect_report_type(
+        request.text,
+        disease_gazetteer=load_disease_gazetteer(),
+        vaccine_gazetteer=load_vaccine_gazetteer(),
+    )
+    return {"detected_type": detected_type, "scores": scores}
 
 
 @app.post("/reports/notifiable-disease/validate")
