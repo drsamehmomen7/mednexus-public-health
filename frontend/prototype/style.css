@@ -50,21 +50,18 @@ body {
 
 .brand { display: flex; align-items: center; gap: 13px; }
 
-/* The mark: a central node branching to four, which reads as a network
-   nexus and as a medical cross at the same time — the two ideas the
-   product actually sits between. Kept as inline SVG rather than a font
-   glyph so it scales cleanly and carries no dependency. */
+/* The mark: scattered report lines on the left converging into one
+   solid node — a literal nexus, and a picture of what the product does
+   (many unstructured reports in, one point of intelligence out). Sits
+   directly on the page with no container tile, so the shape itself has
+   to carry the identity. Inline SVG, no icon-font dependency. */
 .logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 11px;
-  background: var(--brand-gradient);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.logo svg { width: 26px; height: 26px; display: block; }
+.logo svg { width: 46px; height: 42px; display: block; }
 
 /* Wordmark: display serif, with the two halves weighted differently so
    "Nexus" carries the emphasis — the connection is the product, the
@@ -90,8 +87,6 @@ body {
 .header-links { display: flex; align-items: center; gap: 20px; }
 .header-links a { font-size: 13px; color: var(--ink-soft); text-decoration: none; font-weight: 600; }
 .header-links a:hover { color: var(--brand-blue); }
-.byline { font-size: 11.5px; color: var(--ink-soft); letter-spacing: 0.01em; }
-.byline strong { font-weight: 600; color: var(--ink); }
 
 .badge {
   display: flex;
@@ -214,9 +209,14 @@ body {
 .trust-item svg { width: 18px; height: 18px; color: var(--brand-blue); flex-shrink: 0; }
 
 .site-footer {
-  border-top: 1px solid var(--border); padding: 24px 40px; text-align: center;
+  border-top: 1px solid var(--border); padding: 32px 40px 40px; text-align: center;
   font-size: 12.5px; color: var(--ink-soft);
 }
+.site-footer p { max-width: 720px; margin-left: auto; margin-right: auto; }
+.footer-credit { font-size: 14px; color: var(--ink); margin: 0 0 10px; }
+.footer-credit strong { font-weight: 700; }
+.footer-method { margin: 0 0 12px; line-height: 1.6; }
+.footer-meta { margin: 0; font-size: 11.5px; opacity: 0.85; }
 
 /* ---------- Consistency with the redesigned dashboards ---------- */
 .panel, .report-card { box-shadow: var(--shadow-card); }
