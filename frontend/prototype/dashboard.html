@@ -27,6 +27,14 @@
   }
   .dash-title { margin: 0; font-family: var(--font-display); font-size: 30px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
   .dash-sub { margin: 5px 0 0; font-size: 13.5px; color: var(--ink-soft); }
+
+  .export-link {
+    font-size: 12px; font-weight: 600; color: var(--brand-blue);
+    background: none; border: 1px solid var(--border); border-radius: 999px;
+    padding: 5px 12px; cursor: pointer; font-family: inherit;
+  }
+  .export-link:hover { border-color: var(--brand-blue); background: var(--success-bg); }
+
   .data-note {
     font-size: 12px; color: var(--ink-soft);
     background: var(--success-bg); border-radius: 999px; padding: 5px 12px;
@@ -152,7 +160,11 @@
         <h1 class="dash-title">Notifiable disease overview</h1>
         <p class="dash-sub">Reviewed and saved records only — not raw extractions.</p>
       </div>
-      <span class="data-note">Synthetic data</span>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <button id="export-json" class="export-link">Export JSON</button>
+        <button id="export-csv" class="export-link">Export CSV</button>
+        <span class="data-note">Synthetic data</span>
+      </div>
     </div>
 
     <div class="pulse-line" aria-hidden="true"></div>
@@ -409,6 +421,22 @@ function draw(data) {
 ["f-disease", "f-year", "f-region", "f-batch", "f-measure"].forEach(id => {
   document.getElementById(id).addEventListener("change", load);
 });
+
+function currentExportParams() {
+  const batch = document.getElementById("f-batch").value;
+  const params = new URLSearchParams();
+  if (batch) params.set("batch", batch);
+  return params;
+}
+
+function triggerExport(format) {
+  const params = currentExportParams();
+  params.set("format", format);
+  window.location.href = API_BASE + "/reports/notifiable-disease/export?" + params.toString();
+}
+
+document.getElementById("export-json").addEventListener("click", () => triggerExport("json"));
+document.getElementById("export-csv").addEventListener("click", () => triggerExport("csv"));
 
 load();
 </script>

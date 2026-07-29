@@ -2,12 +2,16 @@
 Minimal FastAPI entry point.
 """
 
+import csv
+import io
+import json
 import traceback
+from datetime import date, datetime
 from typing import Optional
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -89,6 +93,67 @@ class SaveImmunizationRequest(BaseModel):
     record: ImmunizationRecord
     confidence: Optional[dict] = None
     batch_label: Optional[str] = None
+
+
+def _json_safe(value):
+    """Make date/datetime values JSON-serializable; everything else passes through."""
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    return value
+
+
+def _export_records(db: Session, table_name: str, batch: Optional[str], fmt: str) -> StreamingResponse:
+    """
+    Shared export logic for both report types — a batch (or, if `batch`
+    is omitted, everything in the table) as a downloadable file.
+
+    This exists because batches currently live only as a column in the
+    SAME database as everything else: there's no separate backup for
+    manually-saved, non-synthetic records the way there is for the
+    synthetic 500-report sets (which can always be regenerated from the
+    same seed). If the database resets again the way it did on
+    2026-07-28, an export taken beforehand is the only way anything
+    saved by hand survives that.
+
+    JSON keeps every column (a full-fidelity snapshot); CSV drops the
+    nested `confidence` blob, which doesn't flatten sensibly into a
+    spreadsheet cell, but keeps `needed_review` since that's a plain
+    boolean an analyst would actually want to filter on.
+    """
+    where = "WHERE batch_label = :batch" if batch else ""
+    params = {"batch": batch} if batch else {}
+    rows = [dict(r) for r in db.execute(text(f"SELECT * FROM {table_name} {where}"), params).mappings()]
+
+    filename_batch = batch.replace(" ", "_") if batch else "all"
+    filename_base = f"{table_name}_{filename_batch}"
+
+    if fmt == "csv":
+        if rows:
+            fieldnames = [k for k in rows[0].keys() if k != "confidence"]
+        else:
+            fieldnames = []
+        buffer = io.StringIO()
+        writer = csv.DictWriter(buffer, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({k: _json_safe(v) for k, v in row.items() if k != "confidence"})
+        buffer.seek(0)
+        return StreamingResponse(
+            iter([buffer.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{filename_base}.csv"'},
+        )
+
+    # Default: JSON, every column, full fidelity.
+    payload = json.dumps(
+        [{k: _json_safe(v) for k, v in row.items()} for row in rows],
+        indent=2,
+    )
+    return StreamingResponse(
+        iter([payload]),
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename_base}.json"'},
+    )
 
 
 @app.get("/health")
@@ -239,7 +304,14 @@ def list_notifiable_disease_batches(db: Session = Depends(get_db)):
     return {"batches": [dict(r) for r in rows]}
 
 
-@app.post("/reports/immunization/extract")
+@app.get("/reports/notifiable-disease/export")
+def export_notifiable_disease(
+    batch: Optional[str] = None,
+    format: str = "json",
+    db: Session = Depends(get_db),
+):
+    """Downloads a batch (or everything, if `batch` is omitted) as JSON or CSV."""
+    return _export_records(db, "notifiable_disease_records", batch, format)
 def extract_immunization_report(
     request: ExtractRequest,
     db: Session = Depends(get_db),
@@ -310,6 +382,16 @@ def list_immunization_batches(db: Session = Depends(get_db)):
         )
     ).mappings()
     return {"batches": [dict(r) for r in rows]}
+
+
+@app.get("/reports/immunization/export")
+def export_immunization(
+    batch: Optional[str] = None,
+    format: str = "json",
+    db: Session = Depends(get_db),
+):
+    """Downloads a batch (or everything, if `batch` is omitted) as JSON or CSV."""
+    return _export_records(db, "immunization_records", batch, format)
 
 
 @app.get("/reports/notifiable-disease/dashboard-data")
