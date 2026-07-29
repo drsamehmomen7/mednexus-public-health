@@ -166,6 +166,10 @@
         <select id="f-region"><option value="">All regions</option></select>
       </div>
       <div class="control">
+        <label for="f-batch">Batch</label>
+        <select id="f-batch"><option value="">All data</option></select>
+      </div>
+      <div class="control">
         <label for="f-measure">Measure</label>
         <select id="f-measure">
           <option value="count">Dose count</option>
@@ -289,12 +293,14 @@ async function load() {
   const vaccine = document.getElementById("f-vaccine").value;
   const year    = document.getElementById("f-year").value;
   const region  = document.getElementById("f-region").value;
+  const batch   = document.getElementById("f-batch").value;
   const measure = document.getElementById("f-measure").value;
 
   const params = new URLSearchParams({ measure });
   if (vaccine) params.set("vaccine", vaccine);
   if (year)    params.set("year", year);
   if (region)  params.set("region", region);
+  if (batch)   params.set("batch", batch);
 
   const state = document.getElementById("dash-state");
   const body  = document.getElementById("dash-body");
@@ -308,6 +314,7 @@ async function load() {
       fillSelect(document.getElementById("f-vaccine"), data.options.vaccines, vaccine);
       fillSelect(document.getElementById("f-year"),    data.options.years,    year);
       fillSelect(document.getElementById("f-region"),  data.options.regions,  region);
+      fillSelect(document.getElementById("f-batch"),   data.options.batches,  batch);
       optionsLoaded = true;
     }
 
@@ -399,7 +406,7 @@ function draw(data) {
   });
 }
 
-["f-vaccine", "f-year", "f-region", "f-measure"].forEach(id => {
+["f-vaccine", "f-year", "f-region", "f-batch", "f-measure"].forEach(id => {
   document.getElementById(id).addEventListener("change", load);
 });
 

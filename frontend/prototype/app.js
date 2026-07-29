@@ -24,11 +24,13 @@ const ENDPOINTS = {
   notifiable: {
     extract: "/reports/notifiable-disease/extract",
     save: "/reports/notifiable-disease/save",
+    batches: "/reports/notifiable-disease/batches",
     savePayloadKey: "case",
   },
   immunization: {
     extract: "/reports/immunization/extract",
     save: "/reports/immunization/save",
+    batches: "/reports/immunization/batches",
     savePayloadKey: "record",
   },
 };
@@ -190,13 +192,27 @@ extractBtn.addEventListener("click", async () => {
           Fields are editable. Anything below 60% confidence or marked
           "not found" should be checked against the original text before use.
         </p>
-        <button id="save-btn" class="btn-primary" style="margin-top:12px;">
+        <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
+          <label for="batch-select" style="display:block; font-size:12px; color:var(--ink-soft); margin-bottom:5px;">
+            Save to
+          </label>
+          <select id="batch-select" style="width:100%; max-width:320px; padding:8px 10px; font-size:13px;
+                  border:1px solid var(--border); border-radius:8px; font-family:inherit;">
+            <option value="">Original data (no batch)</option>
+            <option value="__new__">+ New batch...</option>
+          </select>
+          <input id="batch-new-input" type="text" placeholder="Batch name, e.g. Farwaniya Q1 2026"
+                 hidden style="width:100%; max-width:320px; margin-top:8px; padding:8px 10px; font-size:13px;
+                 border:1px solid var(--border); border-radius:8px; font-family:inherit;" />
+        </div>
+        <button id="save-btn" class="btn-primary" style="margin-top:14px;">
           Save reviewed record
         </button>
         <div id="save-status" style="margin-top:8px; font-size:12px;"></div>
       </div>
     `;
 
+    populateBatchSelect();
     document.getElementById("save-btn").addEventListener("click", saveRecord);
   } catch (err) {
     resultArea.innerHTML = `
@@ -317,6 +333,40 @@ dropzone.addEventListener("drop", (e) => {
 });
 
 // ---------- Save button: persists the (possibly edited) record ----------
+async function populateBatchSelect() {
+  const select = document.getElementById("batch-select");
+  const newInput = document.getElementById("batch-new-input");
+  const config = ENDPOINTS[selectedType];
+
+  try {
+    const res = await fetch(`${API_BASE}${config.batches}`);
+    const data = await res.json();
+    data.batches.forEach((b) => {
+      const opt = document.createElement("option");
+      opt.value = b.batch_label;
+      opt.textContent = `${b.batch_label} (${b.record_count})`;
+      select.insertBefore(opt, select.querySelector('option[value="__new__"]'));
+    });
+  } catch (err) {
+    // Non-fatal — the person can still save to "no batch" or type a new
+    // batch name even if the existing-batches list couldn't be fetched.
+  }
+
+  select.addEventListener("change", () => {
+    newInput.hidden = select.value !== "__new__";
+    if (!newInput.hidden) newInput.focus();
+  });
+}
+
+function currentBatchLabel() {
+  const select = document.getElementById("batch-select");
+  if (!select) return null;
+  if (select.value === "__new__") {
+    const name = document.getElementById("batch-new-input").value.trim();
+    return name || null;
+  }
+  return select.value || null;
+}
 async function saveRecord() {
   const config = ENDPOINTS[selectedType];
   const statusEl = document.getElementById("save-status");
@@ -347,7 +397,11 @@ async function saveRecord() {
     const response = await fetch(`${API_BASE}${config.save}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [config.savePayloadKey]: editedRecord, confidence: lastConfidence }),
+      body: JSON.stringify({
+        [config.savePayloadKey]: editedRecord,
+        confidence: lastConfidence,
+        batch_label: currentBatchLabel(),
+      }),
     });
     const data = await response.json();
 
@@ -357,7 +411,10 @@ async function saveRecord() {
       return;
     }
 
-    statusEl.textContent = `Saved (record id ${data.id}).`;
+    const batchLabel = currentBatchLabel();
+    statusEl.textContent = batchLabel
+      ? `Saved to batch "${batchLabel}".`
+      : "Saved to the original (unbatched) data.";
     statusEl.style.color = "#4d7a2f";
   } catch (err) {
     statusEl.textContent = `Could not reach the backend at ${API_BASE}.`;

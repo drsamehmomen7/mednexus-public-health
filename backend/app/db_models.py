@@ -54,6 +54,14 @@ class NotifiableDiseaseRecord(Base):
     # needing to parse JSON in every query.
     needed_review: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
+    # Which named batch/cohort this record belongs to, if any. NULL means
+    # "original bulk load" — the initial 500-report dataset, never
+    # explicitly batched. A reviewer chooses a batch at save time (new or
+    # existing) so a dashboard can be filtered to just that cohort — e.g.
+    # a specific outbreak period or region under active review — without
+    # disturbing the baseline data. See docs/decisions-log.md.
+    batch_label: Mapped[str] = mapped_column(String, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
@@ -100,5 +108,8 @@ class SavedImmunizationRecord(Base):
     # confidence dict, so a BI tool can filter/aggregate on this without
     # needing to parse JSON in every query.
     needed_review: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    # Same batch/cohort concept as NotifiableDiseaseRecord above.
+    batch_label: Mapped[str] = mapped_column(String, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

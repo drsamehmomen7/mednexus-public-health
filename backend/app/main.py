@@ -80,11 +80,15 @@ class SaveNotifiableDiseaseRequest(BaseModel):
     # (e.g. a record entered by hand with no prior extraction), the record
     # is saved without a review flag.
     confidence: Optional[dict] = None
+    # Optional: which batch/cohort this record belongs to. None means
+    # "original bulk data" — the dashboard's default, unfiltered view.
+    batch_label: Optional[str] = None
 
 
 class SaveImmunizationRequest(BaseModel):
     record: ImmunizationRecord
     confidence: Optional[dict] = None
+    batch_label: Optional[str] = None
 
 
 @app.get("/health")
@@ -205,11 +209,34 @@ def save_notifiable_disease_record(
         source_excerpt=request.case.source_excerpt,
         confidence=request.confidence,
         needed_review=needs_review(request.confidence) if request.confidence else False,
+        batch_label=request.batch_label,
     )
     db.add(record)
     db.commit()
     db.refresh(record)
     return {"saved": True, "id": record.id}
+
+
+@app.get("/reports/notifiable-disease/batches")
+def list_notifiable_disease_batches(db: Session = Depends(get_db)):
+    """
+    Distinct batch labels saved so far, with how many records are in
+    each — lets the frontend offer "add to an existing batch" instead of
+    only ever creating new ones. NULL (unbatched / original bulk data) is
+    never listed here — it's the implicit default, not something you'd
+    pick from a list of named batches.
+    """
+    rows = db.execute(
+        text(
+            """
+            SELECT batch_label, COUNT(*) AS record_count
+            FROM notifiable_disease_records
+            WHERE batch_label IS NOT NULL
+            GROUP BY batch_label ORDER BY batch_label
+            """
+        )
+    ).mappings()
+    return {"batches": [dict(r) for r in rows]}
 
 
 @app.post("/reports/immunization/extract")
@@ -261,6 +288,7 @@ def save_immunization_record(
         source_excerpt=request.record.source_excerpt,
         confidence=request.confidence,
         needed_review=needs_review(request.confidence) if request.confidence else False,
+        batch_label=request.batch_label,
     )
     db.add(record)
     db.commit()
@@ -268,11 +296,28 @@ def save_immunization_record(
     return {"saved": True, "id": record.id}
 
 
+@app.get("/reports/immunization/batches")
+def list_immunization_batches(db: Session = Depends(get_db)):
+    """Same purpose as list_notifiable_disease_batches, for immunization."""
+    rows = db.execute(
+        text(
+            """
+            SELECT batch_label, COUNT(*) AS record_count
+            FROM immunization_records
+            WHERE batch_label IS NOT NULL
+            GROUP BY batch_label ORDER BY batch_label
+            """
+        )
+    ).mappings()
+    return {"batches": [dict(r) for r in rows]}
+
+
 @app.get("/reports/notifiable-disease/dashboard-data")
 def notifiable_disease_dashboard_data(
     disease: Optional[str] = None,
     year: Optional[int] = None,
     region: Optional[str] = None,
+    batch: Optional[str] = None,
     measure: str = "count",
     db: Session = Depends(get_db),
 ):
@@ -302,6 +347,9 @@ def notifiable_disease_dashboard_data(
     if region:
         filters.append("region = :region")
         params["region"] = region
+    if batch:
+        filters.append("batch_label = :batch")
+        params["batch"] = batch
     where_clause = ("WHERE " + " AND ".join(filters)) if filters else ""
 
     age_bucket_sql = """
@@ -531,14 +579,25 @@ def notifiable_disease_dashboard_data(
             )
         )
     ]
+    available_batches = [
+        r[0] for r in db.execute(
+            text(
+                """
+                SELECT DISTINCT batch_label FROM notifiable_disease_records
+                WHERE batch_label IS NOT NULL ORDER BY 1
+                """
+            )
+        )
+    ]
 
     return {
         "measure": measure,
-        "filters": {"disease": disease, "year": year, "region": region},
+        "filters": {"disease": disease, "year": year, "region": region, "batch": batch},
         "options": {
             "diseases": available_diseases,
             "regions": available_regions,
             "years": available_years,
+            "batches": available_batches,
         },
         "summary": {
             "total_cases": total_cases,
@@ -560,6 +619,7 @@ def immunization_dashboard_data(
     vaccine: Optional[str] = None,
     year: Optional[int] = None,
     region: Optional[str] = None,
+    batch: Optional[str] = None,
     measure: str = "count",
     db: Session = Depends(get_db),
 ):
@@ -590,6 +650,9 @@ def immunization_dashboard_data(
     if region:
         filters.append("region = :region")
         params["region"] = region
+    if batch:
+        filters.append("batch_label = :batch")
+        params["batch"] = batch
     where_clause = ("WHERE " + " AND ".join(filters)) if filters else ""
 
     age_band_sql = """
@@ -804,14 +867,25 @@ def immunization_dashboard_data(
             )
         )
     ]
+    available_batches = [
+        r[0] for r in db.execute(
+            text(
+                """
+                SELECT DISTINCT batch_label FROM immunization_records
+                WHERE batch_label IS NOT NULL ORDER BY 1
+                """
+            )
+        )
+    ]
 
     return {
         "measure": measure,
-        "filters": {"vaccine": vaccine, "year": year, "region": region},
+        "filters": {"vaccine": vaccine, "year": year, "region": region, "batch": batch},
         "options": {
             "vaccines": available_vaccines,
             "regions": available_regions,
             "years": available_years,
+            "batches": available_batches,
         },
         "summary": {
             "total_doses": total_doses,
