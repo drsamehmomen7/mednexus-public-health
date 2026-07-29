@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Mangaf Clinic, Ahmadi
+Date of administration: 06 Feb 2026
+
+Patient age: 10-year-old
+Vaccine administered: 1st dose of Tdap vaccine
+Route: I.M.
+Lot number: MOH-60052
+No adverse event reported.

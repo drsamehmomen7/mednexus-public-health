@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Fahaheel Health Centre, Ahmadi
+Date of administration: 17 Mar 2025
+
+Patient age: 6-month-old
+Vaccine administered: 3rd dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: MOH-89570
+Given concurrently with: Hexa, Rota
+No adverse event reported.

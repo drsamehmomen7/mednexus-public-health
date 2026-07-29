@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Western General Hospital, Farwaniya
+Date of administration: 2025-03-04
+
+Patient age: 12-month-old
+Vaccine administered: 1st dose of Varicella vaccine
+Route: S.C.
+Lot number: MOH-77449
+Given concurrently with: OPV, MMR, Meningococcal ACWY
+No adverse event reported.

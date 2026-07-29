@@ -9,12 +9,14 @@ de-identification tool.
 
 ## Current status
 
-Notifiable Disease report type is end-to-end complete and measured:
-extraction (GLiNER + gazetteers + rule-based fields), confidence
-reporting, editable review UI, save to Postgres, and a custom
-indicators dashboard — all backed by 69 passing tests and a confirmed
-100% field accuracy across a 500-report synthetic run. See
-`CURRENT_STATUS.md` for exactly where things stand and what's next.
+Notifiable Disease AND Immunization report types are both end-to-end
+complete and measured: extraction (GLiNER + gazetteers + rule-based
+fields), confidence reporting, save to Postgres — all backed by 107
+passing tests and a confirmed 100% field accuracy across each type's own
+500-report synthetic run. Notifiable Disease also has an editable review
+UI and a custom indicators dashboard; Immunization has the extraction/
+save API but no dashboard yet. See `CURRENT_STATUS.md` for exactly where
+things stand and what's next.
 
 ## Run the prototype locally
 

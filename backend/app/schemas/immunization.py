@@ -17,6 +17,7 @@ class InjectionRoute(str, Enum):
     SC = "subcutaneous"
     ORAL = "oral"
     INTRANASAL = "intranasal"
+    INTRADERMAL = "intradermal"
     UNKNOWN = "unknown"
 
 
@@ -45,6 +46,17 @@ class ImmunizationRecord(BaseModel):
     route: InjectionRoute = InjectionRoute.UNKNOWN
 
     patient_age: Optional[int] = Field(None, ge=0, le=120)
+    patient_age_months: Optional[int] = Field(
+        None, ge=0, le=24,
+        description=(
+            "Age in months, for infants — most of the immunization schedule "
+            "(birth through 18 months) happens before a child's first or "
+            "second birthday, where patient_age in whole years is nearly "
+            "meaningless (mostly 0). Populated alongside patient_age when "
+            "the child is under 2; left unset once whole-year age is the "
+            "natural way to state it (boosters at 2y, 3.5y, 10-12y, 16-18y)."
+        ),
+    )
     region: str = Field(..., description="Governorate / health district of the administering facility")
     facility_name: Optional[str] = None
 

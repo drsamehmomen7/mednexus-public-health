@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Southern General Hospital, Ahmadi
+Date of administration: 01 May 2025
+
+Patient age: 18-month-old
+Vaccine administered: 4th (booster) dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: MOH-50483
+Given concurrently with: OPV, Hexa
+No adverse event reported.

@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Southern General Hospital, Ahmadi
+Date of administration: 09 July 2026
+
+Patient age: 16-year-old
+Vaccine administered: 2nd dose of Tdap vaccine
+Route: I.M.
+Lot number: MOH-32659
+No adverse event reported.

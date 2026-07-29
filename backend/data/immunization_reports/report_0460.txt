@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Khaitan Health Centre, Farwaniya
+Date of administration: 2026-06-07
+
+Patient age: 18-month-old
+Vaccine administered: 2nd dose of OPV vaccine
+Route: Oral
+Lot number: KW-61173
+Given concurrently with: Hexa, Pneumococcal
+No adverse event reported.

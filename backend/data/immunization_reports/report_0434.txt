@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Qurain Health Centre, Mubarak Al-Kabeer
+Date of administration: 07 May 2026
+
+Patient age: 4-month-old
+Vaccine administered: 2nd dose of Rota vaccine
+Route: Oral
+Lot number: MOH-40613
+Given concurrently with: Hexa, Pneumococcal
+No adverse event reported.

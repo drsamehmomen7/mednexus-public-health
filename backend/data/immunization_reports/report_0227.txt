@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Western General Hospital, Farwaniya
+Date of administration: 22/09/2025
+
+Patient age: 10-year-old
+Vaccine administered: 1st dose of Tdap vaccine
+Route: I.M.
+Lot number: KW-94889
+No adverse event reported.

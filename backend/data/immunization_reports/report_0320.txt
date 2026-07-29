@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Salmiya Health Centre, Hawalli
+Date of administration: 2026-01-01
+
+Patient age: 12-month-old
+Vaccine administered: 1st dose of Varicella vaccine
+Route: S.C.
+Lot number: KW-99742
+Given concurrently with: OPV, MMR, Meningococcal ACWY
+No adverse event reported.

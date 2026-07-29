@@ -9,7 +9,7 @@ and auditable than asking an NER model to guess them.
 import calendar
 import re
 from datetime import date, timedelta
-from typing import Optional
+from typing import Optional, Tuple
 
 _MONTH_NAME_TO_NUM = {
     name.lower(): i for i, name in enumerate(calendar.month_name) if name
@@ -193,3 +193,113 @@ def extract_onset_date(text: str, report_date: Optional[date] = None) -> Optiona
         return report_date - timedelta(days=int(duration_match.group(1)))
 
     return None
+
+
+# --- Immunization-specific fields (added for the Immunization report type) -
+
+# "2-month-old", "2 month old", "2mo" — the phrasing this project's own
+# generator uses for infant ages, verified against all 500 synthetic
+# immunization reports before writing this.
+_AGE_MONTHS_PATTERN = re.compile(
+    r"\b(\d{1,2})\s*-?\s*months?[-\s]?old\b|\b(\d{1,2})mo\b", re.IGNORECASE
+)
+_NEWBORN_PATTERN = re.compile(r"\bnewborn\b", re.IGNORECASE)
+
+
+def extract_age_months(text: str) -> Optional[int]:
+    """
+    Return age in months for infant-phrased reports ("2-month-old",
+    "newborn"), or None if the report states age in years instead.
+
+    Immunization reports need this alongside extract_age(): most of the
+    schedule (birth through 18 months) is naturally stated in months, not
+    years, because "0 years old" carries almost no information for that
+    age range. Use extract_age() for the complementary years-based case
+    (patient_age = age_months // 12 when this returns a value, otherwise
+    extract_age()'s own result).
+    """
+    if _NEWBORN_PATTERN.search(text):
+        return 0
+    match = _AGE_MONTHS_PATTERN.search(text)
+    if match:
+        return int(match.group(1) or match.group(2))
+    return None
+
+
+# "1st dose", "2nd dose", "4th (booster) dose" — matches how dose_number
+# is stated across all three report voices; the optional "(booster)"
+# aside doesn't change the captured digit.
+_DOSE_NUMBER_PATTERN = re.compile(
+    r"\b(\d+)(?:st|nd|rd|th)(?:\s*\(booster\))?\s+dose\b", re.IGNORECASE
+)
+
+
+def extract_dose_number(text: str) -> Optional[int]:
+    """Return the dose number in a vaccination series, or None if not stated
+    (single-dose vaccines like BCG or MMRV don't get a numbered phrasing)."""
+    match = _DOSE_NUMBER_PATTERN.search(text)
+    return int(match.group(1)) if match else None
+
+
+# Ordered so the more specific two-letter abbreviations are checked before
+# anything that could coincidentally overlap; intranasal isn't in the
+# current Kuwait schedule (nothing in the 12-vaccine list uses it) but is
+# matched for completeness since the schema supports it.
+_ROUTE_PATTERNS = [
+    (re.compile(r"\bintranasal\b", re.IGNORECASE), "intranasal"),
+    (re.compile(r"\bi\.?d\.?\b", re.IGNORECASE), "intradermal"),
+    (re.compile(r"\bi\.?m\.?\b", re.IGNORECASE), "intramuscular"),
+    (re.compile(r"\bs\.?c\.?\b", re.IGNORECASE), "subcutaneous"),
+    (re.compile(r"\boral\b", re.IGNORECASE), "oral"),
+]
+
+
+def extract_route(text: str) -> Optional[str]:
+    """
+    Return the injection route as a plain string ("intramuscular", etc.),
+    or None if not stated. Kept as a plain string rather than the
+    InjectionRoute enum, same reasoning as extract_sex returning a plain
+    string — this module stays free of any schema dependency.
+    """
+    for pattern, route in _ROUTE_PATTERNS:
+        if pattern.search(text):
+            return route
+    return None
+
+
+_ADVERSE_EVENT_SEVERITY_PATTERN = re.compile(r"\((mild|moderate|severe)\)", re.IGNORECASE)
+_ADVERSE_EVENT_DESCRIPTION_PATTERN = re.compile(
+    r"(?:AEFI:|following immunization:|developed)\s*(.+?)\s*\((?:mild|moderate|severe)\)",
+    re.IGNORECASE,
+)
+# The narrative voice wraps the description in "developed X following the
+# dose (severity)" — "following the dose" is template padding, not part of
+# X, so it has to be stripped off the captured text. (The generator's own
+# description word list was fixed to avoid a genuine phrase collision here
+# — see decisions-log — but the wrapper itself still needs this strip.)
+_TRAILING_FOLLOWING_DOSE = re.compile(r"\s*following the dose\s*$", re.IGNORECASE)
+
+
+def extract_adverse_event(text: str) -> Tuple[bool, str, Optional[str]]:
+    """
+    Return (adverse_event_reported, severity, description).
+
+    severity is one of "none"/"mild"/"moderate"/"severe" (matching the
+    AdverseEventSeverity enum's values) rather than the enum itself, for
+    the same reason other extract_* helpers return plain values — the
+    caller wraps it. The severity marker "(mild)"/"(moderate)"/"(severe)"
+    is the reliable anchor across all three report voices; if it's
+    absent, this reports no adverse event without trying to guess from
+    looser language like "no adverse reaction" (a report that mentions
+    neither phrasing at all should not be assumed clean).
+    """
+    severity_match = _ADVERSE_EVENT_SEVERITY_PATTERN.search(text)
+    if not severity_match:
+        return False, "none", None
+
+    severity = severity_match.group(1).lower()
+    description_match = _ADVERSE_EVENT_DESCRIPTION_PATTERN.search(text)
+    description = None
+    if description_match:
+        description = _TRAILING_FOLLOWING_DOSE.sub("", description_match.group(1).strip()).strip()
+    return True, severity, description

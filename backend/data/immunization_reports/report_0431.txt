@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Khaitan Health Centre, Farwaniya
+Date of administration: 5/5/26
+
+Patient age: 3-year-old
+Vaccine administered: DTaP vaccine
+Route: I.M.
+Lot number: IMZ-30253
+No adverse event reported.

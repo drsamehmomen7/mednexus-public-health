@@ -4,7 +4,16 @@ future report type reusing extract_first_date / extract_age can trust
 these without re-testing through a full extraction pipeline.
 """
 
-from app.services.rule_based import extract_age, extract_first_date, extract_onset_date, extract_sex
+from app.services.rule_based import (
+    extract_adverse_event,
+    extract_age,
+    extract_age_months,
+    extract_dose_number,
+    extract_first_date,
+    extract_onset_date,
+    extract_route,
+    extract_sex,
+)
 
 
 # --- Dates ---
@@ -123,3 +132,76 @@ def test_onset_date_shorthand_needs_report_date():
 
 def test_no_onset_date_returns_none():
     assert extract_onset_date("No onset information in this text.") is None
+
+
+# --- Immunization fields (added for the Immunization report type) ---
+
+def test_age_months_from_month_old_phrase():
+    assert extract_age_months("2-month-old patient received the vaccine.") == 2
+
+
+def test_age_months_from_shorthand():
+    assert extract_age_months("4mo, 2nd dose of Rota vaccine.") == 4
+
+
+def test_age_months_newborn():
+    assert extract_age_months("Newborn received Hepatitis B vaccine.") == 0
+
+
+def test_age_months_none_when_years_stated():
+    assert extract_age_months("16-year-old patient received Tdap.") is None
+
+
+def test_dose_number_ordinal():
+    assert extract_dose_number("Vaccine administered: 2nd dose of Hexa vaccine") == 2
+
+
+def test_dose_number_booster_aside_still_parses():
+    assert extract_dose_number("4th (booster) dose of Pneumococcal vaccine") == 4
+
+
+def test_dose_number_none_for_single_dose_vaccine():
+    assert extract_dose_number("Vaccine administered: BCG vaccine") is None
+
+
+def test_route_abbreviation_im():
+    assert extract_route("Route: I.M.") == "intramuscular"
+
+
+def test_route_abbreviation_sc():
+    assert extract_route("administered s.c.") == "subcutaneous"
+
+
+def test_route_oral():
+    assert extract_route("Route: Oral") == "oral"
+
+
+def test_route_intradermal():
+    assert extract_route("Route: I.D.") == "intradermal"
+
+
+def test_route_none_when_not_stated():
+    assert extract_route("No route mentioned here.") is None
+
+
+def test_adverse_event_reported_with_severity_and_description():
+    reported, severity, description = extract_adverse_event(
+        "AEFI: mild swelling at injection site (mild)."
+    )
+    assert reported is True
+    assert severity == "mild"
+    assert description == "mild swelling at injection site"
+
+
+def test_adverse_event_narrative_wrapper_stripped():
+    reported, severity, description = extract_adverse_event(
+        "Patient developed low-grade fever following the dose (mild). "
+    )
+    assert description == "low-grade fever"
+
+
+def test_no_adverse_event_returns_none_severity():
+    reported, severity, description = extract_adverse_event("No adverse event reported.")
+    assert reported is False
+    assert severity == "none"
+    assert description is None

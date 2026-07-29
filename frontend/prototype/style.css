@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&display=swap');
+
 :root {
   --brand-blue: #146c43;   /* kept variable name for minimal diff; now deep forest green */
   --brand-teal: #4d9d3f;   /* warm leaf green, gradient partner */
@@ -10,6 +12,20 @@
   --success-bg: #eef6e8;
   --success-ink: #4d7a2f;
   --radius: 12px;
+
+  /* Extended accent family for data visualization — each chart/metric
+     gets its own identity instead of everything defaulting to green.
+     Slate is the cool counterpoint to the brand's green warmth; amber/
+     rust/rose form a severity ramp for adverse-event and review-flag
+     data, where color needs to carry real meaning (mild -> severe). */
+  --accent-slate: #3d5a68;
+  --accent-slate-soft: #8fabb8;
+  --accent-amber: #c99a2e;
+  --accent-rust: #b9581f;
+  --accent-rose: #a3312c;
+
+  --shadow-card: 0 1px 2px rgba(23,36,27,0.05), 0 6px 18px rgba(23,36,27,0.06);
+  --font-display: "Fraunces", Georgia, serif;
 }
 
 * { box-sizing: border-box; }
@@ -81,18 +97,92 @@ body {
 }
 
 .hero h1 {
-  font-size: 38px;
-  line-height: 1.2;
-  margin: 0 0 16px;
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  margin: 0 0 18px;
   color: var(--ink);
 }
 
 .hero-sub {
-  font-size: 16px;
+  font-size: 16.5px;
   color: var(--ink-soft);
   max-width: 640px;
   margin: 0;
 }
+
+.hero-layout {
+  display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center;
+  padding: 56px 40px 40px; max-width: 1180px; margin: 0 auto;
+}
+.hero-art { display: flex; justify-content: center; align-items: center; }
+.hero-art svg { width: 100%; max-width: 380px; height: auto; }
+@media (max-width: 900px) {
+  .hero-layout { grid-template-columns: 1fr; padding: 40px 20px 20px; }
+  .hero-art { order: -1; max-width: 240px; margin: 0 auto; }
+}
+
+/* ---------- Marketing sections (How it works / What's inside) ---------- */
+.section-wrap { max-width: 1180px; margin: 0 auto; padding: 8px 40px 48px; }
+.section-eyebrow {
+  font-size: 12.5px; font-weight: 700; color: var(--brand-blue);
+  text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 10px;
+}
+.section-title {
+  font-family: var(--font-display); font-size: 26px; font-weight: 600;
+  color: var(--ink); margin: 0 0 8px; letter-spacing: -0.01em;
+}
+.section-desc { font-size: 14.5px; color: var(--ink-soft); max-width: 640px; margin: 0 0 32px; }
+
+.steps-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px;
+}
+.step-item { display: flex; flex-direction: column; gap: 10px; }
+.step-icon {
+  width: 44px; height: 44px; border-radius: 10px; background: var(--success-bg);
+  display: flex; align-items: center; justify-content: center; color: var(--brand-blue);
+}
+.step-icon svg { width: 22px; height: 22px; }
+.step-item h4 { margin: 0; font-size: 15px; font-weight: 700; color: var(--ink); }
+.step-item p { margin: 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; }
+.step-connector {
+  height: 1px; background: var(--border); margin-top: 20px; position: relative;
+}
+
+.capability-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
+}
+.capability-card {
+  background: var(--surface); border-radius: var(--radius); padding: 22px;
+  box-shadow: var(--shadow-card);
+}
+.capability-card.dim { opacity: 0.62; }
+.cap-status {
+  display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px;
+  border-radius: 999px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.cap-status.live { background: var(--success-bg); color: var(--success-ink); }
+.cap-status.soon { background: #f1f0eb; color: #8a7f5c; }
+.capability-card h4 { margin: 0 0 6px; font-size: 15.5px; font-weight: 700; color: var(--ink); }
+.capability-card p { margin: 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; }
+
+.trust-strip {
+  display: flex; flex-wrap: wrap; gap: 28px; padding: 20px 0 0; border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+.trust-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-soft); }
+.trust-item svg { width: 18px; height: 18px; color: var(--brand-blue); flex-shrink: 0; }
+
+.site-footer {
+  border-top: 1px solid var(--border); padding: 24px 40px; text-align: center;
+  font-size: 12.5px; color: var(--ink-soft);
+}
+
+/* ---------- Consistency with the redesigned dashboards ---------- */
+.panel, .report-card { box-shadow: var(--shadow-card); }
+.panel-header h2 { font-family: var(--font-display); font-weight: 600; }
 
 /* ---------- Panels ---------- */
 .panel {

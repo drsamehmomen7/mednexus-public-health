@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Mangaf Clinic, Ahmadi
+Date of administration: 23/9/25
+
+Patient age: 6-month-old
+Vaccine administered: 3rd dose of Hexa vaccine
+Route: I.M.
+Lot number: MOH-22903
+Given concurrently with: Pneumococcal, Rota
+No adverse event reported.

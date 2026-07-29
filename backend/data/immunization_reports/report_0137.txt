@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Bayan Clinic, Hawalli
+Date of administration: 05 Jun 2025
+
+Patient age: 16-year-old
+Vaccine administered: 2nd dose of Tdap vaccine
+Route: I.M.
+Lot number: KW-90676
+No adverse event reported.

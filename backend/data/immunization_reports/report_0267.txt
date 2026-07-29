@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Bayan Clinic, Hawalli
+Date of administration: 2025-11-03
+
+Patient age: 3-month-old
+Vaccine administered: BCG vaccine
+Route: I.D.
+Lot number: IMZ-42215
+No adverse event reported.

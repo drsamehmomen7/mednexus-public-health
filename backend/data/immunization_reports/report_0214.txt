@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Western General Hospital, Farwaniya
+Date of administration: 06 Sep 2025
+
+Patient age: 6-month-old
+Vaccine administered: 3rd dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: IMZ-25012
+Given concurrently with: Hexa, Rota
+No adverse event reported.

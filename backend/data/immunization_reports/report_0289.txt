@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Salmiya Health Centre, Hawalli
+Date of administration: 27 Nov 2025
+
+Patient age: 6-month-old
+Vaccine administered: 3rd dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: IMZ-74094
+Given concurrently with: Hexa, Rota
+No adverse event reported.

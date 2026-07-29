@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Qibla Health Centre, Al Asimah
+Date of administration: 1/11/25
+
+Patient age: 12-month-old
+Vaccine administered: Meningococcal ACWY vaccine
+Route: I.M.
+Lot number: IMZ-67637
+Given concurrently with: OPV, MMR, Varicella
+No adverse event reported.

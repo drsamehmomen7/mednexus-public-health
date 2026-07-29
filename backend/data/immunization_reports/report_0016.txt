@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Khaitan Health Centre, Farwaniya
+Date of administration: 2025-02-17
+
+Patient age: newborn
+Vaccine administered: 1st dose of Hepatitis B vaccine
+Route: I.M.
+Lot number: KW-65534
+No adverse event reported.

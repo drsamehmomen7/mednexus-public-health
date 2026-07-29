@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Messila Clinic, Mubarak Al-Kabeer
+Date of administration: 2026-04-26
+
+Patient age: 16-year-old
+Vaccine administered: 2nd dose of Tdap vaccine
+Route: I.M.
+Lot number: IMZ-18511
+No adverse event reported.

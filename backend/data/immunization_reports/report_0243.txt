@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Eastern General Hospital, Hawalli
+Date of administration: 2025-10-06
+
+Patient age: newborn
+Vaccine administered: 1st dose of Hepatitis B vaccine
+Route: I.M.
+Lot number: MOH-97747
+No adverse event reported.

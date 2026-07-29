@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Eastern General Hospital, Hawalli
+Date of administration: 07/06/2026
+
+Patient age: 3-month-old
+Vaccine administered: BCG vaccine
+Route: I.D.
+Lot number: MOH-63354
+No adverse event reported.

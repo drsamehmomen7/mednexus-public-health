@@ -17,8 +17,9 @@
         <div class="brand-sub">Public Health Intelligence</div>
       </div>
     </div>
-    <div style="display:flex; align-items:center; gap:14px;">
-      <a href="dashboard.html" style="font-size:13px; color:var(--brand-blue); text-decoration:none; font-weight:600;">View dashboard &rarr;</a>
+    <div style="display:flex; align-items:center; gap:20px;">
+      <a href="dashboard.html" style="font-size:13px; color:var(--ink-soft); text-decoration:none; font-weight:600;">Notifiable Disease</a>
+      <a href="immunization-dashboard.html" style="font-size:13px; color:var(--ink-soft); text-decoration:none; font-weight:600;">Immunization</a>
       <div class="badge badge-local">
         <span class="dot"></span> Local AI Processing
       </div>
@@ -26,13 +27,152 @@
   </header>
 
   <!-- ============ HERO ============ -->
-  <section class="hero">
-    <span class="eyebrow">Public Health Report Intelligence</span>
-    <h1>Turn public health reports into structured, actionable data</h1>
-    <p class="hero-sub">
-      Upload or paste a report from a hospital or health unit. MedNexus identifies the
-      report type, extracts the relevant fields, and prepares them for statistics and indicators.
+  <section class="hero-layout">
+    <div>
+      <span class="eyebrow">Public Health Report Intelligence</span>
+      <h1>Turn public health reports into structured, actionable data</h1>
+      <p class="hero-sub">
+        Paste or upload a report from a hospital or health unit. MedNexus identifies the
+        report type, extracts the fields a surveillance team actually needs, and prepares
+        them for statistics, dashboards, and indicators — without the report ever leaving this machine.
+      </p>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <svg viewBox="0 0 340 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Raw report on the left -->
+        <rect x="18" y="46" width="110" height="150" rx="8" fill="#ffffff" stroke="#dde6de" stroke-width="2"/>
+        <line x1="34" y1="72" x2="112" y2="72" stroke="#c6d3c7" stroke-width="3" stroke-linecap="round"/>
+        <line x1="34" y1="90" x2="98" y2="90" stroke="#c6d3c7" stroke-width="3" stroke-linecap="round"/>
+        <line x1="34" y1="108" x2="112" y2="108" stroke="#c6d3c7" stroke-width="3" stroke-linecap="round"/>
+        <line x1="34" y1="126" x2="80" y2="126" stroke="#c6d3c7" stroke-width="3" stroke-linecap="round"/>
+        <line x1="34" y1="144" x2="112" y2="144" stroke="#c6d3c7" stroke-width="3" stroke-linecap="round"/>
+        <line x1="34" y1="162" x2="90" y2="162" stroke="#c6d3c7" stroke-width="3" stroke-linecap="round"/>
+
+        <!-- Flow arrow -->
+        <path d="M140 121 H 196" stroke="#4d9d3f" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="2 7"/>
+        <path d="M188 113 L198 121 L188 129" stroke="#4d9d3f" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+        <!-- Structured fields on the right -->
+        <rect x="210" y="30" width="112" height="34" rx="7" fill="#eef6e8" stroke="#146c43" stroke-width="1.5"/>
+        <circle cx="226" cy="47" r="4" fill="#146c43"/>
+        <line x1="238" y1="42" x2="300" y2="42" stroke="#146c43" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+        <line x1="238" y1="52" x2="284" y2="52" stroke="#146c43" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+
+        <rect x="210" y="74" width="112" height="34" rx="7" fill="#ffffff" stroke="#dde6de" stroke-width="1.5"/>
+        <circle cx="226" cy="91" r="4" fill="#3d5a68"/>
+        <line x1="238" y1="86" x2="296" y2="86" stroke="#3d5a68" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+        <line x1="238" y1="96" x2="270" y2="96" stroke="#3d5a68" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+
+        <rect x="210" y="118" width="112" height="34" rx="7" fill="#ffffff" stroke="#dde6de" stroke-width="1.5"/>
+        <circle cx="226" cy="135" r="4" fill="#c99a2e"/>
+        <line x1="238" y1="130" x2="292" y2="130" stroke="#c99a2e" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+        <line x1="238" y1="140" x2="266" y2="140" stroke="#c99a2e" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+
+        <rect x="210" y="162" width="112" height="34" rx="7" fill="#ffffff" stroke="#dde6de" stroke-width="1.5"/>
+        <circle cx="226" cy="179" r="4" fill="#4d9d3f"/>
+        <line x1="238" y1="174" x2="298" y2="174" stroke="#4d9d3f" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+        <line x1="238" y1="184" x2="272" y2="184" stroke="#4d9d3f" stroke-width="2" stroke-linecap="round" opacity="0.35"/>
+
+        <!-- small bar chart underneath, hinting at the dashboard -->
+        <g transform="translate(210,222)">
+          <rect x="0" y="18" width="14" height="28" rx="2" fill="#8fc47a"/>
+          <rect x="20" y="6"  width="14" height="40" rx="2" fill="#146c43"/>
+          <rect x="40" y="24" width="14" height="22" rx="2" fill="#8fc47a"/>
+          <rect x="60" y="14" width="14" height="32" rx="2" fill="#3d5a68"/>
+          <rect x="80" y="30" width="14" height="16" rx="2" fill="#c6d3c7"/>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ============ HOW IT WORKS ============ -->
+  <section class="section-wrap">
+    <span class="section-eyebrow">How it works</span>
+    <h2 class="section-title">From a paragraph of clinical notes to a number on a dashboard</h2>
+    <p class="section-desc">
+      Four steps, all running on this machine — nothing is sent to a cloud model.
     </p>
+    <div class="steps-row">
+      <div class="step-item">
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6M9 16h6M9 8h2"/><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>
+        </div>
+        <h4>Paste or upload</h4>
+        <p>Drop in free text from a hospital, clinic, or health-unit report — no fixed template required.</p>
+      </div>
+      <div class="step-item">
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+        </div>
+        <h4>MedNexus reads it locally</h4>
+        <p>A biomedical NER model plus deterministic rules pull out disease names, dates, ages, vaccines, and doses — on this machine, not a cloud API.</p>
+      </div>
+      <div class="step-item">
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        </div>
+        <h4>A reviewer confirms it</h4>
+        <p>Every field ships with a confidence badge, so a human can fix anything the model is unsure about before it counts.</p>
+      </div>
+      <div class="step-item">
+        <div class="step-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-6 4 3 5-8"/></svg>
+        </div>
+        <h4>It feeds the indicators</h4>
+        <p>Confirmed records flow straight into the case-count, coverage, and adverse-event dashboards — filterable by disease, region, and time.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WHAT'S INSIDE ============ -->
+  <section class="section-wrap">
+    <span class="section-eyebrow">Report types</span>
+    <h2 class="section-title">Built for the reports a surveillance team actually receives</h2>
+    <p class="section-desc">
+      Two report types are extracting at full accuracy today; three more are designed and coming next.
+    </p>
+    <div class="capability-grid">
+      <div class="capability-card">
+        <span class="cap-status live">Live</span>
+        <h4>Notifiable Disease</h4>
+        <p>Case reports for infectious diseases requiring mandatory reporting — disease, region, onset, demographics, lab confirmation.</p>
+      </div>
+      <div class="capability-card">
+        <span class="cap-status live">Live</span>
+        <h4>Immunization</h4>
+        <p>Vaccination records — vaccine, dose number, route, patient age in months for infants, and adverse events following immunization.</p>
+      </div>
+      <div class="capability-card dim">
+        <span class="cap-status soon">Coming next</span>
+        <h4>Laboratory</h4>
+        <p>Test results feeding surveillance and case confirmation.</p>
+      </div>
+      <div class="capability-card dim">
+        <span class="cap-status soon">Coming next</span>
+        <h4>Syndromic</h4>
+        <p>Symptom-based reports for early outbreak detection.</p>
+      </div>
+      <div class="capability-card dim">
+        <span class="cap-status soon">Coming next</span>
+        <h4>Outbreak / Cluster</h4>
+        <p>Group-level reports covering a detected outbreak event.</p>
+      </div>
+    </div>
+
+    <div class="trust-strip">
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Runs locally — reports never leave this machine
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Confidence scores on every field, not just a final answer
+      </div>
+      <div class="trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h8.5L20 8.5V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 3v6h6"/></svg>
+        Prototype phase — synthetic data only
+      </div>
+    </div>
   </section>
 
   <!-- ============ STEP 1: REPORT TYPE ============ -->
@@ -134,6 +274,11 @@
       </div>
     </div>
   </section>
+
+  <footer class="site-footer">
+    MedNexus Public Health Intelligence — prototype phase, synthetic data only.
+    Shares a visual identity with the MedNexus de-identification tool, independent codebase.
+  </footer>
 
   <script src="app.js"></script>
 </body>

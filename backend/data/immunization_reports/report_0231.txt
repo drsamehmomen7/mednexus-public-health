@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Western General Hospital, Farwaniya
+Date of administration: 2025-09-26
+
+Patient age: newborn
+Vaccine administered: 1st dose of Hepatitis B vaccine
+Route: I.M.
+Lot number: KW-15754
+No adverse event reported.

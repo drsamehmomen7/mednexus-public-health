@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Mangaf Clinic, Ahmadi
+Date of administration: 2025-08-18
+
+Patient age: 6-month-old
+Vaccine administered: 3rd dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: KW-21725
+Given concurrently with: Hexa, Rota
+No adverse event reported.

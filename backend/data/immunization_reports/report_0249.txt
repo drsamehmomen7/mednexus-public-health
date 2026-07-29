@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Salmiya Health Centre, Hawalli
+Date of administration: 18/10/2025
+
+Patient age: 3-month-old
+Vaccine administered: BCG vaccine
+Route: I.D.
+Lot number: KW-13847
+No adverse event reported.

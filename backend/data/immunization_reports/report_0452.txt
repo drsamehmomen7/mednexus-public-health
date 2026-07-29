@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Fahaheel Health Centre, Ahmadi
+Date of administration: 31 May 2026
+
+Patient age: 3-month-old
+Vaccine administered: BCG vaccine
+Route: I.D.
+Lot number: MOH-14847
+No adverse event reported.

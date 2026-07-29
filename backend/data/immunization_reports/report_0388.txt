@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Adan District Hospital, Mubarak Al-Kabeer
+Date of administration: 2026-03-18
+
+Patient age: 3-month-old
+Vaccine administered: BCG vaccine
+Route: I.D.
+Lot number: KW-64040
+No adverse event reported.

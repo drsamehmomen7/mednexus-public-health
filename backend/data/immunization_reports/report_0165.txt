@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Eastern General Hospital, Hawalli
+Date of administration: 2/7/25
+
+Patient age: 10-year-old
+Vaccine administered: 1st dose of Tdap vaccine
+Route: I.M.
+Lot number: IMZ-15399
+No adverse event reported.

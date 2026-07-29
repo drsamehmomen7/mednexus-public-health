@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Mangaf Clinic, Ahmadi
+Date of administration: 2025-01-27
+
+Patient age: 18-month-old
+Vaccine administered: 4th (booster) dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: KW-36895
+Given concurrently with: OPV, Hexa
+No adverse event reported.

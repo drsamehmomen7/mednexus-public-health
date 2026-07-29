@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Southern General Hospital, Ahmadi
+Date of administration: 26/07/2025
+
+Patient age: 10-year-old
+Vaccine administered: 1st dose of Tdap vaccine
+Route: I.M.
+Lot number: IMZ-14244
+No adverse event reported.

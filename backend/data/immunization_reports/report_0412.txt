@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Sulaibiya Clinic, Jahra
+Date of administration: 10 April 2026
+
+Patient age: 2-year-old
+Vaccine administered: 1st dose of MMRV vaccine
+Route: S.C.
+Lot number: MOH-54270
+No adverse event reported.

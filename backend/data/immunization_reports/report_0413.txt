@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Eastern General Hospital, Hawalli
+Date of administration: 2026-04-10
+
+Patient age: 2-month-old
+Vaccine administered: 1st dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: IMZ-92251
+Given concurrently with: Hexa, Rota
+No adverse event reported.

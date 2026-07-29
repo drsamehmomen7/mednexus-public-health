@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Khaitan Health Centre, Farwaniya
+Date of administration: 18/06/2026
+
+Patient age: 12-month-old
+Vaccine administered: 1st dose of OPV vaccine
+Route: Oral
+Lot number: IMZ-31873
+Given concurrently with: MMR, Varicella, Meningococcal ACWY
+No adverse event reported.

@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Salmiya Health Centre, Hawalli
+Date of administration: 31 Mar 2026
+
+Patient age: 3-year-old
+Vaccine administered: DTaP vaccine
+Route: I.M.
+Lot number: IMZ-12559
+No adverse event reported.

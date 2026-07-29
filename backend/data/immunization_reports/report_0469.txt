@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Sulaibiya Clinic, Jahra
+Date of administration: 14/06/2026
+
+Patient age: 12-month-old
+Vaccine administered: Meningococcal ACWY vaccine
+Route: I.M.
+Lot number: MOH-85766
+Given concurrently with: OPV, MMR, Varicella
+No adverse event reported.

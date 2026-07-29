@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Ardiya Clinic, Farwaniya
+Date of administration: 12/3/25
+
+Patient age: 4-month-old
+Vaccine administered: 2nd dose of Rota vaccine
+Route: Oral
+Lot number: KW-28367
+Given concurrently with: Hexa, Pneumococcal
+No adverse event reported.

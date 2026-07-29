@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Messila Clinic, Mubarak Al-Kabeer
+Date of administration: 09 March 2026
+
+Patient age: 6-month-old
+Vaccine administered: 3rd dose of Hexa vaccine
+Route: I.M.
+Lot number: IMZ-61007
+Given concurrently with: Pneumococcal, Rota
+No adverse event reported.

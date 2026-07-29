@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Eastern General Hospital, Hawalli
+Date of administration: 30/01/2026
+
+Patient age: 12-month-old
+Vaccine administered: 1st dose of MMR vaccine
+Route: S.C.
+Lot number: MOH-95915
+Given concurrently with: OPV, Varicella, Meningococcal ACWY
+Adverse event following immunization: mild redness at injection site (mild).

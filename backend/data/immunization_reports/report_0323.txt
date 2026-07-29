@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Khaitan Health Centre, Farwaniya
+Date of administration: 03 January 2026
+
+Patient age: 16-year-old
+Vaccine administered: 2nd dose of Tdap vaccine
+Route: I.M.
+Lot number: IMZ-36326
+No adverse event reported.

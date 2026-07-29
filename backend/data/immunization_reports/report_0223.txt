@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Mangaf Clinic, Ahmadi
+Date of administration: 2025-09-18
+
+Patient age: 12-month-old
+Vaccine administered: 1st dose of MMR vaccine
+Route: S.C.
+Lot number: IMZ-42850
+Given concurrently with: OPV, Varicella, Meningococcal ACWY
+No adverse event reported.

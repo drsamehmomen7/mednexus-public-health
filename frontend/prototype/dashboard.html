@@ -9,22 +9,54 @@
 <style>
   /* Dashboard-specific styles. Colours reuse the shared palette in
      style.css so this page stays visually part of the same product. */
-  .dash-wrap { max-width: 1180px; margin: 0 auto; padding: 24px 28px 56px; }
+  .dash-wrap { max-width: 1240px; margin: 0 auto; padding: 32px 32px 64px; }
+
+  .dash-nav { font-size: 13px; margin-bottom: 6px; }
+  .dash-nav a { color: var(--ink-soft); text-decoration: none; margin-right: 16px; padding-bottom: 3px; }
+  .dash-nav a.current { color: var(--brand-blue); font-weight: 700; border-bottom: 2px solid var(--brand-blue); }
+
+  .back-link {
+    display: inline-block; margin-bottom: 14px; font-size: 13px;
+    color: var(--brand-blue); text-decoration: none;
+  }
+  .back-link:hover { text-decoration: underline; }
 
   .dash-head {
     display: flex; justify-content: space-between; align-items: flex-end;
-    gap: 16px; flex-wrap: wrap; margin-bottom: 20px;
+    gap: 16px; flex-wrap: wrap; margin-bottom: 14px; margin-top: 10px;
   }
-  .dash-title { margin: 0; font-size: 22px; font-weight: 700; color: var(--ink); }
-  .dash-sub { margin: 4px 0 0; font-size: 13px; color: var(--ink-soft); }
+  .dash-title { margin: 0; font-family: var(--font-display); font-size: 30px; font-weight: 600; color: var(--ink); letter-spacing: -0.01em; }
+  .dash-sub { margin: 5px 0 0; font-size: 13.5px; color: var(--ink-soft); }
   .data-note {
     font-size: 12px; color: var(--ink-soft);
     background: var(--success-bg); border-radius: 999px; padding: 5px 12px;
+    white-space: nowrap;
+  }
+
+  /* Signature element: a thin traveling pulse, the one deliberately bold
+     flourish on the page — everything else stays quiet by comparison.
+     Reads as a vital-signs trace, fitting for a public-health monitor. */
+  .pulse-line {
+    position: relative; height: 2px; margin-bottom: 28px; border-radius: 2px;
+    background: var(--border); overflow: hidden;
+  }
+  .pulse-line::after {
+    content: ""; position: absolute; top: 0; left: -30%; height: 100%; width: 30%;
+    background: linear-gradient(90deg, transparent, var(--brand-teal), transparent);
+    animation: pulse-sweep 3.4s ease-in-out infinite;
+  }
+  @keyframes pulse-sweep {
+    0%   { left: -30%; }
+    60%  { left: 100%; }
+    100% { left: 100%; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pulse-line::after { animation: none; display: none; }
   }
 
   .controls {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 12px; margin-bottom: 22px;
+    gap: 12px; margin-bottom: 26px;
   }
   .control label {
     display: block; font-size: 12px; color: var(--ink-soft); margin-bottom: 5px;
@@ -37,33 +69,36 @@
   .control select:focus { outline: none; border-color: var(--brand-teal); }
 
   .metrics {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px; margin-bottom: 22px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px; margin-bottom: 28px;
   }
-  .metric { background: var(--success-bg); border-radius: var(--radius); padding: 15px 17px; }
-  .metric-label { font-size: 12px; color: var(--success-ink); margin: 0 0 6px; }
-  .metric-value { font-size: 26px; font-weight: 700; color: var(--ink); margin: 0; line-height: 1.1; }
+  .metric {
+    background: var(--surface); border-radius: var(--radius); padding: 18px 20px;
+    box-shadow: var(--shadow-card); border-top: 3px solid var(--accent);
+  }
+  .metric-label { font-size: 12px; color: var(--ink-soft); margin: 0 0 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+  .metric-value { font-family: var(--font-display); font-size: 32px; font-weight: 600; color: var(--ink); margin: 0; line-height: 1; }
+  .metric-value.warn { color: var(--accent-rust); }
 
   .chart-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 18px;
   }
   .chart-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px 18px 12px;
+    background: var(--surface); border-radius: var(--radius); padding: 20px 22px 16px;
+    box-shadow: var(--shadow-card);
   }
-  .chart-card h3 { margin: 0 0 2px; font-size: 14px; font-weight: 700; color: var(--ink); }
-  .chart-card .chart-sub { margin: 0 0 12px; font-size: 12px; color: var(--ink-soft); }
+  .chart-card h3 { margin: 0 0 4px; font-size: 15px; font-weight: 700; color: var(--ink); }
+  .chart-card .chart-sub { margin: 0 0 16px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.4; }
   .chart-box { position: relative; height: 230px; }
 
   .dash-state {
     padding: 40px 0; text-align: center; font-size: 14px; color: var(--ink-soft);
   }
   .dash-state.error { color: #a3312c; }
-  .back-link {
-    display: inline-block; margin-bottom: 14px; font-size: 13px;
-    color: var(--brand-blue); text-decoration: none;
+
+  @media (max-width: 800px) {
+    .dash-wrap { padding: 24px 18px 48px; }
   }
-  .back-link:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -83,6 +118,10 @@
 
   <div class="dash-wrap">
     <a class="back-link" href="index.html">&larr; Back to report extraction</a>
+    <div class="dash-nav">
+      <a href="dashboard.html" class="current">Notifiable Disease</a>
+      <a href="immunization-dashboard.html">Immunization</a>
+    </div>
 
     <div class="dash-head">
       <div>
@@ -91,6 +130,8 @@
       </div>
       <span class="data-note">Synthetic data</span>
     </div>
+
+    <div class="pulse-line" aria-hidden="true"></div>
 
     <div class="controls">
       <div class="control">
@@ -118,19 +159,19 @@
 
     <div id="dash-body" hidden>
       <div class="metrics">
-        <div class="metric">
+        <div class="metric" style="--accent: var(--brand-blue);">
           <p class="metric-label">Total cases</p>
           <p class="metric-value" id="m-total">—</p>
         </div>
-        <div class="metric">
+        <div class="metric" style="--accent: var(--accent-slate);">
           <p class="metric-label">Rate per 100,000</p>
           <p class="metric-value" id="m-rate">—</p>
         </div>
-        <div class="metric">
+        <div class="metric" style="--accent: var(--accent-amber);">
           <p class="metric-label">Needing review</p>
           <p class="metric-value" id="m-review">—</p>
         </div>
-        <div class="metric">
+        <div class="metric" style="--accent: var(--brand-teal);">
           <p class="metric-label">Regions reporting</p>
           <p class="metric-value" id="m-regions">—</p>
         </div>
@@ -139,27 +180,27 @@
       <div class="chart-grid">
         <div class="chart-card">
           <h3>Cases by disease</h3>
-          <p class="chart-sub" id="sub-disease"></p>
+          <p class="chart-sub" id="sub-disease">Which diseases are being reported most, across the current filters.</p>
           <div class="chart-box"><canvas id="c-disease"></canvas></div>
         </div>
         <div class="chart-card">
           <h3>Cases by region</h3>
-          <p class="chart-sub" id="sub-region"></p>
+          <p class="chart-sub" id="sub-region">Where cases are concentrated geographically.</p>
           <div class="chart-box"><canvas id="c-region"></canvas></div>
         </div>
         <div class="chart-card">
           <h3>Cases over time</h3>
-          <p class="chart-sub" id="sub-time"></p>
+          <p class="chart-sub" id="sub-time">Weekly case trend — a rising run of weeks is the earliest signal of an outbreak.</p>
           <div class="chart-box"><canvas id="c-time"></canvas></div>
         </div>
         <div class="chart-card">
           <h3>Cases by age group</h3>
-          <p class="chart-sub" id="sub-age"></p>
+          <p class="chart-sub" id="sub-age">Age distribution of confirmed and suspected cases.</p>
           <div class="chart-box"><canvas id="c-age"></canvas></div>
         </div>
         <div class="chart-card">
           <h3>Cases by sex</h3>
-          <p class="chart-sub" id="sub-sex"></p>
+          <p class="chart-sub" id="sub-sex">Male / female split of reported cases.</p>
           <div class="chart-box"><canvas id="c-sex"></canvas></div>
         </div>
       </div>
@@ -170,20 +211,21 @@
 const API_BASE = "http://127.0.0.1:8001";
 const ENDPOINT = API_BASE + "/reports/notifiable-disease/dashboard-data";
 
-const GREEN_DARK = "#146c43";
-const GREEN_LEAF = "#4d9d3f";
-const GREEN_SOFT = "#8fc47a";
-const GREY_SOFT  = "#c6d3c7";
-const GRID       = "#e6efe6";
-const INK_SOFT   = "#5c6b60";
+const GREEN_DARK  = "#146c43";
+const GREEN_LEAF  = "#4d9d3f";
+const SLATE       = "#3d5a68";
+const SLATE_SOFT  = "#8fabb8";
+const AMBER       = "#c99a2e";
+const GRID        = "#e6efe6";
+const INK_SOFT    = "#5c6b60";
 
 const charts = {};
 let optionsLoaded = false;
 
-function measureLabel() {
+function unitSuffix() {
   return document.getElementById("f-measure").value === "rate"
-    ? "Rate per 100,000 population"
-    : "Number of cases";
+    ? "Rate per 100,000 population."
+    : "Number of cases.";
 }
 
 function baseOptions({ horizontal = false, hideLegend = true } = {}) {
@@ -262,17 +304,28 @@ async function load() {
   }
 }
 
+const CHART_DESCRIPTIONS = {
+  disease: "Which diseases are being reported most, across the current filters.",
+  region:  "Where cases are concentrated geographically.",
+  time:    "Weekly case trend — a rising run of weeks is the earliest signal of an outbreak.",
+  age:     "Age distribution of confirmed and suspected cases.",
+  sex:     "Male / female split of reported cases.",
+};
+
 function draw(data) {
   const s = data.summary;
   document.getElementById("m-total").textContent   = s.total_cases;
   document.getElementById("m-rate").textContent    = s.rate_per_100k ?? "—";
-  document.getElementById("m-review").textContent  =
-    s.pct_needing_review === null ? "—" : s.pct_needing_review + "%";
+
+  const reviewEl = document.getElementById("m-review");
+  reviewEl.textContent = s.pct_needing_review === null ? "—" : s.pct_needing_review + "%";
+  reviewEl.classList.toggle("warn", !!s.pct_needing_review);
+
   document.getElementById("m-regions").textContent = s.regions_reporting;
 
-  const unit = measureLabel();
-  ["disease", "region", "time", "age", "sex"].forEach(k => {
-    document.getElementById("sub-" + k).textContent = unit;
+  const unit = unitSuffix();
+  Object.keys(CHART_DESCRIPTIONS).forEach(k => {
+    document.getElementById("sub-" + k).textContent = CHART_DESCRIPTIONS[k] + " " + unit;
   });
 
   const values = rows => rows.map(r => r.value ?? 0);
@@ -290,7 +343,7 @@ function draw(data) {
     type: "bar",
     data: { labels: labels(data.cases_by_region),
             datasets: [{ data: values(data.cases_by_region),
-                         backgroundColor: GREEN_LEAF, borderRadius: 4, maxBarThickness: 22 }] },
+                         backgroundColor: SLATE, borderRadius: 4, maxBarThickness: 22 }] },
     options: baseOptions({ horizontal: true })
   });
 
@@ -308,7 +361,7 @@ function draw(data) {
     type: "bar",
     data: { labels: labels(data.cases_by_age_group),
             datasets: [{ data: values(data.cases_by_age_group),
-                         backgroundColor: GREEN_LEAF, borderRadius: 4, maxBarThickness: 46 }] },
+                         backgroundColor: AMBER, borderRadius: 4, maxBarThickness: 46 }] },
     options: baseOptions()
   });
 
@@ -316,7 +369,7 @@ function draw(data) {
     type: "doughnut",
     data: { labels: labels(data.cases_by_sex),
             datasets: [{ data: values(data.cases_by_sex),
-                         backgroundColor: [GREEN_DARK, GREEN_SOFT, GREY_SOFT],
+                         backgroundColor: [GREEN_DARK, SLATE_SOFT, "#c6d3c7"],
                          borderWidth: 2, borderColor: "#ffffff" }] },
     options: { ...baseOptions({ horizontal: null, hideLegend: false }), cutout: "58%" }
   });

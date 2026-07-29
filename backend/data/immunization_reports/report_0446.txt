@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Ardiya Clinic, Farwaniya
+Date of administration: 21/5/26
+
+Patient age: newborn
+Vaccine administered: 1st dose of Hepatitis B vaccine
+Route: I.M.
+Lot number: IMZ-89807
+Adverse event following immunization: mild redness at injection site (mild).

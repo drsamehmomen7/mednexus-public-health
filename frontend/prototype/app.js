@@ -13,6 +13,46 @@ const typeLabels = {
   outbreak: "Outbreak / Cluster",
 };
 
+// Which report types actually have a working backend behind them. Only
+// these two get real /extract and /save routes; everything else in the
+// UI is a placeholder for a report type whose schema exists but whose
+// extraction pipeline hasn't been built yet (see CURRENT_STATUS.md) — the
+// card is still selectable (so the full report-type lineup is visible),
+// it just shows an honest "not built yet" message instead of silently
+// running the wrong pipeline against it.
+const ENDPOINTS = {
+  notifiable: {
+    extract: "/reports/notifiable-disease/extract",
+    save: "/reports/notifiable-disease/save",
+    savePayloadKey: "case",
+  },
+  immunization: {
+    extract: "/reports/immunization/extract",
+    save: "/reports/immunization/save",
+    savePayloadKey: "record",
+  },
+};
+
+// Per-type field type map, so the Save step converts each edited text
+// input back to the right JSON type instead of sending everything as a
+// string. Only fields that need a NON-string type are listed — anything
+// else passes through as-is (matches how enum fields like
+// diagnosis_status/patient_sex/route/adverse_event_severity are already
+// handled: the schema validates the string value, no JS-side conversion
+// needed for those).
+const FIELD_TYPES = {
+  notifiable: {
+    lab_confirmed: "bool",
+    patient_age: "int",
+  },
+  immunization: {
+    dose_number: "int",
+    patient_age: "int",
+    patient_age_months: "int",
+    adverse_event_reported: "bool",
+  },
+};
+
 function updateSummary() {
   summaryText.textContent = `${typeLabels[selectedType]} · ${inputMode === "paste" ? "Text input" : "File upload"} · Local processing`;
 }
@@ -23,6 +63,7 @@ reportCards.forEach((card) => {
     card.setAttribute("aria-pressed", "true");
     selectedType = card.dataset.type;
     updateSummary();
+    resultArea.innerHTML = `<span class="placeholder-text">Extracted fields will appear here after processing.</span>`;
   });
 });
 
@@ -56,6 +97,18 @@ let lastFields = null;
 let lastConfidence = null;
 
 extractBtn.addEventListener("click", async () => {
+  const config = ENDPOINTS[selectedType];
+
+  if (!config) {
+    resultArea.innerHTML = `
+      <span class="placeholder-text">
+        ${typeLabels[selectedType]} extraction isn't built yet — schema exists,
+        pipeline doesn't. Try Notifiable Disease or Immunization for now.
+      </span>
+    `;
+    return;
+  }
+
   const reportText = document.querySelector('.tab-panel[data-panel="paste"] textarea').value.trim();
 
   if (!reportText) {
@@ -66,7 +119,7 @@ extractBtn.addEventListener("click", async () => {
   resultArea.innerHTML = `<span class="placeholder-text">Extracting...</span>`;
 
   try {
-    const response = await fetch(`${API_BASE}/reports/notifiable-disease/extract`, {
+    const response = await fetch(`${API_BASE}${config.extract}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: reportText }),
@@ -97,6 +150,8 @@ extractBtn.addEventListener("click", async () => {
         if (conf) {
           if (conf.source === "rule_based") {
             badge = `<span style="font-size:11px; padding:2px 8px; border-radius:999px; background:#eef1f4; color:#57685e;">rule-based</span>`;
+          } else if (conf.source === "gazetteer") {
+            badge = `<span style="font-size:11px; padding:2px 8px; border-radius:999px; background:#eef6e8; color:#4d7a2f;">gazetteer match</span>`;
           } else if (conf.score === null) {
             badge = `<span style="font-size:11px; padding:2px 8px; border-radius:999px; background:#fdecea; color:#8a3a1f;">not found</span>`;
           } else {
@@ -155,6 +210,7 @@ extractBtn.addEventListener("click", async () => {
 
 // ---------- Save button: persists the (possibly edited) record ----------
 async function saveRecord() {
+  const config = ENDPOINTS[selectedType];
   const statusEl = document.getElementById("save-status");
   statusEl.textContent = "Saving...";
   statusEl.style.color = "var(--ink-soft)";
@@ -162,25 +218,28 @@ async function saveRecord() {
   // Start from the last extracted values, then overlay whatever the
   // reviewer edited in the input boxes — this is what makes manual
   // correction actually take effect before saving, not just cosmetic.
-  const editedCase = { ...lastFields };
+  const editedRecord = { ...lastFields };
+  const fieldTypes = FIELD_TYPES[selectedType] || {};
+
   document.querySelectorAll('#result-area input[data-field]').forEach((input) => {
     const field = input.dataset.field;
-    let value = input.value;
+    const value = input.value;
+    const type = fieldTypes[field];
 
-    if (field === "lab_confirmed") {
-      editedCase[field] = value.trim().toLowerCase() === "true";
-    } else if (field === "patient_age") {
-      editedCase[field] = value.trim() === "" ? null : parseInt(value, 10);
+    if (type === "bool") {
+      editedRecord[field] = value.trim().toLowerCase() === "true";
+    } else if (type === "int") {
+      editedRecord[field] = value.trim() === "" ? null : parseInt(value, 10);
     } else {
-      editedCase[field] = value;
+      editedRecord[field] = value;
     }
   });
 
   try {
-    const response = await fetch(`${API_BASE}/reports/notifiable-disease/save`, {
+    const response = await fetch(`${API_BASE}${config.save}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ case: editedCase, confidence: lastConfidence }),
+      body: JSON.stringify({ [config.savePayloadKey]: editedRecord, confidence: lastConfidence }),
     });
     const data = await response.json();
 

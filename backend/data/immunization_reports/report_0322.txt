@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Jahra Health Centre, Jahra
+Date of administration: 02 January 2026
+
+Patient age: 3-year-old
+Vaccine administered: DTaP vaccine
+Route: I.M.
+Lot number: IMZ-28321
+No adverse event reported.

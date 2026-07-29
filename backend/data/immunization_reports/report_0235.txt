@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Ardiya Clinic, Farwaniya
+Date of administration: 28/9/25
+
+Patient age: 2-month-old
+Vaccine administered: 1st dose of Hexa vaccine
+Route: I.M.
+Lot number: IMZ-19307
+Given concurrently with: Pneumococcal, Rota
+No adverse event reported.

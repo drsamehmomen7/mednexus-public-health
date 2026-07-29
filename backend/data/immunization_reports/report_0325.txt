@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Khaitan Health Centre, Farwaniya
+Date of administration: 04/01/2026
+
+Patient age: 6-month-old
+Vaccine administered: 3rd dose of Hexa vaccine
+Route: I.M.
+Lot number: KW-55938
+Given concurrently with: Pneumococcal, Rota
+No adverse event reported.

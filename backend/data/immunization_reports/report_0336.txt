@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Salmiya Health Centre, Hawalli
+Date of administration: 19/1/26
+
+Patient age: 16-year-old
+Vaccine administered: 2nd dose of Tdap vaccine
+Route: I.M.
+Lot number: IMZ-21104
+No adverse event reported.

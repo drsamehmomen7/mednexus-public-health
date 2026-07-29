@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Northern General Hospital, Jahra
+Date of administration: 19 November 2025
+
+Patient age: 3-month-old
+Vaccine administered: BCG vaccine
+Route: I.D.
+Lot number: IMZ-39391
+No adverse event reported.

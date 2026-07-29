@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Western General Hospital, Farwaniya
+Date of administration: 2026-05-04
+
+Patient age: 3-year-old
+Vaccine administered: DTaP vaccine
+Route: I.M.
+Lot number: KW-28322
+No adverse event reported.

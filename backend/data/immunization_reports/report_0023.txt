@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Bayan Clinic, Hawalli
+Date of administration: 26/2/25
+
+Patient age: 10-year-old
+Vaccine administered: 1st dose of Tdap vaccine
+Route: I.M.
+Lot number: MOH-60181
+Adverse event following immunization: mild headache (mild).

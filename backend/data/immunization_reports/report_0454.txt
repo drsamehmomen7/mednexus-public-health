@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Khaitan Health Centre, Farwaniya
+Date of administration: 1/6/26
+
+Patient age: 6-month-old
+Vaccine administered: 3rd dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: IMZ-81197
+Given concurrently with: Hexa, Rota
+No adverse event reported.

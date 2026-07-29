@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: North Clinic, Al Asimah
+Date of administration: 29 Jun 2025
+
+Patient age: 3-year-old
+Vaccine administered: DTaP vaccine
+Route: I.M.
+Lot number: IMZ-93588
+No adverse event reported.

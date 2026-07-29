@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Southern General Hospital, Ahmadi
+Date of administration: 27/10/25
+
+Patient age: 12-month-old
+Vaccine administered: 1st dose of OPV vaccine
+Route: Oral
+Lot number: MOH-81611
+Given concurrently with: MMR, Varicella, Meningococcal ACWY
+No adverse event reported.

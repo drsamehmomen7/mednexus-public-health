@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Western General Hospital, Farwaniya
+Date of administration: 09 September 2025
+
+Patient age: 18-month-old
+Vaccine administered: 4th (booster) dose of Hexa vaccine
+Route: I.M.
+Lot number: IMZ-75597
+Given concurrently with: OPV, Pneumococcal
+No adverse event reported.

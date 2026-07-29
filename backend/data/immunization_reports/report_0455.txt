@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Salmiya Health Centre, Hawalli
+Date of administration: 01/06/2026
+
+Patient age: newborn
+Vaccine administered: 1st dose of Hepatitis B vaccine
+Route: I.M.
+Lot number: MOH-20739
+No adverse event reported.

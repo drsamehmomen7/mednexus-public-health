@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Central District Hospital, Al Asimah
+Date of administration: 12 Jun 2026
+
+Patient age: newborn
+Vaccine administered: 1st dose of Hepatitis B vaccine
+Route: I.M.
+Lot number: MOH-54657
+No adverse event reported.

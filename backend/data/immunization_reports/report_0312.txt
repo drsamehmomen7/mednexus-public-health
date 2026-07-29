@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Sulaibiya Clinic, Jahra
+Date of administration: 22/12/2025
+
+Patient age: 2-month-old
+Vaccine administered: 1st dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: KW-70910
+Given concurrently with: Hexa, Rota
+No adverse event reported.

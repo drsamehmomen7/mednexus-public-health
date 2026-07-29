@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Southern General Hospital, Ahmadi
+Date of administration: 20/10/25
+
+Patient age: 4-month-old
+Vaccine administered: 2nd dose of Hexa vaccine
+Route: I.M.
+Lot number: MOH-50213
+Given concurrently with: Pneumococcal, Rota
+No adverse event reported.

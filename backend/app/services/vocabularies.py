@@ -35,8 +35,10 @@ from app.services.gazetteer import Gazetteer
 # (disease) per report.
 _region_gazetteer_cache: Optional[Gazetteer] = None
 _disease_gazetteer_cache: Optional[Gazetteer] = None
+_vaccine_gazetteer_cache: Optional[Gazetteer] = None
 
 _DISEASE_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "notifiable_diseases.json"
+_VACCINE_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "vaccines.json"
 
 
 def load_region_gazetteer(db: Session, aliases: Optional[Dict[str, str]] = None,
@@ -97,3 +99,41 @@ def clear_disease_cache() -> None:
     """Call after changing the disease reference data, and in tests."""
     global _disease_gazetteer_cache
     _disease_gazetteer_cache = None
+
+
+def load_vaccine_gazetteer(aliases: Optional[Dict[str, str]] = None,
+                          refresh: bool = False) -> Gazetteer:
+    """
+    Build (or return the cached) vaccine-name vocabulary for the
+    Immunization report type.
+
+    Unlike the disease vocabulary (seeded from synthetic ground truth as a
+    placeholder), this one comes from a REAL source: the Kuwait Ministry
+    of Health's 2025 Childhood Immunization Schedule — data/vaccines.json.
+    `aliases` isn't populated yet; add entries here once real report
+    phrasing shows which shorthand terms ("Rota" vs "Rotavirus", "HBV" vs
+    "Hepatitis B") actually need mapping, the same way region/disease
+    aliases would be — don't guess ahead of the data.
+
+    Returns an empty Gazetteer if the file is missing, so extraction falls
+    back to the NER model entirely — same fail-safe behaviour as the
+    other two gazetteers.
+    """
+    global _vaccine_gazetteer_cache
+
+    if _vaccine_gazetteer_cache is not None and not refresh:
+        return _vaccine_gazetteer_cache
+
+    try:
+        terms = json.loads(_VACCINE_VOCAB_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        terms = []
+
+    _vaccine_gazetteer_cache = Gazetteer(terms, aliases=aliases)
+    return _vaccine_gazetteer_cache
+
+
+def clear_vaccine_cache() -> None:
+    """Call after changing the vaccine reference data, and in tests."""
+    global _vaccine_gazetteer_cache
+    _vaccine_gazetteer_cache = None

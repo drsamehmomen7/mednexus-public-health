@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Northern General Hospital, Jahra
+Date of administration: 24 November 2025
+
+Patient age: 2-month-old
+Vaccine administered: 1st dose of Rota vaccine
+Route: Oral
+Lot number: IMZ-79013
+Given concurrently with: Hexa, Pneumococcal
+No adverse event reported.

@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Jahra Health Centre, Jahra
+Date of administration: 13/9/25
+
+Patient age: 3-month-old
+Vaccine administered: BCG vaccine
+Route: I.D.
+Lot number: KW-69692
+Adverse event following immunization: hospitalization (severe).

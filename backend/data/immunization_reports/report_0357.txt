@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Qibla Health Centre, Al Asimah
+Date of administration: 11/02/2026
+
+Patient age: 16-year-old
+Vaccine administered: 2nd dose of Tdap vaccine
+Route: I.M.
+Lot number: IMZ-16019
+No adverse event reported.

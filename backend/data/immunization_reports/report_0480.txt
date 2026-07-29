@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Bayan Clinic, Hawalli
+Date of administration: 27 June 2026
+
+Patient age: 18-month-old
+Vaccine administered: 2nd dose of OPV vaccine
+Route: Oral
+Lot number: KW-67014
+Given concurrently with: Hexa, Pneumococcal
+No adverse event reported.

@@ -1,7 +1,8 @@
 """
-SQLAlchemy ORM model for a Notifiable Disease record, saved AFTER human
-review confirms it — this table is the "reviewed and trusted" store that
-Metabase (or any BI tool) will read from, not a raw extraction log.
+SQLAlchemy ORM models for the "reviewed and trusted" record stores —
+saved AFTER human review confirms them, not raw extraction logs. Any BI
+tool (dashboard, Metabase) reads from these tables, not from extraction
+output directly.
 """
 
 from datetime import date, datetime
@@ -42,6 +43,53 @@ class NotifiableDiseaseRecord(Base):
 
     lab_confirmed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     lab_test_type: Mapped[str] = mapped_column(String, nullable=True)
+    source_excerpt: Mapped[str] = mapped_column(String, nullable=True)
+
+    # Full confidence report kept for audit — lets anyone re-check exactly
+    # what the model was sure/unsure about at save time.
+    confidence: Mapped[dict] = mapped_column(JSON, nullable=True)
+
+    # Denormalized on purpose: computed once at save time from the
+    # confidence dict, so a BI tool can filter/aggregate on this without
+    # needing to parse JSON in every query.
+    needed_review: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class SavedImmunizationRecord(Base):
+    """
+    The persisted (reviewed and trusted) store — named differently from
+    the Pydantic ImmunizationRecord schema (app/schemas/immunization.py)
+    on purpose, so both can be imported in the same file without aliasing,
+    the same way NotifiableDiseaseCase/NotifiableDiseaseRecord are
+    distinct names above.
+    """
+    __tablename__ = "immunization_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    vaccine_name: Mapped[str] = mapped_column(String, nullable=False)
+    vaccine_code: Mapped[str] = mapped_column(String, nullable=True)
+    dose_number: Mapped[int] = mapped_column(Integer, nullable=True)
+    lot_number: Mapped[str] = mapped_column(String, nullable=True)
+
+    administration_date: Mapped[date] = mapped_column(Date, nullable=False)
+    route: Mapped[str] = mapped_column(String, nullable=False, default="unknown")
+
+    patient_age: Mapped[int] = mapped_column(Integer, nullable=True)
+    # See ImmunizationRecord (Pydantic schema) for why this exists
+    # alongside patient_age: most of the schedule is stated in months for
+    # children under 2, where a whole-year age is nearly meaningless.
+    patient_age_months: Mapped[int] = mapped_column(Integer, nullable=True)
+
+    region: Mapped[str] = mapped_column(String, nullable=False)
+    facility_name: Mapped[str] = mapped_column(String, nullable=True)
+
+    adverse_event_reported: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    adverse_event_severity: Mapped[str] = mapped_column(String, nullable=False, default="none")
+    adverse_event_description: Mapped[str] = mapped_column(String, nullable=True)
+
     source_excerpt: Mapped[str] = mapped_column(String, nullable=True)
 
     # Full confidence report kept for audit — lets anyone re-check exactly

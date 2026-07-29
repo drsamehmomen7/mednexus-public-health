@@ -655,3 +655,89 @@ charts currently on the dashboard. Next planned work: dashboard visual
 polish (cosmetic only), then likely the Immunization report type — the
 real Kuwait MOH 2025 childhood immunization schedule is on hand as the
 vaccine-name source, the same role notifiable_diseases.json plays here.
+
+### 2026-07-28 — Immunization report type built, tested, and completed
+Followed the same reasoning discipline as every fix above: check real
+phrasing across the full generated set before writing any regex, then
+verify against all 500, not a sample.
+
+**Schema decisions before writing any code.** Two gaps found in the
+existing `ImmunizationRecord` schema by cross-checking it against the
+real Kuwait MOH 2025 schedule PDF, both fixed before generating data
+around them: `InjectionRoute` had no `INTRADERMAL` value (BCG genuinely
+uses I.D. per the official schedule) — added, purely additive. Second,
+most of the schedule (birth through 18 months) is naturally stated in
+months, and `patient_age` alone (years) would show "0" for nearly all of
+it — asked the user directly rather than guessing; the answer was to add
+`patient_age_months` (0-24, optional) alongside `patient_age`, populated
+for infant doses and left unset once years is the natural way to state
+an age (2y, 3.5y, 10-12y, 16-18y boosters).
+
+**Vaccine gazetteer is a REAL source, not synthetic.** `data/vaccines.json`
+(12 vaccines: BCG, DTaP, Hepatitis B, Hexa, MMR, MMRV, Meningococcal
+ACWY, OPV, Pneumococcal, Rota, Tdap, Varicella) transcribed directly from
+the official schedule table — canonical names match the table's own
+wording ("Rota" not "Rotavirus", since that's what the source document
+itself uses). `vaccine_name` does NOT need negation-aware matching the
+way `disease_name` does — an administered-dose report isn't where a
+vaccine gets "ruled out" — so it uses `Gazetteer.find()` directly, same
+as `region`.
+
+**Generator (`generate_immunization_reports.py`) modelled on the real
+schedule**, not invented ages/doses. Explicit scope decisions: pregnant-
+mother Tdap excluded (different patient, adult age profile, out of scope
+for a first version); one report = one vaccine administration event,
+matching how real immunization registries actually record multi-vaccine
+visits (three separate entries, not one entry listing three vaccines) —
+some reports mention co-administered vaccines as flavour text only, not
+part of ground truth. Adverse event descriptions split by age
+(infant vs older) after an early check showed "mild fussiness" attached
+to a 16-year-old's Tdap booster — same principle as occupation-by-age in
+the disease generator.
+
+**Two self-inflicted ambiguities found by testing, not by inspection**,
+both fixed at the source rather than patched around:
+1. One "severe" adverse-event description string was itself "hospitalization
+   following the dose" — colliding with the narrative voice's own template
+   wrapper ("developed X following the dose (severity)"), which duplicated
+   the phrase for that one case. Fixed in the generator (shortened to
+   "hospitalization"), not in the extractor.
+2. The extractor's own trailing-phrase strip was written, tested in
+   isolation, then accidentally dropped when the function was pasted into
+   `rule_based.py` — caught by re-running the SAME test against the real
+   file rather than assuming the isolated test result still applied.
+
+**Rule-based extraction, all verified against all 500 before shipping:**
+`extract_age_months`, `extract_dose_number`, `extract_route`,
+`extract_adverse_event` — added to `rule_based.py`. New orchestrator
+`immunization_extraction.py` mirrors `extraction.py`'s structure exactly.
+New `SavedImmunizationRecord` ORM model in `db_models.py` — named
+differently from the Pydantic `ImmunizationRecord` schema on purpose, to
+avoid a name collision (same reason `NotifiableDiseaseCase` and
+`NotifiableDiseaseRecord` are distinct names). New endpoints
+`POST /reports/immunization/extract` and `/save`, and
+`scripts/load_immunization_reports.py`, both mirroring the Notifiable
+Disease equivalents.
+
+**Real GLiNER run result:** 100% on 10/11 fields immediately; facility_name
+measured 99.0% (495/500) — GLiNER's zero-shot "facility" label was
+swallowing a trailing ", <region>" when both appear on one comma-separated
+line ("Facility: Central District Hospital, Al Asimah"). Same root cause
+already known from Notifiable Disease's region-vs-facility confusion (see
+the region gazetteer entry above), just manifesting the other direction
+here. Fixed with `_strip_trailing_region()` — strips a trailing ", <known
+region>" from facility_name using the region gazetteer, which is safe
+specifically because region is a closed vocabulary: it only ever fires on
+an actual region name, never a real facility name that happens to contain
+a comma for some other reason. Re-run after the fix: 100% on all 11
+fields, 500/500, 0% flagged for review. 107 tests total (99 → 107, 8 new
+covering the orchestrator and this exact fix).
+
+Not done: vaccine_code and lot_number (terminology normalization,
+deferred same as ICD-10 for Notifiable Disease). No dashboard or review
+UI for Immunization yet — API only.
+
+Next planned work: dashboard visual polish (Notifiable Disease) and
+making the project's landing page more visually engaging with more
+explanation of what it does — both purely cosmetic/presentation, no new
+extraction logic.

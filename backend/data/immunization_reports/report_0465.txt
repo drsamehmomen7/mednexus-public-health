@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Jahra Health Centre, Jahra
+Date of administration: 11/06/2026
+
+Patient age: 2-year-old
+Vaccine administered: 1st dose of MMRV vaccine
+Route: S.C.
+Lot number: IMZ-81228
+No adverse event reported.

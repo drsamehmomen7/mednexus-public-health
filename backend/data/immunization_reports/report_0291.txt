@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Ardiya Clinic, Farwaniya
+Date of administration: 2025-11-29
+
+Patient age: 16-year-old
+Vaccine administered: 2nd dose of Tdap vaccine
+Route: I.M.
+Lot number: IMZ-48752
+No adverse event reported.

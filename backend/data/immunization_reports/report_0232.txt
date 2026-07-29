@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Salmiya Health Centre, Hawalli
+Date of administration: 27 September 2025
+
+Patient age: 2-month-old
+Vaccine administered: 1st dose of Rota vaccine
+Route: Oral
+Lot number: MOH-54020
+Given concurrently with: Hexa, Pneumococcal
+No adverse event reported.

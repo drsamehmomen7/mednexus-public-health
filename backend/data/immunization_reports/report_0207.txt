@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Fahaheel Health Centre, Ahmadi
+Date of administration: 26/8/25
+
+Patient age: 4-month-old
+Vaccine administered: 2nd dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: IMZ-10371
+Given concurrently with: Hexa, Rota
+No adverse event reported.

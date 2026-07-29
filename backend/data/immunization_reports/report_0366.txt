@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Southern General Hospital, Ahmadi
+Date of administration: 20 February 2026
+
+Patient age: 12-month-old
+Vaccine administered: Meningococcal ACWY vaccine
+Route: I.M.
+Lot number: MOH-59343
+Given concurrently with: OPV, MMR, Varicella
+No adverse event reported.

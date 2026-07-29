@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Sulaibiya Clinic, Jahra
+Date of administration: 2025-06-06
+
+Patient age: 3-year-old
+Vaccine administered: DTaP vaccine
+Route: I.M.
+Lot number: KW-66704
+No adverse event reported.

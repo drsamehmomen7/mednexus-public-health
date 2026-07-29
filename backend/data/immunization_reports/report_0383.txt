@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Central District Hospital, Al Asimah
+Date of administration: 2026-03-15
+
+Patient age: 10-year-old
+Vaccine administered: 1st dose of Tdap vaccine
+Route: I.M.
+Lot number: KW-91183
+No adverse event reported.

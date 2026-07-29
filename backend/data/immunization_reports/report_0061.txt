@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Bayan Clinic, Hawalli
+Date of administration: 03 April 2025
+
+Patient age: 10-year-old
+Vaccine administered: 1st dose of Tdap vaccine
+Route: I.M.
+Lot number: MOH-61856
+No adverse event reported.

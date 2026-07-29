@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Fahaheel Health Centre, Ahmadi
+Date of administration: 10 June 2025
+
+Patient age: 12-month-old
+Vaccine administered: 1st dose of Varicella vaccine
+Route: S.C.
+Lot number: MOH-73156
+Given concurrently with: OPV, MMR, Meningococcal ACWY
+No adverse event reported.

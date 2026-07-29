@@ -12,12 +12,18 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db import get_db, init_db
-from app.db_models import NotifiableDiseaseRecord
+from app.db_models import NotifiableDiseaseRecord, SavedImmunizationRecord
+from app.schemas.immunization import ImmunizationRecord
 from app.schemas.notifiable_disease import NotifiableDiseaseCase
 from app.services.confidence import needs_review
 from app.services.extraction import extract_notifiable_disease_with_confidence
+from app.services.immunization_extraction import extract_immunization_with_confidence
 from app.services.ner_client import NerBackendUnavailable
-from app.services.vocabularies import load_disease_gazetteer, load_region_gazetteer
+from app.services.vocabularies import (
+    load_disease_gazetteer,
+    load_region_gazetteer,
+    load_vaccine_gazetteer,
+)
 from sqlalchemy import text
 
 app = FastAPI(title="MedNexus Public Health API", version="0.1.0")
@@ -67,6 +73,11 @@ class SaveNotifiableDiseaseRequest(BaseModel):
     # it's stored for audit and used to compute needed_review. If omitted
     # (e.g. a record entered by hand with no prior extraction), the record
     # is saved without a review flag.
+    confidence: Optional[dict] = None
+
+
+class SaveImmunizationRequest(BaseModel):
+    record: ImmunizationRecord
     confidence: Optional[dict] = None
 
 
@@ -145,6 +156,62 @@ def save_notifiable_disease_record(
         lab_confirmed=request.case.lab_confirmed,
         lab_test_type=request.case.lab_test_type,
         source_excerpt=request.case.source_excerpt,
+        confidence=request.confidence,
+        needed_review=needs_review(request.confidence) if request.confidence else False,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return {"saved": True, "id": record.id}
+
+
+@app.post("/reports/immunization/extract")
+def extract_immunization_report(
+    request: ExtractRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Extracts a structured ImmunizationRecord from raw report text, plus a
+    per-field confidence report. Mirrors
+    /reports/notifiable-disease/extract exactly — see that endpoint's
+    docstring for the region-gazetteer reasoning, which applies the same
+    way to vaccine_name here.
+    """
+    try:
+        record, confidence = extract_immunization_with_confidence(
+            request.text,
+            region_gazetteer=load_region_gazetteer(db),
+            vaccine_gazetteer=load_vaccine_gazetteer(),
+        )
+    except NerBackendUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {"extracted": record, "confidence": confidence}
+
+
+@app.post("/reports/immunization/save")
+def save_immunization_record(
+    request: SaveImmunizationRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Persist a record AFTER human review — same "reviewed and trusted"
+    store convention as save_notifiable_disease_record above.
+    """
+    record = SavedImmunizationRecord(
+        vaccine_name=request.record.vaccine_name,
+        vaccine_code=request.record.vaccine_code,
+        dose_number=request.record.dose_number,
+        lot_number=request.record.lot_number,
+        administration_date=request.record.administration_date,
+        route=request.record.route.value,
+        patient_age=request.record.patient_age,
+        patient_age_months=request.record.patient_age_months,
+        region=request.record.region,
+        facility_name=request.record.facility_name,
+        adverse_event_reported=request.record.adverse_event_reported,
+        adverse_event_severity=request.record.adverse_event_severity.value,
+        adverse_event_description=request.record.adverse_event_description,
+        source_excerpt=request.record.source_excerpt,
         confidence=request.confidence,
         needed_review=needs_review(request.confidence) if request.confidence else False,
     )
@@ -438,4 +505,277 @@ def notifiable_disease_dashboard_data(
         "cases_by_sex": cases_by_sex,
         "cases_by_age_group": cases_by_age_group,
         "cases_over_time": cases_over_time,
+    }
+
+
+@app.get("/reports/immunization/dashboard-data")
+def immunization_dashboard_data(
+    vaccine: Optional[str] = None,
+    year: Optional[int] = None,
+    region: Optional[str] = None,
+    measure: str = "count",
+    db: Session = Depends(get_db),
+):
+    """
+    Returns everything the Immunization dashboard page needs in one JSON
+    payload. Mirrors notifiable_disease_dashboard_data's shape and
+    filter-combination logic (vaccine/year/region all AND together;
+    `measure` is "count" or "rate" per 100,000, same population_strata
+    denominators) — see that endpoint's docstring for the population
+    reasoning, which applies unchanged here.
+
+    The age-band breakdown is Immunization-specific rather than reused
+    from Notifiable Disease: nearly the entire schedule happens before a
+    child's 2nd birthday, so the disease dashboard's 0-4/5-14/... buckets
+    would put almost every dose in one bucket. This buckets by
+    patient_age_months first (where the report stated it that way), then
+    falls back to patient_age in years for anything month-based ages
+    don't apply to (school-age boosters).
+    """
+    filters = []
+    params: dict = {}
+    if vaccine:
+        filters.append("vaccine_name = :vaccine")
+        params["vaccine"] = vaccine
+    if year:
+        filters.append("EXTRACT(YEAR FROM administration_date) = :year")
+        params["year"] = year
+    if region:
+        filters.append("region = :region")
+        params["region"] = region
+    where_clause = ("WHERE " + " AND ".join(filters)) if filters else ""
+
+    age_band_sql = """
+        CASE
+            WHEN patient_age_months IS NOT NULL AND patient_age_months <= 2 THEN 'Birth-2mo'
+            WHEN patient_age_months IS NOT NULL AND patient_age_months <= 6 THEN '3-6mo'
+            WHEN patient_age_months IS NOT NULL AND patient_age_months <= 18 THEN '7-18mo'
+            WHEN patient_age IS NULL THEN 'Unknown'
+            WHEN patient_age < 3 THEN '2-3y'
+            WHEN patient_age < 10 THEN '3-9y'
+            WHEN patient_age < 16 THEN '10-15y'
+            ELSE '16-18y'
+        END
+    """
+    age_band_sort_sql = """
+        CASE
+            WHEN patient_age_months IS NOT NULL AND patient_age_months <= 2 THEN 0
+            WHEN patient_age_months IS NOT NULL AND patient_age_months <= 6 THEN 1
+            WHEN patient_age_months IS NOT NULL AND patient_age_months <= 18 THEN 2
+            WHEN patient_age IS NULL THEN 99
+            WHEN patient_age < 3 THEN 3
+            WHEN patient_age < 10 THEN 4
+            WHEN patient_age < 16 THEN 5
+            ELSE 6
+        END
+    """
+
+    # --- population denominators, respecting the region filter ---------
+    pop_filters = []
+    pop_params: dict = {}
+    if region:
+        pop_filters.append("region = :region")
+        pop_params["region"] = region
+    pop_where = ("WHERE " + " AND ".join(pop_filters)) if pop_filters else ""
+
+    total_population = db.execute(
+        text(f"SELECT SUM(population) FROM population_strata {pop_where}"),
+        pop_params,
+    ).scalar() or 0
+
+    population_by_region = {
+        row["region"]: row["population"]
+        for row in db.execute(
+            text(
+                """
+                SELECT region, SUM(population) AS population
+                FROM population_strata GROUP BY region
+                """
+            )
+        ).mappings()
+    }
+
+    def as_rate(count: int, population: Optional[int]) -> Optional[float]:
+        """Doses per 100,000. None when we have no denominator to divide by."""
+        if not population:
+            return None
+        return round(100000.0 * count / population, 2)
+
+    def apply_measure(rows, population_lookup, key):
+        for row in rows:
+            count = row["dose_count"]
+            if measure == "rate":
+                row["value"] = as_rate(count, population_lookup.get(row[key]))
+            else:
+                row["value"] = count
+        return rows
+
+    # --- headline numbers ----------------------------------------------
+    total_doses = db.execute(
+        text(f"SELECT COUNT(*) FROM immunization_records {where_clause}"),
+        params,
+    ).scalar() or 0
+
+    pct_adverse_events = db.execute(
+        text(
+            f"""
+            SELECT ROUND(
+                100.0 * SUM(CASE WHEN adverse_event_reported THEN 1 ELSE 0 END)
+                    / NULLIF(COUNT(*), 0), 1
+            )
+            FROM immunization_records {where_clause}
+            """
+        ),
+        params,
+    ).scalar()
+
+    regions_reporting = db.execute(
+        text(
+            f"""
+            SELECT COUNT(DISTINCT region)
+            FROM immunization_records {where_clause}
+            """
+        ),
+        params,
+    ).scalar() or 0
+
+    # --- breakdowns -----------------------------------------------------
+    doses_by_vaccine = [
+        dict(row)
+        for row in db.execute(
+            text(
+                f"""
+                SELECT vaccine_name AS label, COUNT(*) AS dose_count
+                FROM immunization_records {where_clause}
+                GROUP BY vaccine_name ORDER BY dose_count DESC
+                """
+            ),
+            params,
+        ).mappings()
+    ]
+    for row in doses_by_vaccine:
+        row["value"] = (
+            as_rate(row["dose_count"], total_population)
+            if measure == "rate"
+            else row["dose_count"]
+        )
+
+    doses_by_region = apply_measure(
+        [
+            dict(row)
+            for row in db.execute(
+                text(
+                    f"""
+                    SELECT region AS label, COUNT(*) AS dose_count
+                    FROM immunization_records {where_clause}
+                    GROUP BY region ORDER BY dose_count DESC
+                    """
+                ),
+                params,
+            ).mappings()
+        ],
+        population_by_region,
+        "label",
+    )
+
+    doses_by_age_band = [
+        dict(row)
+        for row in db.execute(
+            text(
+                f"""
+                SELECT {age_band_sql} AS label,
+                       COUNT(*) AS dose_count,
+                       MIN({age_band_sort_sql}) AS sort_key
+                FROM immunization_records {where_clause}
+                GROUP BY label ORDER BY sort_key
+                """
+            ),
+            params,
+        ).mappings()
+    ]
+    for row in doses_by_age_band:
+        row["value"] = (
+            as_rate(row["dose_count"], total_population)
+            if measure == "rate"
+            else row["dose_count"]
+        )
+        row.pop("sort_key", None)
+
+    doses_over_time = [
+        dict(row)
+        for row in db.execute(
+            text(
+                f"""
+                SELECT date_trunc('week', administration_date) AS week, COUNT(*) AS dose_count
+                FROM immunization_records {where_clause}
+                GROUP BY 1 ORDER BY 1
+                """
+            ),
+            params,
+        ).mappings()
+    ]
+    for row in doses_over_time:
+        row["label"] = row.pop("week").date().isoformat()
+        row["value"] = (
+            as_rate(row["dose_count"], total_population)
+            if measure == "rate"
+            else row["dose_count"]
+        )
+
+    adverse_events_by_severity = [
+        dict(row)
+        for row in db.execute(
+            text(
+                f"""
+                SELECT adverse_event_severity AS label, COUNT(*) AS dose_count
+                FROM immunization_records {where_clause}
+                GROUP BY adverse_event_severity ORDER BY dose_count DESC
+                """
+            ),
+            params,
+        ).mappings()
+    ]
+    for row in adverse_events_by_severity:
+        row["value"] = row["dose_count"]
+
+    # --- filter options, so the frontend doesn't hardcode them ----------
+    available_vaccines = [
+        r[0] for r in db.execute(
+            text("SELECT DISTINCT vaccine_name FROM immunization_records ORDER BY 1")
+        )
+    ]
+    available_regions = [
+        r[0] for r in db.execute(text("SELECT region FROM population_strata GROUP BY region ORDER BY 1"))
+    ]
+    available_years = [
+        int(r[0]) for r in db.execute(
+            text(
+                """
+                SELECT DISTINCT EXTRACT(YEAR FROM administration_date)
+                FROM immunization_records ORDER BY 1 DESC
+                """
+            )
+        )
+    ]
+
+    return {
+        "measure": measure,
+        "filters": {"vaccine": vaccine, "year": year, "region": region},
+        "options": {
+            "vaccines": available_vaccines,
+            "regions": available_regions,
+            "years": available_years,
+        },
+        "summary": {
+            "total_doses": total_doses,
+            "pct_adverse_events": pct_adverse_events,
+            "regions_reporting": regions_reporting,
+            "rate_per_100k": as_rate(total_doses, total_population),
+            "population_covered": total_population,
+        },
+        "doses_by_vaccine": doses_by_vaccine,
+        "doses_by_region": doses_by_region,
+        "doses_by_age_band": doses_by_age_band,
+        "doses_over_time": doses_over_time,
+        "adverse_events_by_severity": adverse_events_by_severity,
     }

@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Ardiya Clinic, Farwaniya
+Date of administration: 26 June 2026
+
+Patient age: 3-year-old
+Vaccine administered: DTaP vaccine
+Route: I.M.
+Lot number: IMZ-99181
+No adverse event reported.

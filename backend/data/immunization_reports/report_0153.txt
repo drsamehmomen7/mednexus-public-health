@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Khaitan Health Centre, Farwaniya
+Date of administration: 20/6/25
+
+Patient age: 12-month-old
+Vaccine administered: Meningococcal ACWY vaccine
+Route: I.M.
+Lot number: IMZ-73298
+Given concurrently with: OPV, MMR, Varicella
+No adverse event reported.

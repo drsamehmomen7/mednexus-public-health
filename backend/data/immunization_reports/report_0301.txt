@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: North Clinic, Al Asimah
+Date of administration: 10 Dec 2025
+
+Patient age: newborn
+Vaccine administered: 1st dose of Hepatitis B vaccine
+Route: I.M.
+Lot number: MOH-61990
+No adverse event reported.

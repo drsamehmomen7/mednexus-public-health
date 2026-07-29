@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Eastern General Hospital, Hawalli
+Date of administration: 22 February 2026
+
+Patient age: 6-month-old
+Vaccine administered: 3rd dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: IMZ-85088
+Given concurrently with: Hexa, Rota
+No adverse event reported.

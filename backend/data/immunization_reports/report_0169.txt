@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Southern General Hospital, Ahmadi
+Date of administration: 8/7/25
+
+Patient age: 2-month-old
+Vaccine administered: 1st dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: MOH-39154
+Given concurrently with: Hexa, Rota
+No adverse event reported.

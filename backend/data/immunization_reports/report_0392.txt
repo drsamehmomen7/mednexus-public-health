@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Northern General Hospital, Jahra
+Date of administration: 23/03/2026
+
+Patient age: 6-month-old
+Vaccine administered: 3rd dose of Rota vaccine
+Route: Oral
+Lot number: KW-42725
+Given concurrently with: Hexa, Pneumococcal
+No adverse event reported.

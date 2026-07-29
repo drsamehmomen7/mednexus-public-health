@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Khaitan Health Centre, Farwaniya
+Date of administration: 2026-05-12
+
+Patient age: 4-month-old
+Vaccine administered: 2nd dose of Hexa vaccine
+Route: I.M.
+Lot number: MOH-19099
+Given concurrently with: Pneumococcal, Rota
+Adverse event following immunization: mild fussiness (mild).

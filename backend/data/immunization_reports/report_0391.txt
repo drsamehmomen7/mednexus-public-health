@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Qibla Health Centre, Al Asimah
+Date of administration: 21 March 2026
+
+Patient age: 3-year-old
+Vaccine administered: DTaP vaccine
+Route: I.M.
+Lot number: IMZ-11257
+No adverse event reported.

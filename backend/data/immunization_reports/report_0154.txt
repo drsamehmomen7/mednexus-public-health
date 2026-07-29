@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Western General Hospital, Farwaniya
+Date of administration: 20 Jun 2025
+
+Patient age: 4-month-old
+Vaccine administered: 2nd dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: KW-74282
+Given concurrently with: Hexa, Rota
+No adverse event reported.

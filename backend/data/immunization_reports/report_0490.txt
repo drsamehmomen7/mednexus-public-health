@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Western General Hospital, Farwaniya
+Date of administration: 12 July 2026
+
+Patient age: 12-month-old
+Vaccine administered: Meningococcal ACWY vaccine
+Route: I.M.
+Lot number: KW-86122
+Given concurrently with: OPV, MMR, Varicella
+No adverse event reported.

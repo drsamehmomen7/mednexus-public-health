@@ -1,0 +1,9 @@
+IMMUNIZATION RECORD
+Facility: Sulaibiya Clinic, Jahra
+Date of administration: 01 December 2025
+
+Patient age: 16-year-old
+Vaccine administered: 2nd dose of Tdap vaccine
+Route: I.M.
+Lot number: MOH-17989
+No adverse event reported.

@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Jahra Health Centre, Jahra
+Date of administration: 10 September 2025
+
+Patient age: 12-month-old
+Vaccine administered: 1st dose of OPV vaccine
+Route: Oral
+Lot number: MOH-75799
+Given concurrently with: MMR, Varicella, Meningococcal ACWY
+No adverse event reported.

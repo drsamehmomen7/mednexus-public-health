@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Ardiya Clinic, Farwaniya
+Date of administration: 27/05/2026
+
+Patient age: 4-month-old
+Vaccine administered: 2nd dose of Rota vaccine
+Route: Oral
+Lot number: IMZ-73517
+Given concurrently with: Hexa, Pneumococcal
+No adverse event reported.

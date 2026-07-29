@@ -4,29 +4,44 @@ Last updated: 2026-07-28
 
 ## Where we are right now
 
-Notifiable Disease is end-to-end complete, with a custom dashboard and a
-measured accuracy figure. Pipeline: raw text -> GLiNER NER + gazetteer +
-rule-based fields -> confidence report -> editable review UI -> Render
-Postgres -> dashboard.
+Notifiable Disease AND Immunization are both end-to-end complete, each
+with a measured 100% field-accuracy figure on their own full 500-report
+run. Same pipeline shape for both: raw text -> GLiNER NER + gazetteer(s)
++ rule-based fields -> confidence report -> save to Postgres. Notifiable
+Disease also has a custom dashboard; Immunization doesn't yet (see
+immediate next step).
 
-**Extraction accuracy is confirmed 100% on all NINE extracted fields
-across the FULL 500-report run** (real GLiNER pipeline, exact match
-against ground truth), including onset_date and patient_sex — not just a
-20-report sample. disease_name had actually dropped to 84.8% at
+**Immunization report type completed 2026-07-28.** vaccine_name and
+region via gazetteers (vaccine_name doesn't need negation-awareness,
+unlike disease_name — a vaccine given isn't the kind of thing that gets
+"ruled out"); dose_number, route, adverse_event_reported/severity/
+description, and patient_age_months all rule-based. The vaccine
+vocabulary (`backend/data/vaccines.json`, 12 vaccines) is a REAL source —
+transcribed from the Kuwait MOH 2025 Childhood Immunization Schedule PDF
+— not a synthetic placeholder the way the disease gazetteer is. Two
+schema decisions made along the way: `InjectionRoute` gained
+`INTRADERMAL` (BCG genuinely uses it, the enum didn't have it), and
+`ImmunizationRecord` gained `patient_age_months` (0-24, optional)
+alongside `patient_age`, because most of the schedule (birth through 18
+months) is naturally stated in months, not years. New endpoints:
+`POST /reports/immunization/extract` and `/save`, plus
+`scripts/load_immunization_reports.py`. **Result on the real GLiNER
+pipeline: 100% on all 11 attempted fields, 500/500, 0% flagged for
+review** — first run measured facility_name at 99.0% (GLiNER's
+"facility" label was swallowing a trailing ", <region>" on
+comma-separated lines), fixed with a post-extraction cleanup
+(`_strip_trailing_region` in `immunization_extraction.py`) and confirmed
+back to 100% on re-run. vaccine_code and lot_number aren't attempted yet.
+107 tests passing.
+
+**Extraction accuracy is confirmed 100% on all NINE Notifiable Disease
+fields across the FULL 500-report run** (real GLiNER pipeline, exact
+match against ground truth), including onset_date and patient_sex — not
+just a 20-report sample. disease_name had actually dropped to 84.8% at
 500-report scale before the 2026-07-27 fix (the 100% figure from the
 20-report sample didn't hold up); see that day's decisions-log entries
 for the two bugs that caused it and how they were fixed (a disease
 gazetteer, plus a sentence-boundary bug in negation-checking).
-
-**onset_date is now extracted too** (2026-07-28) — two different
-phrasings depending on report style: prose states it directly ("Onset
-2025-03-04", "Symptoms began on..."), while clinical shorthand states a
-DURATION instead ("c/o cough x12d") and onset is computed as report_date
-minus that many days. 100% on all 500 reports. This was the last of the
-"core patient/timing" fields — remaining gaps (occupation, travel_*,
-vaccination_status, outcome) are lower-priority contextual fields, not
-needed for the epidemic-curve/demographic charts already on the
-dashboard.
 
 **The Render Postgres database reset (2026-07-28)** — cause not fully
 confirmed. Free-tier Render Postgres databases are hard-deleted 30 days
@@ -45,34 +60,32 @@ drop the stale table, let `init_db()` recreate it from the current
 it recurs, the same recovery steps apply regardless of root cause — see
 the ground rules section below.
 
-**patient_sex is now extracted too** (2026-07-27, rule-based, same
-approach as patient_age) — 100% on all 500 reports. The dashboard's
-"Cases by sex" chart is confirmed visually showing a real male/female
-split now, instead of 100% "unknown" (which was expected before that
-day: the field simply wasn't populated by extraction yet — earlier
-Metabase-era test data had `patient_sex` hand-typed directly into a seed
-script, bypassing extraction entirely, which is why it looked like it
-worked before).
-
 **Dashboard is a custom page in our own frontend, not Metabase.**
 `frontend/prototype/dashboard.html` (Chart.js, reuses `style.css`), fed by
 `GET /reports/notifiable-disease/dashboard-data`. Four controls combining
 with AND: disease, year, region, measure (count vs rate per 100,000). Five
 charts plus four summary metrics. Metabase was tried and dropped — see the
-2026-07-27 decisions-log entry.
+2026-07-27 decisions-log entry. **Immunization has no dashboard yet** —
+the save endpoint and table exist, but nothing reads from them visually.
 
 **IMMEDIATE NEXT STEP — this is the one thing to do first:**
-Dashboard visual polish (colors, animations/transitions) — purely
-cosmetic, no functional changes planned. After that, open questions in
-rough priority order:
-1. Four lower-priority fields still not extracted: occupation,
-   travel_related, travel_country, vaccination_status, outcome. The
-   loader prints this gap list every run.
-2. More report types — Immunization next (the Kuwait MOH 2025 childhood
-   immunization schedule PDF is on hand as the real vaccine-name source,
-   the same role notifiable_diseases.json plays for disease names),
-   reusing entity_selection.py / confidence.py / gazetteer.py. Or
-   terminology normalization (ICD-10 / LOINC).
+Two things planned together, purely cosmetic/presentation — no new
+extraction logic:
+1. **Dashboard visual polish** — colors, animations/transitions on the
+   existing Notifiable Disease dashboard.
+2. **Landing page** (the project's overall entry page) needs more
+   creativity/visual impact and more explanation of what the project
+   does — flagged as needing "ابهار" (more impressive/polished) and more
+   detail, not just a functional page.
+
+After that, open questions in rough priority order:
+1. Lower-priority fields still not extracted: Notifiable Disease's
+   occupation/travel_related/travel_country/vaccination_status/outcome,
+   and Immunization's vaccine_code/lot_number.
+2. An Immunization dashboard (mirroring the Notifiable Disease one) —
+   not started.
+3. More report types (Laboratory, Syndromic, Outbreak — schemas exist,
+   no extraction logic), or terminology normalization (ICD-10 / LOINC).
 
 Docx file upload is **descoped entirely**, not deferred — the workflow is
 free-text only, no file upload, no live hospital system integration.
@@ -82,46 +95,58 @@ free-text only, no file upload, no live hospital system integration.
 - Full extraction pipeline for **Notifiable Disease** report type: raw
   text → GLiNER-based NER + rule-based fields + gazetteers → confidence
   report → editable review UI → save to Postgres.
-- 84 backend tests passing (`pytest tests/ -v` from `backend/`).
+- Full extraction pipeline for **Immunization** report type: raw text →
+  GLiNER NER + vaccine/region gazetteers + rule-based fields (dose
+  number, route, adverse event, patient_age_months) → confidence report
+  → save to Postgres. No review UI or dashboard yet, just the API.
+- 107 backend tests passing (`pytest tests/ -v` from `backend/`).
 - Negation-aware extraction in BOTH directions ("ruled out dengue" and
   "dengue was ruled out"), bounded to the sentence so a negation can't leak
   onto a neighbouring diagnosis — applies to both NER entities and
-  gazetteer matches.
-- Closed-vocabulary matching for BOTH region and disease name via
-  data-driven gazetteers — regions come from population_strata, diseases
-  from `backend/data/notifiable_diseases.json` (seeded from the synthetic
-  ground truth via `scripts/build_disease_vocabulary.py`, a placeholder
-  until a real deployment supplies its own reportable-disease list).
-  Neither is hardcoded in extraction.
-- Rule-based patient_age, patient_sex, AND onset_date extraction
-  (`rule_based.py`) — 100% on all 500 reports, no model or gazetteer
-  needed for any of the three.
-- 500 synthetic free-text reports + ground_truth.json in
-  `backend/data/synthetic_reports/` (regenerate with
-  `python scripts/generate_synthetic_reports.py --count 500`).
+  gazetteer matches. Immunization's vaccine_name doesn't need this (see
+  "Where we are right now").
+- Closed-vocabulary matching via data-driven gazetteers for region,
+  disease name, AND vaccine name — regions come from population_strata,
+  diseases from `backend/data/notifiable_diseases.json` (synthetic
+  placeholder), vaccines from `backend/data/vaccines.json` (real, from
+  the Kuwait MOH schedule). None hardcoded in extraction.
+- Rule-based patient_age, patient_sex, onset_date (Notifiable Disease),
+  and patient_age_months, dose_number, route, adverse_event_* fields
+  (Immunization) — all in `rule_based.py`, all 100% on their full
+  500-report runs, no model needed for any of them.
+- 500 synthetic free-text reports + ground_truth.json for EACH report
+  type: `backend/data/synthetic_reports/` (Notifiable Disease, regenerate
+  with `python -m scripts.generate_synthetic_reports --count 500`) and
+  `backend/data/immunization_reports/` (Immunization, regenerate with
+  `python -m scripts.generate_immunization_reports --count 500`).
 - Frontend prototype (static HTML/CSS/JS) at `frontend/prototype/`,
   green-themed, distinct from the sibling de-identification tool.
 - Custom dashboard at `frontend/prototype/dashboard.html` — four combined
   filters, five Chart.js charts, count/rate toggle, confirmed visually
-  showing correct disease/region/time/age/sex breakdowns.
+  showing correct disease/region/time/age/sex breakdowns. **Notifiable
+  Disease only** — Immunization has no dashboard yet.
 
 ## What's not built yet
 
-- Immunization, Laboratory, Syndromic, Outbreak report types (schemas
-  exist in `backend/app/schemas/`, no extraction logic yet — reuse
+- Laboratory, Syndromic, Outbreak report types (schemas exist in
+  `backend/app/schemas/`, no extraction logic yet — reuse
   `entity_selection.py` and `confidence.py`, don't reimplement them).
-- Terminology normalization (ICD-10, LOINC, vaccine codes).
+  Immunization is DONE as of 2026-07-28 (see above).
+- Terminology normalization (ICD-10, LOINC, vaccine codes) — includes
+  Immunization's vaccine_code and lot_number fields, not attempted.
 - File upload of any kind — deliberately out of scope; workflow is
   free-text only (see Where we are right now).
 - Frontend is not yet pointed at the deployed Render URL — still hardcoded
   to `http://127.0.0.1:8001` in both `app.js` and `dashboard.html`.
-- Four lower-priority fields present in report text that extraction
-  doesn't attempt yet (occupation, travel_related, travel_country,
-  vaccination_status, outcome) — disease_name, region, patient_age,
-  patient_sex, onset_date, report_date, diagnosis_status, and
-  lab_confirmed are all done and at 100%.
-- Dashboard visual polish (colors, animations/transitions) — next planned
-  step, purely cosmetic.
+- Lower-priority fields present in report text that extraction doesn't
+  attempt yet: Notifiable Disease's occupation/travel_related/
+  travel_country/vaccination_status/outcome, Immunization's
+  vaccine_code/lot_number.
+- An Immunization dashboard and review UI — the extract/save API exists,
+  nothing visual reads from it yet.
+- Dashboard visual polish (colors, animations/transitions) AND the
+  project's landing page needing more creativity/explanation — both next
+  planned, purely cosmetic/presentation.
 - Dashboard refresh takes 3-4s: ~12 separate queries against Render's
   free-tier Postgres in Oregon. Latency, not a code problem.
 

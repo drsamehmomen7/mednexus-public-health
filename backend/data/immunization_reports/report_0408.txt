@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Western General Hospital, Farwaniya
+Date of administration: 5/4/26
+
+Patient age: 4-month-old
+Vaccine administered: 2nd dose of Hexa vaccine
+Route: I.M.
+Lot number: KW-46129
+Given concurrently with: Pneumococcal, Rota
+No adverse event reported.

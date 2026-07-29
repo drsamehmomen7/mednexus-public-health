@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Jahra Health Centre, Jahra
+Date of administration: 2025-11-20
+
+Patient age: 2-month-old
+Vaccine administered: 1st dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: KW-93012
+Given concurrently with: Hexa, Rota
+No adverse event reported.

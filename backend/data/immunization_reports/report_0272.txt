@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Salmiya Health Centre, Hawalli
+Date of administration: 2025-11-11
+
+Patient age: 2-month-old
+Vaccine administered: 1st dose of Pneumococcal vaccine
+Route: I.M.
+Lot number: MOH-93964
+Given concurrently with: Hexa, Rota
+No adverse event reported.

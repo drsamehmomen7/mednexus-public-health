@@ -1,0 +1,10 @@
+IMMUNIZATION RECORD
+Facility: Eastern General Hospital, Hawalli
+Date of administration: 28 September 2025
+
+Patient age: 2-month-old
+Vaccine administered: 1st dose of Hexa vaccine
+Route: I.M.
+Lot number: MOH-14278
+Given concurrently with: Pneumococcal, Rota
+Adverse event following immunization: mild swelling at injection site (mild).
