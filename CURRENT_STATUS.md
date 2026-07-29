@@ -80,6 +80,14 @@ would be nearly useless here), and adverse-events-by-severity.
 correct extraction on every field before delivery, for demoing the full
 upload -> detect -> extract -> save-to-batch flow to decision-makers
 with documents that look like real official forms, not plain text.
+Testing these through the real UI caught (and fixed) a genuine bug: an
+earlier edit had silently deleted the `@app.post(...)` decorator above
+`extract_immunization_report`, so the function existed but FastAPI never
+registered it as a route — `POST /reports/immunization/extract` returned
+a plain 404 until the decorator was restored. All 14 `/reports/*` +
+`/health` routes were audited by name afterward, not just the ones
+touched in that edit. Both Immunization DOCX demos now confirmed
+extracting correctly through the real running backend.
 
 **Immunization report type completed 2026-07-28.** vaccine_name and
 region via gazetteers (vaccine_name doesn't need negation-awareness,

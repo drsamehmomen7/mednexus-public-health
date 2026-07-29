@@ -842,3 +842,31 @@ flow can be demonstrated to decision-makers against documents that look
 like real official forms, not plain pasted text.
 
 120 tests passing by the end of the session (up from 107).
+
+### 2026-07-29 — Immunization extract route silently broken by an editing mistake
+Found by the user testing the two Immunization DOCX demos through the
+real UI: both failed with "Not Found" — FastAPI's literal 404 body, not
+an application error. `POST /reports/immunization/extract` had stopped
+being a registered route entirely.
+
+Root cause: when `/reports/notifiable-disease/export` was added earlier
+the same day, the edit's old/new text boundary ended right at the
+`@app.post("/reports/immunization/extract")` decorator line — the
+replacement reproduced everything up to that line but not the line
+itself, silently deleting the decorator while leaving the function body
+below it untouched. The function still existed as plain Python; FastAPI
+just never registered it as a route. Every test run that session
+imported main.py successfully (no syntax error) and other new routes
+were spot-checked, but nothing re-verified that a PRE-EXISTING route was
+still present after a later edit — the gap wasn't caught until real use
+surfaced it.
+
+Fixed by restoring the decorator, then auditing every `/reports/*` and
+`/health` route by name against the full expected list (14 routes) —
+not just confirming the routes touched in that turn. Worth remembering
+as a general practice for future edits near existing decorators: check
+the full route list, not just the new ones.
+
+Confirmed end-to-end afterward: both Immunization DOCX demos (Tdap AEFI,
+Hepatitis B newborn) now extract correctly through the real running
+backend, not just the sandboxed test used during development.
