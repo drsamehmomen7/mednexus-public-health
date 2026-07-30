@@ -60,7 +60,7 @@ DISEASE_TEST_MAP = {
     "Salmonellosis": [("Salmonella Stool Culture", "Stool")],
     "Typhoid fever": [("Typhoid Widal Test", "Blood"), ("Typhoid Blood Culture", "Blood")],
     "Dengue fever": [("Dengue NS1 Antigen Test", "Blood"), ("Dengue IgM Serology", "Serum")],
-    "Chickenpox": [("Chickenpox PCR", "Vesicle Fluid")],
+    "Chickenpox": [("Chickenpox PCR", "Vesicle Fluid"), ("Varicella PCR", "Vesicle Fluid")],
     "Mumps": [("Mumps IgM Serology", "Serum")],
     "Hepatitis A": [("Hepatitis A IgM Serology", "Serum")],
 }

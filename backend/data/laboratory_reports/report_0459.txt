@@ -5,6 +5,6 @@ Result Date: 11 June 2026
 
 Patient Age: 70 years
 Specimen Type: Vesicle Fluid
-Test: Chickenpox PCR
+Test: Varicella PCR
 Result: Positive
 Pathogen Identified: Chickenpox

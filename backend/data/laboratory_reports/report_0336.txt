@@ -5,5 +5,5 @@ Result Date: 8/2/26
 
 Patient Age: 2 years
 Specimen Type: Vesicle Fluid
-Test: Chickenpox PCR
+Test: Varicella PCR
 Result: Negative

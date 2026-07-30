@@ -210,6 +210,27 @@ body {
 .trust-item { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-soft); }
 .trust-item svg { width: 18px; height: 18px; color: var(--brand-blue); flex-shrink: 0; }
 
+.sources-block {
+  margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border);
+}
+.sources-desc { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 18px; max-width: 620px; }
+.sources-grid { display: flex; flex-direction: column; gap: 12px; }
+.sources-row {
+  display: grid; grid-template-columns: 92px 160px 1fr; align-items: center; gap: 14px;
+  font-size: 13.5px;
+}
+.sources-badge {
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+  text-transform: uppercase; letter-spacing: 0.03em; text-align: center; width: fit-content;
+}
+.sources-badge.real { background: var(--success-bg); color: var(--success-ink); }
+.sources-badge.placeholder { background: #f1f0eb; color: #8a7f5c; }
+.sources-label { font-weight: 700; color: var(--ink); }
+.sources-detail { color: var(--ink-soft); }
+@media (max-width: 700px) {
+  .sources-row { grid-template-columns: 1fr; gap: 4px; }
+}
+
 .site-footer {
   border-top: 1px solid var(--border); padding: 32px 40px 40px; text-align: center;
   font-size: 12.5px; color: var(--ink-soft);

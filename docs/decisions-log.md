@@ -870,3 +870,69 @@ the full route list, not just the new ones.
 Confirmed end-to-end afterward: both Immunization DOCX demos (Tdap AEFI,
 Hepatitis B newborn) now extract correctly through the real running
 backend, not just the sandboxed test used during development.
+
+### 2026-07-30 — Notifiable disease list replaced with a real source (CDC 2025)
+Prompted by a direct question about the system's own logic: why was the
+notifiable-disease gazetteer only 10 items when `vaccines.json` had 12
+from a real official document? The honest answer was an inconsistency —
+`notifiable_diseases.json` had always been synthetic, originally derived
+FROM the ground truth of a generator the developer built, not from any
+authoritative list. Worth fixing before Immunization and Laboratory get
+the same scrutiny.
+
+Searched for a Kuwait MOH-published notifiable disease list first, to
+match the vaccine schedule's precedent exactly — none found via search
+(unlike the immunization schedule, which the user already had as a PDF).
+WHO's International Health Regulations (2005) Annex 2 was checked next
+and rejected as the wrong reference: it's a narrow 4-disease "public
+health emergency of international concern" framework, not a routine
+national surveillance list — the wrong TYPE of document for what this
+project models (case-by-case reporting of ~50 common notifiable
+diseases, not global emergency escalation).
+
+Settled on CDC's "Protocol for Public Health Agencies to Notify CDC
+about the Occurrence of Nationally Notifiable Conditions, 2025"
+(approved by CSTE June 2024, implemented January 1, 2025) — fetched
+directly from CDC's own site, ~90 conditions with full official naming.
+Not used verbatim: about a third of the CDC list is either non-
+infectious (cancer, lead-in-blood, silicosis, acute pesticide illness —
+none of which fit this schema's onset/lab-confirmation shape) or a
+narrow US-specific lab-classification subtype (VISA/VRSA screening,
+individual US arboviruses like Jamestown Canyon or Powassan virus) with
+little relevance outside that context. Curated down to 54 genuinely
+infectious, broadly-relevant conditions, keeping every one of the
+original 10 (Influenza was ADDED back in deliberately — it isn't a
+standalone CDC routine-notification category, since ordinary seasonal
+flu is too common to case-report individually in the US, but it's
+foundational to what's already built here and regionally relevant, so
+kept as a stated exception rather than silently dropped).
+
+Verified before considering this done: re-ran the disease gazetteer
+against all 500 existing synthetic reports — still 100% (expected,
+since 54 is a strict superset of the original 10) — but caught a false
+alarm along the way. A quick check calling `Gazetteer.find()` directly
+(bypassing the real negation-aware code path) showed 428/500, which
+looked like a real regression; re-testing through the actual
+`extract_notifiable_disease_with_confidence()` orchestrator (the code
+path every real request actually uses) confirmed 500/500. Worth
+remembering: `.find()` alone was never how disease_name gets extracted
+in production — testing it directly is not representative and produced
+a misleading result here.
+
+Explicitly scoped what this does NOT do yet: the 500-report SYNTHETIC
+test corpus still only mentions the original 10 diseases by name — the
+gazetteer now recognizes 54, but that hasn't been exercised by generated
+test data, only verified not to regress the existing 10. Expanding the
+generator to realistically cover the other 44 (each needs its own
+onset/symptom/lab phrasing, not just a name) is separate, larger work,
+not done here. `lab_tests.json` remains an unsourced synthetic
+placeholder — the next item, ideally against a real terminology standard
+(LOINC) rather than another developer-picked list. `vaccines.json`
+stays real (Kuwait MOH) but pediatric-only — whether to add adult/travel
+vaccines is open.
+
+Added a "Data Sources" section to the landing page footer disclosing
+exactly this: which vocabularies are real vs. synthetic-placeholder,
+and where the real ones come from — matches the project's existing
+transparency practice (the AI-collaboration disclosure) rather than
+letting a demo audience assume every list is equally authoritative.

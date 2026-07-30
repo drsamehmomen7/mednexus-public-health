@@ -1,17 +1,43 @@
 # Current Status — read this first in any new chat
 
-Last updated: 2026-07-29
+Last updated: 2026-07-30
 
 ## Where we are right now
 
-Notifiable Disease AND Immunization are both end-to-end complete, each
-with a measured 100% field-accuracy figure on their own full 500-report
-run, PLUS a working document-upload pipeline with automatic report-type
-detection, a batch/cohort system, data export, and a fully redesigned
-frontend (landing page, both dashboards, brand identity). Same
-extraction pipeline shape for both report types: raw text -> GLiNER NER
-+ gazetteer(s) + rule-based fields -> confidence report -> save to
-Postgres.
+Notifiable Disease, Immunization, AND Laboratory are all end-to-end
+complete, each with a measured 100% field-accuracy figure on their own
+full 500-report run, PLUS a working document-upload pipeline with
+automatic (3-way) report-type detection, a batch/cohort system, data
+export, and a fully redesigned frontend (landing page, three dashboards,
+brand identity). Same extraction pipeline shape for all three report
+types: raw text -> GLiNER NER + gazetteer(s) + rule-based fields ->
+confidence report -> save to Postgres.
+
+**Data sourcing reviewed 2026-07-30.** `vaccines.json` was already a real
+source (Kuwait MOH's 2025 Childhood Immunization Schedule).
+`notifiable_diseases.json` was NOT — it was a synthetic placeholder (10
+diseases the developer picked to build the generator around), an
+inconsistency flagged and fixed the same day: replaced with a 54-disease
+list curated from CDC's official "2025 Nationally Notifiable Conditions"
+protocol (approved by CSTE June 2024, implemented January 2025) — the
+most complete, current, authoritative notifiable-disease reference
+found; no equivalent Kuwait MOH list was locatable via search. The
+curation excluded CDC categories that aren't infectious disease or don't
+fit this project's case-report schema (cancer, lead-in-blood, silicosis,
+pesticide-related illness, foodborne/waterborne OUTBREAK categories,
+narrow US lab-classification subtypes like VISA/VRSA) and kept
+"Influenza" as a deliberate addition beyond the strict CDC list, since
+it's foundational to what's already built and regionally relevant
+despite not being a standalone US routine-notification category.
+Verified: the expanded gazetteer still extracts all 500 existing
+synthetic reports at 100% (a strict superset of the original 10) — the
+existing synthetic test corpus still only exercises those original 10
+by name, though the real gazetteer now recognizes 54. `lab_tests.json`
+is still a synthetic placeholder (built to mirror the original 10
+diseases) — reviewing it against a real terminology source (e.g. LOINC)
+is the next sourcing item, along with checking whether `vaccines.json`
+should expand beyond the pediatric schedule (adult/travel vaccines
+aren't covered yet).
 
 **Document upload + auto-detection (2026-07-29).** The "Upload a
 document" button is no longer a placeholder — `POST
@@ -89,6 +115,39 @@ a plain 404 until the decorator was restored. All 14 `/reports/*` +
 touched in that edit. Both Immunization DOCX demos now confirmed
 extracting correctly through the real running backend.
 
+**Laboratory report type completed 2026-07-29.** test_name and
+specimen_type via new gazetteers (`data/lab_tests.json`,
+`data/specimen_types.json`, 15 tests / 8 specimen types, synthetic
+placeholders); pathogen_identified REUSES the disease gazetteer directly
+(no separate vocabulary), populated only when result is positive; result
+and the two dates (specimen_collection_date, result_date — disambiguated
+via a narrow keyword-anchor window, verified against tight shorthand
+phrasing like "Collected 22 Mar 2025, result 27/3/25:") all rule-based.
+Own dashboard (`laboratory-dashboard.html` +
+`GET /reports/laboratory/dashboard-data`) with metrics specific to
+testing activity rather than case/dose counts: % positive, % pending,
+average turnaround time, tests by type/region/pathogen — no count/rate
+toggle, since a test result is an activity metric, not a population
+health event the way a case or dose is. Report-type auto-detection
+extended from 2-way to 3-way (99.2% on the combined 1500-report corpus,
+the only miscategorized) — a real, inherent overlap where a Notifiable
+Disease report narrates its own confirmatory lab result using phrasing
+close to a standalone lab report, not a bug to force to 100%.
+
+**Two real bugs found and fixed via genuine testing 2026-07-29:** (1)
+`/reports/immunization/extract`'s route decorator was silently deleted
+during an editing mistake while adding the export endpoint — the
+function still existed, FastAPI just never registered it, caught only
+when the user tested the real UI ("Not Found", not an application
+error). Fixed, and all 19 routes audited by name afterward, not just the
+ones touched in that edit. (2) The Laboratory generator never actually
+wired "Varicella PCR" to any disease in its own test-selection map
+despite listing it in the vocabulary, so it could never appear in
+generated data — noticed by the user checking the dashboard's test
+dropdown against the vocabulary file directly. Fixed by giving
+Chickenpox two test-name options (Chickenpox PCR / Varicella PCR, same
+disease, two real naming conventions).
+
 **Immunization report type completed 2026-07-28.** vaccine_name and
 region via gazetteers (vaccine_name doesn't need negation-awareness,
 unlike disease_name — a vaccine given isn't the kind of thing that gets
@@ -122,7 +181,7 @@ Recovery steps documented in the ground rules below; the same steps
 apply regardless of root cause if it recurs — and now there's an Export
 button to reduce what a repeat would cost.
 
-120 backend tests passing.
+126 backend tests passing.
 
 **IMMEDIATE NEXT STEP:** None fixed — the four originally-planned steps
 (app.js routing, Immunization dashboard, visual redesign, landing page)
@@ -157,7 +216,7 @@ are ALL done as of today. Open questions, rough priority order:
 - **Export**: JSON/CSV download per batch (or everything) on both
   dashboards — the safety net for manually-saved records with no other
   backup.
-- 120 backend tests passing (`pytest tests/ -v` from `backend/`).
+- 126 backend tests passing (`pytest tests/ -v` from `backend/`).
 - Negation-aware extraction in BOTH directions ("ruled out dengue" and
   "dengue was ruled out"), bounded to the sentence so a negation can't leak
   onto a neighbouring diagnosis — applies to both NER entities and

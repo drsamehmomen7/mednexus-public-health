@@ -97,9 +97,9 @@
   },
   {
     "file": "report_0007.txt",
-    "text": "LABORATORY REPORT\nFacility: Jahra Health Centre, Jahra\nSpecimen Collection Date: 02 Feb 2025\nResult Date: 04 Feb 2025\n\nPatient Age: 10 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Negative",
+    "text": "LABORATORY REPORT\nFacility: Jahra Health Centre, Jahra\nSpecimen Collection Date: 02 Feb 2025\nResult Date: 04 Feb 2025\n\nPatient Age: 10 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Negative",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "negative",
@@ -161,9 +161,9 @@
   },
   {
     "file": "report_0011.txt",
-    "text": "LABORATORY REPORT\nFacility: Eastern General Hospital, Hawalli\nSpecimen Collection Date: 05 February 2025\nResult Date: 07 February 2025\n\nPatient Age: 23 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Positive\nPathogen Identified: Chickenpox",
+    "text": "LABORATORY REPORT\nFacility: Eastern General Hospital, Hawalli\nSpecimen Collection Date: 05 February 2025\nResult Date: 07 February 2025\n\nPatient Age: 23 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Positive\nPathogen Identified: Chickenpox",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -497,9 +497,9 @@
   },
   {
     "file": "report_0032.txt",
-    "text": "74-year-old patient had a vesicle fluid specimen collected on 27 February 2025 for Chickenpox PCR at Southern General Hospital, Ahmadi. Result finalized 28 February 2025: positive, identifying Chickenpox. ",
+    "text": "74-year-old patient had a vesicle fluid specimen collected on 27 February 2025 for Varicella PCR at Southern General Hospital, Ahmadi. Result finalized 28 February 2025: positive, identifying Chickenpox. ",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -1185,9 +1185,9 @@
   },
   {
     "file": "report_0075.txt",
-    "text": "46yo, Chickenpox PCR, Vesicle Fluid specimen. Collected 24/04/2025, result 25/04/2025: Positive. Bayan Clinic, Hawalli. Chickenpox identified.",
+    "text": "46yo, Varicella PCR, Vesicle Fluid specimen. Collected 24/04/2025, result 25/04/2025: Positive. Bayan Clinic, Hawalli. Chickenpox identified.",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -1633,9 +1633,9 @@
   },
   {
     "file": "report_0103.txt",
-    "text": "27-year-old patient had a vesicle fluid specimen collected on 14/5/25 for Chickenpox PCR at Salmiya Health Centre, Hawalli. Result finalized 18/5/25: positive, identifying Chickenpox. ",
+    "text": "27-year-old patient had a vesicle fluid specimen collected on 14/5/25 for Varicella PCR at Salmiya Health Centre, Hawalli. Result finalized 18/5/25: positive, identifying Chickenpox. ",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -1905,9 +1905,9 @@
   },
   {
     "file": "report_0120.txt",
-    "text": "6-year-old patient had a vesicle fluid specimen collected on 2025-06-07 for Chickenpox PCR at Western General Hospital, Farwaniya. Result finalized 2025-06-08: pending. ",
+    "text": "6-year-old patient had a vesicle fluid specimen collected on 2025-06-07 for Varicella PCR at Western General Hospital, Farwaniya. Result finalized 2025-06-08: pending. ",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "pending",
@@ -2001,9 +2001,9 @@
   },
   {
     "file": "report_0126.txt",
-    "text": "LABORATORY REPORT\nFacility: Bayan Clinic, Hawalli\nSpecimen Collection Date: 8/6/25\nResult Date: 12/6/25\n\nPatient Age: 78 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Positive\nPathogen Identified: Chickenpox",
+    "text": "LABORATORY REPORT\nFacility: Bayan Clinic, Hawalli\nSpecimen Collection Date: 8/6/25\nResult Date: 12/6/25\n\nPatient Age: 78 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Positive\nPathogen Identified: Chickenpox",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -2241,9 +2241,9 @@
   },
   {
     "file": "report_0141.txt",
-    "text": "LABORATORY REPORT\nFacility: Khaitan Health Centre, Farwaniya\nSpecimen Collection Date: 2025-07-03\nResult Date: 2025-07-06\n\nPatient Age: 42 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Negative",
+    "text": "LABORATORY REPORT\nFacility: Khaitan Health Centre, Farwaniya\nSpecimen Collection Date: 2025-07-03\nResult Date: 2025-07-06\n\nPatient Age: 42 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Negative",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "negative",
@@ -2465,9 +2465,9 @@
   },
   {
     "file": "report_0155.txt",
-    "text": "LABORATORY REPORT\nFacility: Western General Hospital, Farwaniya\nSpecimen Collection Date: 31/7/25\nResult Date: 5/8/25\n\nPatient Age: 35 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Pending",
+    "text": "LABORATORY REPORT\nFacility: Western General Hospital, Farwaniya\nSpecimen Collection Date: 31/7/25\nResult Date: 5/8/25\n\nPatient Age: 35 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Pending",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "pending",
@@ -2721,9 +2721,9 @@
   },
   {
     "file": "report_0171.txt",
-    "text": "4yo, Chickenpox PCR, Vesicle Fluid specimen. Collected 16/08/2025, result 17/8/25: Negative. Eastern General Hospital, Hawalli.",
+    "text": "4yo, Varicella PCR, Vesicle Fluid specimen. Collected 16/08/2025, result 17/8/25: Negative. Eastern General Hospital, Hawalli.",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "negative",
@@ -2961,9 +2961,9 @@
   },
   {
     "file": "report_0186.txt",
-    "text": "42yo, Chickenpox PCR, Vesicle Fluid specimen. Collected 31/8/25, result 3/9/25: Positive. Ardiya Clinic, Farwaniya. Chickenpox identified.",
+    "text": "42yo, Varicella PCR, Vesicle Fluid specimen. Collected 31/8/25, result 3/9/25: Positive. Ardiya Clinic, Farwaniya. Chickenpox identified.",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -3377,9 +3377,9 @@
   },
   {
     "file": "report_0212.txt",
-    "text": "38-year-old patient had a vesicle fluid specimen collected on 28/09/2025 for Chickenpox PCR at Southern General Hospital, Ahmadi. Result finalized 29/09/2025: negative. ",
+    "text": "38-year-old patient had a vesicle fluid specimen collected on 28/09/2025 for Varicella PCR at Southern General Hospital, Ahmadi. Result finalized 29/09/2025: negative. ",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "negative",
@@ -3473,9 +3473,9 @@
   },
   {
     "file": "report_0218.txt",
-    "text": "8-year-old patient had a vesicle fluid specimen collected on 30 Sep 2025 for Chickenpox PCR at Southern General Hospital, Ahmadi. Result finalized 04 Oct 2025: pending. ",
+    "text": "8-year-old patient had a vesicle fluid specimen collected on 30 Sep 2025 for Varicella PCR at Southern General Hospital, Ahmadi. Result finalized 04 Oct 2025: pending. ",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "pending",
@@ -3793,9 +3793,9 @@
   },
   {
     "file": "report_0238.txt",
-    "text": "52-year-old patient had a vesicle fluid specimen collected on 20/10/25 for Chickenpox PCR at Western General Hospital, Farwaniya. Result finalized 23/10/25: positive, identifying Chickenpox. ",
+    "text": "52-year-old patient had a vesicle fluid specimen collected on 20/10/25 for Varicella PCR at Western General Hospital, Farwaniya. Result finalized 23/10/25: positive, identifying Chickenpox. ",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -4081,9 +4081,9 @@
   },
   {
     "file": "report_0256.txt",
-    "text": "LABORATORY REPORT\nFacility: Central District Hospital, Al Asimah\nSpecimen Collection Date: 07/11/2025\nResult Date: 09/11/2025\n\nPatient Age: 21 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Negative",
+    "text": "LABORATORY REPORT\nFacility: Central District Hospital, Al Asimah\nSpecimen Collection Date: 07/11/2025\nResult Date: 09/11/2025\n\nPatient Age: 21 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Negative",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "negative",
@@ -4657,9 +4657,9 @@
   },
   {
     "file": "report_0292.txt",
-    "text": "59yo, Chickenpox PCR, Vesicle Fluid specimen. Collected 22/12/2025, result 24/12/25: Positive. Messila Clinic, Mubarak Al-Kabeer. Chickenpox identified.",
+    "text": "59yo, Varicella PCR, Vesicle Fluid specimen. Collected 22/12/2025, result 24/12/25: Positive. Messila Clinic, Mubarak Al-Kabeer. Chickenpox identified.",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -4769,9 +4769,9 @@
   },
   {
     "file": "report_0299.txt",
-    "text": "LABORATORY REPORT\nFacility: Ardiya Clinic, Farwaniya\nSpecimen Collection Date: 28/12/2025\nResult Date: 30/12/2025\n\nPatient Age: 16 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Positive\nPathogen Identified: Chickenpox",
+    "text": "LABORATORY REPORT\nFacility: Ardiya Clinic, Farwaniya\nSpecimen Collection Date: 28/12/2025\nResult Date: 30/12/2025\n\nPatient Age: 16 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Positive\nPathogen Identified: Chickenpox",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -4929,9 +4929,9 @@
   },
   {
     "file": "report_0309.txt",
-    "text": "LABORATORY REPORT\nFacility: Eastern General Hospital, Hawalli\nSpecimen Collection Date: 03 January 2026\nResult Date: 06 January 2026\n\nPatient Age: 22 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Positive\nPathogen Identified: Chickenpox",
+    "text": "LABORATORY REPORT\nFacility: Eastern General Hospital, Hawalli\nSpecimen Collection Date: 03 January 2026\nResult Date: 06 January 2026\n\nPatient Age: 22 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Positive\nPathogen Identified: Chickenpox",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -5185,9 +5185,9 @@
   },
   {
     "file": "report_0325.txt",
-    "text": "41-year-old patient had a vesicle fluid specimen collected on 25/01/2026 for Chickenpox PCR at Western General Hospital, Farwaniya. Result finalized 29/01/2026: positive, identifying Chickenpox. ",
+    "text": "41-year-old patient had a vesicle fluid specimen collected on 25/01/2026 for Varicella PCR at Western General Hospital, Farwaniya. Result finalized 29/01/2026: positive, identifying Chickenpox. ",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -5361,9 +5361,9 @@
   },
   {
     "file": "report_0336.txt",
-    "text": "LABORATORY REPORT\nFacility: Bayan Clinic, Hawalli\nSpecimen Collection Date: 3/2/26\nResult Date: 8/2/26\n\nPatient Age: 2 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Negative",
+    "text": "LABORATORY REPORT\nFacility: Bayan Clinic, Hawalli\nSpecimen Collection Date: 3/2/26\nResult Date: 8/2/26\n\nPatient Age: 2 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Negative",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "negative",
@@ -5505,9 +5505,9 @@
   },
   {
     "file": "report_0345.txt",
-    "text": "36yo, Chickenpox PCR, Vesicle Fluid specimen. Collected 14/02/2026, result 18/2/26: Positive. Salmiya Health Centre, Hawalli. Chickenpox identified.",
+    "text": "36yo, Varicella PCR, Vesicle Fluid specimen. Collected 14/02/2026, result 18/2/26: Positive. Salmiya Health Centre, Hawalli. Chickenpox identified.",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -5617,9 +5617,9 @@
   },
   {
     "file": "report_0352.txt",
-    "text": "15-year-old patient had a vesicle fluid specimen collected on 23 February 2026 for Chickenpox PCR at Ardiya Clinic, Farwaniya. Result finalized 24 February 2026: pending. ",
+    "text": "15-year-old patient had a vesicle fluid specimen collected on 23 February 2026 for Varicella PCR at Ardiya Clinic, Farwaniya. Result finalized 24 February 2026: pending. ",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "pending",
@@ -5633,9 +5633,9 @@
   },
   {
     "file": "report_0353.txt",
-    "text": "LABORATORY REPORT\nFacility: Southern General Hospital, Ahmadi\nSpecimen Collection Date: 22/02/2026\nResult Date: 24/02/2026\n\nPatient Age: 15 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Negative",
+    "text": "LABORATORY REPORT\nFacility: Southern General Hospital, Ahmadi\nSpecimen Collection Date: 22/02/2026\nResult Date: 24/02/2026\n\nPatient Age: 15 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Negative",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "negative",
@@ -6481,9 +6481,9 @@
   },
   {
     "file": "report_0406.txt",
-    "text": "79-year-old patient had a vesicle fluid specimen collected on 13 Apr 2026 for Chickenpox PCR at Fahaheel Health Centre, Ahmadi. Result finalized 18 Apr 2026: positive, identifying Chickenpox. ",
+    "text": "79-year-old patient had a vesicle fluid specimen collected on 13 Apr 2026 for Varicella PCR at Fahaheel Health Centre, Ahmadi. Result finalized 18 Apr 2026: positive, identifying Chickenpox. ",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -6545,9 +6545,9 @@
   },
   {
     "file": "report_0410.txt",
-    "text": "66-year-old patient had a vesicle fluid specimen collected on 22/04/2026 for Chickenpox PCR at Southern General Hospital, Ahmadi. Result finalized 24/04/2026: positive, identifying Chickenpox. ",
+    "text": "66-year-old patient had a vesicle fluid specimen collected on 22/04/2026 for Varicella PCR at Southern General Hospital, Ahmadi. Result finalized 24/04/2026: positive, identifying Chickenpox. ",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -6673,9 +6673,9 @@
   },
   {
     "file": "report_0418.txt",
-    "text": "42yo, Chickenpox PCR, Vesicle Fluid specimen. Collected 28 Apr 2026, result 2/5/26: Positive. Eastern General Hospital, Hawalli. Chickenpox identified.",
+    "text": "42yo, Varicella PCR, Vesicle Fluid specimen. Collected 28 Apr 2026, result 2/5/26: Positive. Eastern General Hospital, Hawalli. Chickenpox identified.",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -7057,9 +7057,9 @@
   },
   {
     "file": "report_0442.txt",
-    "text": "LABORATORY REPORT\nFacility: Central District Hospital, Al Asimah\nSpecimen Collection Date: 27 May 2026\nResult Date: 28 May 2026\n\nPatient Age: 15 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Positive\nPathogen Identified: Chickenpox",
+    "text": "LABORATORY REPORT\nFacility: Central District Hospital, Al Asimah\nSpecimen Collection Date: 27 May 2026\nResult Date: 28 May 2026\n\nPatient Age: 15 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Positive\nPathogen Identified: Chickenpox",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -7329,9 +7329,9 @@
   },
   {
     "file": "report_0459.txt",
-    "text": "LABORATORY REPORT\nFacility: Jahra Health Centre, Jahra\nSpecimen Collection Date: 06 June 2026\nResult Date: 11 June 2026\n\nPatient Age: 70 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Positive\nPathogen Identified: Chickenpox",
+    "text": "LABORATORY REPORT\nFacility: Jahra Health Centre, Jahra\nSpecimen Collection Date: 06 June 2026\nResult Date: 11 June 2026\n\nPatient Age: 70 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Positive\nPathogen Identified: Chickenpox",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "positive",
@@ -7473,9 +7473,9 @@
   },
   {
     "file": "report_0468.txt",
-    "text": "LABORATORY REPORT\nFacility: Southern General Hospital, Ahmadi\nSpecimen Collection Date: 15/06/2026\nResult Date: 16/06/2026\n\nPatient Age: 56 years\nSpecimen Type: Vesicle Fluid\nTest: Chickenpox PCR\nResult: Negative",
+    "text": "LABORATORY REPORT\nFacility: Southern General Hospital, Ahmadi\nSpecimen Collection Date: 15/06/2026\nResult Date: 16/06/2026\n\nPatient Age: 56 years\nSpecimen Type: Vesicle Fluid\nTest: Varicella PCR\nResult: Negative",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "negative",
@@ -7537,9 +7537,9 @@
   },
   {
     "file": "report_0472.txt",
-    "text": "3yo, Chickenpox PCR, Vesicle Fluid specimen. Collected 16/6/26, result 20/6/26: Indeterminate \u2014 repeat testing recommended. Adan District Hospital, Mubarak Al-Kabeer.",
+    "text": "3yo, Varicella PCR, Vesicle Fluid specimen. Collected 16/6/26, result 20/6/26: Indeterminate \u2014 repeat testing recommended. Adan District Hospital, Mubarak Al-Kabeer.",
     "truth": {
-      "test_name": "Chickenpox PCR",
+      "test_name": "Varicella PCR",
       "test_code": null,
       "specimen_type": "Vesicle Fluid",
       "result": "indeterminate",

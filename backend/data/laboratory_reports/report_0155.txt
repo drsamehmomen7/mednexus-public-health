@@ -5,5 +5,5 @@ Result Date: 5/8/25
 
 Patient Age: 35 years
 Specimen Type: Vesicle Fluid
-Test: Chickenpox PCR
+Test: Varicella PCR
 Result: Pending

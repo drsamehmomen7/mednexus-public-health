@@ -5,6 +5,6 @@ Result Date: 07 February 2025
 
 Patient Age: 23 years
 Specimen Type: Vesicle Fluid
-Test: Chickenpox PCR
+Test: Varicella PCR
 Result: Positive
 Pathogen Identified: Chickenpox
