@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Western General Hospital, Farwaniya
+Specimen Collection Date: 2026-07-09
+Result Date: 2026-07-10
+
+Patient Age: 59 years
+Specimen Type: Serum
+Test: Mumps IgM Serology
+Result: Pending

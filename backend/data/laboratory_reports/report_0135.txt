@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Bayan Clinic, Hawalli
+Specimen Collection Date: 23 June 2025
+Result Date: 24 June 2025
+
+Patient Age: 23 years
+Specimen Type: Serum
+Test: Rubella IgM Serology
+Result: Negative

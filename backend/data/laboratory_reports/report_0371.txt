@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Ardiya Clinic, Farwaniya
+Specimen Collection Date: 16 Mar 2026
+Result Date: 17 Mar 2026
+
+Patient Age: 84 years
+Specimen Type: CSF
+Test: Meningococcal CSF Culture
+Result: Positive
+Pathogen Identified: Meningococcal disease

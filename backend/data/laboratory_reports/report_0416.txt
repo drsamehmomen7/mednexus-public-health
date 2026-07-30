@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Salmiya Health Centre, Hawalli
+Specimen Collection Date: 27 Apr 2026
+Result Date: 01 May 2026
+
+Patient Age: 79 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Positive
+Pathogen Identified: Measles

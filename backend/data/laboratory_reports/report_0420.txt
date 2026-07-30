@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Ardiya Clinic, Farwaniya
+Specimen Collection Date: 04 May 2026
+Result Date: 05 May 2026
+
+Patient Age: 84 years
+Specimen Type: Blood
+Test: Dengue NS1 Antigen Test
+Result: Negative

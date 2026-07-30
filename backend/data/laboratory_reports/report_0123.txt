@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Khaitan Health Centre, Farwaniya
+Specimen Collection Date: 09 Jun 2025
+Result Date: 10 Jun 2025
+
+Patient Age: 14 years
+Specimen Type: CSF
+Test: Meningococcal Gram Stain
+Result: Positive
+Pathogen Identified: Meningococcal disease

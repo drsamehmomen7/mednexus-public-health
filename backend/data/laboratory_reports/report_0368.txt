@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: North Clinic, Al Asimah
+Specimen Collection Date: 11/03/2026
+Result Date: 16/03/2026
+
+Patient Age: 59 years
+Specimen Type: Blood
+Test: Typhoid Widal Test
+Result: Negative

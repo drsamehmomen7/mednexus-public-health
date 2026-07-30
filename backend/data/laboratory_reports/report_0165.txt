@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Khaitan Health Centre, Farwaniya
+Specimen Collection Date: 09 August 2025
+Result Date: 13 August 2025
+
+Patient Age: 71 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Positive
+Pathogen Identified: Salmonellosis

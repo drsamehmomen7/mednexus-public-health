@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Fahaheel Health Centre, Ahmadi
+Specimen Collection Date: 2025-06-03
+Result Date: 2025-06-07
+
+Patient Age: 68 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Positive
+Pathogen Identified: Measles

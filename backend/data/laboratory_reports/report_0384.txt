@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Western General Hospital, Farwaniya
+Specimen Collection Date: 2026-03-28
+Result Date: 2026-04-01
+
+Patient Age: 49 years
+Specimen Type: Serum
+Test: Dengue IgM Serology
+Result: Indeterminate — repeat testing recommended

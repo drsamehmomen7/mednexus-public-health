@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Bayan Clinic, Hawalli
+Specimen Collection Date: 3/2/26
+Result Date: 8/2/26
+
+Patient Age: 2 years
+Specimen Type: Vesicle Fluid
+Test: Chickenpox PCR
+Result: Negative

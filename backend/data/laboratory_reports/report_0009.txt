@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Khaitan Health Centre, Farwaniya
+Specimen Collection Date: 2025-02-03
+Result Date: 2025-02-04
+
+Patient Age: 29 years
+Specimen Type: Serum
+Test: Rubella IgM Serology
+Result: Negative

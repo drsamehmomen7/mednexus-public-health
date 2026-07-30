@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Sulaibiya Clinic, Jahra
+Specimen Collection Date: 10/06/2026
+Result Date: 14/06/2026
+
+Patient Age: 74 years
+Specimen Type: Blood
+Test: Typhoid Blood Culture
+Result: Positive
+Pathogen Identified: Typhoid fever

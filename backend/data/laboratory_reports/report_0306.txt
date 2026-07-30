@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Mangaf Clinic, Ahmadi
+Specimen Collection Date: 2025-12-31
+Result Date: 2026-01-04
+
+Patient Age: 18 years
+Specimen Type: Serum
+Test: Rubella IgM Serology
+Result: Positive
+Pathogen Identified: Rubella

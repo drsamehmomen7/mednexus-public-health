@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Qibla Health Centre, Al Asimah
+Specimen Collection Date: 06 February 2026
+Result Date: 11 February 2026
+
+Patient Age: 6 years
+Specimen Type: Nasopharyngeal Swab
+Test: Influenza PCR
+Result: Positive
+Pathogen Identified: Influenza

@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Adan District Hospital, Mubarak Al-Kabeer
+Specimen Collection Date: 10/03/2026
+Result Date: 11/03/2026
+
+Patient Age: 34 years
+Specimen Type: Blood
+Test: Typhoid Blood Culture
+Result: Positive
+Pathogen Identified: Typhoid fever

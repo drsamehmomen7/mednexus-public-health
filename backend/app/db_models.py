@@ -113,3 +113,34 @@ class SavedImmunizationRecord(Base):
     batch_label: Mapped[str] = mapped_column(String, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class SavedLaboratoryRecord(Base):
+    """
+    Same "reviewed and trusted" convention as the other two tables —
+    named to avoid colliding with the Pydantic LaboratoryReport schema.
+    """
+    __tablename__ = "laboratory_records"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    test_name: Mapped[str] = mapped_column(String, nullable=False)
+    test_code: Mapped[str] = mapped_column(String, nullable=True)
+    specimen_type: Mapped[str] = mapped_column(String, nullable=True)
+
+    result: Mapped[str] = mapped_column(String, nullable=False)
+    pathogen_identified: Mapped[str] = mapped_column(String, nullable=True)
+
+    specimen_collection_date: Mapped[date] = mapped_column(Date, nullable=True)
+    result_date: Mapped[date] = mapped_column(Date, nullable=False)
+
+    patient_age: Mapped[int] = mapped_column(Integer, nullable=True)
+    region: Mapped[str] = mapped_column(String, nullable=False)
+    facility_name: Mapped[str] = mapped_column(String, nullable=True)
+
+    source_excerpt: Mapped[str] = mapped_column(String, nullable=True)
+    confidence: Mapped[dict] = mapped_column(JSON, nullable=True)
+    needed_review: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    batch_label: Mapped[str] = mapped_column(String, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

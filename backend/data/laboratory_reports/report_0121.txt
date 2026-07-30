@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Khaitan Health Centre, Farwaniya
+Specimen Collection Date: 07/06/2025
+Result Date: 10/06/2025
+
+Patient Age: 3 years
+Specimen Type: Vesicle Fluid
+Test: Chickenpox PCR
+Result: Negative

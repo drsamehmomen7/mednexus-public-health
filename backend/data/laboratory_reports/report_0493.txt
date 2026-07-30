@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Mangaf Clinic, Ahmadi
+Specimen Collection Date: 14 Jul 2026
+Result Date: 16 Jul 2026
+
+Patient Age: 5 years
+Specimen Type: Serum
+Test: Hepatitis A IgM Serology
+Result: Positive
+Pathogen Identified: Hepatitis A

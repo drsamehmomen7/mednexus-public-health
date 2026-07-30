@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Mangaf Clinic, Ahmadi
+Specimen Collection Date: 18 Jun 2026
+Result Date: 23 Jun 2026
+
+Patient Age: 27 years
+Specimen Type: Vesicle Fluid
+Test: Chickenpox PCR
+Result: Negative

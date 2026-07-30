@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Mangaf Clinic, Ahmadi
+Specimen Collection Date: 2026-06-28
+Result Date: 2026-07-02
+
+Patient Age: 60 years
+Specimen Type: Serum
+Test: Mumps IgM Serology
+Result: Positive
+Pathogen Identified: Mumps

@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Ardiya Clinic, Farwaniya
+Specimen Collection Date: 25 March 2025
+Result Date: 27 March 2025
+
+Patient Age: 42 years
+Specimen Type: Serum
+Test: Mumps IgM Serology
+Result: Negative

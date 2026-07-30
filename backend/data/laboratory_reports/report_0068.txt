@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Jahra Health Centre, Jahra
+Specimen Collection Date: 21 April 2025
+Result Date: 22 April 2025
+
+Patient Age: 11 years
+Specimen Type: Serum
+Test: Rubella IgM Serology
+Result: Negative

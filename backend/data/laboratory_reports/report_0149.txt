@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Northern General Hospital, Jahra
+Specimen Collection Date: 18 July 2025
+Result Date: 21 July 2025
+
+Patient Age: 16 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Negative

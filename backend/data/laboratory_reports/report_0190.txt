@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Ardiya Clinic, Farwaniya
+Specimen Collection Date: 04/09/2025
+Result Date: 08/09/2025
+
+Patient Age: 44 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Positive
+Pathogen Identified: Salmonellosis

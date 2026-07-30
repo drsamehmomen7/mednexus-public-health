@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Ardiya Clinic, Farwaniya
+Specimen Collection Date: 21 September 2025
+Result Date: 24 September 2025
+
+Patient Age: 13 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Positive
+Pathogen Identified: Measles

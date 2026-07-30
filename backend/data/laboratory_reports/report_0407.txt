@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Qibla Health Centre, Al Asimah
+Specimen Collection Date: 16 Apr 2026
+Result Date: 19 Apr 2026
+
+Patient Age: 47 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Negative

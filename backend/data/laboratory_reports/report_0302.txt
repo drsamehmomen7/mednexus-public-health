@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Bayan Clinic, Hawalli
+Specimen Collection Date: 2025-12-30
+Result Date: 2026-01-01
+
+Patient Age: 60 years
+Specimen Type: Blood
+Test: Typhoid Blood Culture
+Result: Negative

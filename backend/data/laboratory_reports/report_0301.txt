@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Southern General Hospital, Ahmadi
+Specimen Collection Date: 29 December 2025
+Result Date: 31 December 2025
+
+Patient Age: 82 years
+Specimen Type: CSF
+Test: Meningococcal Gram Stain
+Result: Pending

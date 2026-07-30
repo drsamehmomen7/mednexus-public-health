@@ -16,18 +16,22 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db import get_db, init_db
-from app.db_models import NotifiableDiseaseRecord, SavedImmunizationRecord
+from app.db_models import NotifiableDiseaseRecord, SavedImmunizationRecord, SavedLaboratoryRecord
 from app.schemas.immunization import ImmunizationRecord
+from app.schemas.laboratory import LaboratoryReport
 from app.schemas.notifiable_disease import NotifiableDiseaseCase
 from app.services.confidence import needs_review
 from app.services.document_parsing import UnsupportedDocumentType, extract_text
 from app.services.extraction import extract_notifiable_disease_with_confidence
 from app.services.immunization_extraction import extract_immunization_with_confidence
+from app.services.laboratory_extraction import extract_laboratory_with_confidence
 from app.services.ner_client import NerBackendUnavailable
 from app.services.report_type_detection import detect_report_type
 from app.services.vocabularies import (
     load_disease_gazetteer,
+    load_lab_test_gazetteer,
     load_region_gazetteer,
+    load_specimen_type_gazetteer,
     load_vaccine_gazetteer,
 )
 from sqlalchemy import text
@@ -91,6 +95,12 @@ class SaveNotifiableDiseaseRequest(BaseModel):
 
 class SaveImmunizationRequest(BaseModel):
     record: ImmunizationRecord
+    confidence: Optional[dict] = None
+    batch_label: Optional[str] = None
+
+
+class SaveLaboratoryRequest(BaseModel):
+    report: LaboratoryReport
     confidence: Optional[dict] = None
     batch_label: Optional[str] = None
 
@@ -199,6 +209,7 @@ def detect_type(request: DetectTypeRequest):
         request.text,
         disease_gazetteer=load_disease_gazetteer(),
         vaccine_gazetteer=load_vaccine_gazetteer(),
+        lab_test_gazetteer=load_lab_test_gazetteer(),
     )
     return {"detected_type": detected_type, "scores": scores}
 
@@ -984,4 +995,271 @@ def immunization_dashboard_data(
         "doses_by_age_band": doses_by_age_band,
         "doses_over_time": doses_over_time,
         "adverse_events_by_severity": adverse_events_by_severity,
+    }
+
+
+@app.post("/reports/laboratory/extract")
+def extract_laboratory_report(
+    request: ExtractRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Extracts a structured LaboratoryReport from raw report text, plus a
+    per-field confidence report. Mirrors the other two /extract
+    endpoints — see extract_notifiable_disease_report's docstring for
+    the region-gazetteer reasoning, which applies the same way here to
+    test_name/specimen_type/pathogen_identified.
+    """
+    try:
+        report, confidence = extract_laboratory_with_confidence(
+            request.text,
+            region_gazetteer=load_region_gazetteer(db),
+            disease_gazetteer=load_disease_gazetteer(),
+            lab_test_gazetteer=load_lab_test_gazetteer(),
+            specimen_type_gazetteer=load_specimen_type_gazetteer(),
+        )
+    except NerBackendUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    return {"extracted": report, "confidence": confidence}
+
+
+@app.post("/reports/laboratory/save")
+def save_laboratory_record(
+    request: SaveLaboratoryRequest,
+    db: Session = Depends(get_db),
+):
+    """Persist a record AFTER human review — same convention as the other two save endpoints."""
+    record = SavedLaboratoryRecord(
+        test_name=request.report.test_name,
+        test_code=request.report.test_code,
+        specimen_type=request.report.specimen_type,
+        result=request.report.result.value,
+        pathogen_identified=request.report.pathogen_identified,
+        specimen_collection_date=request.report.specimen_collection_date,
+        result_date=request.report.result_date,
+        patient_age=request.report.patient_age,
+        region=request.report.region,
+        facility_name=request.report.facility_name,
+        source_excerpt=request.report.source_excerpt,
+        confidence=request.confidence,
+        needed_review=needs_review(request.confidence) if request.confidence else False,
+        batch_label=request.batch_label,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return {"saved": True, "id": record.id}
+
+
+@app.get("/reports/laboratory/batches")
+def list_laboratory_batches(db: Session = Depends(get_db)):
+    """Same purpose as the other two list_*_batches endpoints, for laboratory."""
+    rows = db.execute(
+        text(
+            """
+            SELECT batch_label, COUNT(*) AS record_count
+            FROM laboratory_records
+            WHERE batch_label IS NOT NULL
+            GROUP BY batch_label ORDER BY batch_label
+            """
+        )
+    ).mappings()
+    return {"batches": [dict(r) for r in rows]}
+
+
+@app.get("/reports/laboratory/export")
+def export_laboratory(
+    batch: Optional[str] = None,
+    format: str = "json",
+    db: Session = Depends(get_db),
+):
+    """Downloads a batch (or everything, if `batch` is omitted) as JSON or CSV."""
+    return _export_records(db, "laboratory_records", batch, format)
+
+
+@app.get("/reports/laboratory/dashboard-data")
+def laboratory_dashboard_data(
+    test_name: Optional[str] = None,
+    result: Optional[str] = None,
+    year: Optional[int] = None,
+    region: Optional[str] = None,
+    batch: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Returns everything the Laboratory dashboard page needs. Different
+    shape from the other two dashboards on purpose — a lab report
+    stream is fundamentally about TESTING ACTIVITY and RESULT QUALITY,
+    not case counts or doses, so "measure: count vs rate" doesn't apply
+    here the same way (rate-per-100,000 case/dose counts assumes the
+    thing being measured is a health EVENT in the population; a test
+    result is an activity metric, not an event count). No rate toggle;
+    the headline numbers are about testing volume and how it resolved.
+    """
+    filters = []
+    params: dict = {}
+    if test_name:
+        filters.append("test_name = :test_name")
+        params["test_name"] = test_name
+    if result:
+        filters.append("result = :result")
+        params["result"] = result
+    if year:
+        filters.append("EXTRACT(YEAR FROM result_date) = :year")
+        params["year"] = year
+    if region:
+        filters.append("region = :region")
+        params["region"] = region
+    if batch:
+        filters.append("batch_label = :batch")
+        params["batch"] = batch
+    where_clause = ("WHERE " + " AND ".join(filters)) if filters else ""
+
+    total_tests = db.execute(
+        text(f"SELECT COUNT(*) FROM laboratory_records {where_clause}"), params
+    ).scalar() or 0
+
+    pct_positive = db.execute(
+        text(
+            f"""
+            SELECT ROUND(
+                100.0 * SUM(CASE WHEN result = 'positive' THEN 1 ELSE 0 END)
+                    / NULLIF(SUM(CASE WHEN result IN ('positive','negative') THEN 1 ELSE 0 END), 0), 1
+            )
+            FROM laboratory_records {where_clause}
+            """
+        ),
+        params,
+    ).scalar()
+
+    pct_pending = db.execute(
+        text(
+            f"""
+            SELECT ROUND(100.0 * SUM(CASE WHEN result = 'pending' THEN 1 ELSE 0 END) / NULLIF(COUNT(*), 0), 1)
+            FROM laboratory_records {where_clause}
+            """
+        ),
+        params,
+    ).scalar()
+
+    avg_turnaround_days = db.execute(
+        text(
+            f"""
+            SELECT ROUND(AVG(result_date - specimen_collection_date), 1)
+            FROM laboratory_records {where_clause}
+            {"AND" if where_clause else "WHERE"} specimen_collection_date IS NOT NULL
+            """
+        ),
+        params,
+    ).scalar()
+
+    regions_reporting = db.execute(
+        text(f"SELECT COUNT(DISTINCT region) FROM laboratory_records {where_clause}"), params
+    ).scalar() or 0
+
+    tests_by_name = [
+        dict(row) for row in db.execute(
+            text(
+                f"""
+                SELECT test_name AS label, COUNT(*) AS value
+                FROM laboratory_records {where_clause}
+                GROUP BY test_name ORDER BY value DESC
+                """
+            ),
+            params,
+        ).mappings()
+    ]
+
+    tests_by_region = [
+        dict(row) for row in db.execute(
+            text(
+                f"""
+                SELECT region AS label, COUNT(*) AS value
+                FROM laboratory_records {where_clause}
+                GROUP BY region ORDER BY value DESC
+                """
+            ),
+            params,
+        ).mappings()
+    ]
+
+    tests_over_time = [
+        dict(row) for row in db.execute(
+            text(
+                f"""
+                SELECT date_trunc('week', result_date) AS week, COUNT(*) AS value
+                FROM laboratory_records {where_clause}
+                GROUP BY 1 ORDER BY 1
+                """
+            ),
+            params,
+        ).mappings()
+    ]
+    for row in tests_over_time:
+        row["label"] = row.pop("week").date().isoformat()
+
+    results_by_status = [
+        dict(row) for row in db.execute(
+            text(
+                f"""
+                SELECT result AS label, COUNT(*) AS value
+                FROM laboratory_records {where_clause}
+                GROUP BY result ORDER BY value DESC
+                """
+            ),
+            params,
+        ).mappings()
+    ]
+
+    pathogens_identified = [
+        dict(row) for row in db.execute(
+            text(
+                f"""
+                SELECT pathogen_identified AS label, COUNT(*) AS value
+                FROM laboratory_records
+                {where_clause} {"AND" if where_clause else "WHERE"} pathogen_identified IS NOT NULL
+                GROUP BY pathogen_identified ORDER BY value DESC
+                """
+            ),
+            params,
+        ).mappings()
+    ]
+
+    available_test_names = [
+        r[0] for r in db.execute(text("SELECT DISTINCT test_name FROM laboratory_records ORDER BY 1"))
+    ]
+    available_regions = [
+        r[0] for r in db.execute(text("SELECT region FROM population_strata GROUP BY region ORDER BY 1"))
+    ]
+    available_years = [
+        int(r[0]) for r in db.execute(
+            text("SELECT DISTINCT EXTRACT(YEAR FROM result_date) FROM laboratory_records ORDER BY 1 DESC")
+        )
+    ]
+    available_batches = [
+        r[0] for r in db.execute(
+            text("SELECT DISTINCT batch_label FROM laboratory_records WHERE batch_label IS NOT NULL ORDER BY 1")
+        )
+    ]
+
+    return {
+        "filters": {"test_name": test_name, "result": result, "year": year, "region": region, "batch": batch},
+        "options": {
+            "test_names": available_test_names,
+            "regions": available_regions,
+            "years": available_years,
+            "batches": available_batches,
+        },
+        "summary": {
+            "total_tests": total_tests,
+            "pct_positive": pct_positive,
+            "pct_pending": pct_pending,
+            "avg_turnaround_days": avg_turnaround_days,
+            "regions_reporting": regions_reporting,
+        },
+        "tests_by_name": tests_by_name,
+        "tests_by_region": tests_by_region,
+        "tests_over_time": tests_over_time,
+        "results_by_status": results_by_status,
+        "pathogens_identified": pathogens_identified,
     }

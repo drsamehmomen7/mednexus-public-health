@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Southern General Hospital, Ahmadi
+Specimen Collection Date: 28/8/25
+Result Date: 31/8/25
+
+Patient Age: 32 years
+Specimen Type: Serum
+Test: Hepatitis A IgM Serology
+Result: Positive
+Pathogen Identified: Hepatitis A

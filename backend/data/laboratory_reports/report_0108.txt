@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Mangaf Clinic, Ahmadi
+Specimen Collection Date: 18/5/25
+Result Date: 23/5/25
+
+Patient Age: 80 years
+Specimen Type: Serum
+Test: Hepatitis A IgM Serology
+Result: Negative

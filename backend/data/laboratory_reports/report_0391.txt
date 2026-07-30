@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Messila Clinic, Mubarak Al-Kabeer
+Specimen Collection Date: 05 Apr 2026
+Result Date: 07 Apr 2026
+
+Patient Age: 82 years
+Specimen Type: CSF
+Test: Meningococcal Gram Stain
+Result: Negative

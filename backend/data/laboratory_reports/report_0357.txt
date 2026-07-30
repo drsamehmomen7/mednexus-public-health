@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Qurain Health Centre, Mubarak Al-Kabeer
+Specimen Collection Date: 4/3/26
+Result Date: 6/3/26
+
+Patient Age: 18 years
+Specimen Type: Nasopharyngeal Swab
+Test: Influenza PCR
+Result: Positive
+Pathogen Identified: Influenza

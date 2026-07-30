@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Central District Hospital, Al Asimah
+Specimen Collection Date: 19/05/2025
+Result Date: 20/05/2025
+
+Patient Age: 70 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Positive
+Pathogen Identified: Salmonellosis

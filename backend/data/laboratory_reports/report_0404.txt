@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Fahaheel Health Centre, Ahmadi
+Specimen Collection Date: 13/4/26
+Result Date: 17/4/26
+
+Patient Age: 43 years
+Specimen Type: Vesicle Fluid
+Test: Chickenpox PCR
+Result: Positive
+Pathogen Identified: Chickenpox

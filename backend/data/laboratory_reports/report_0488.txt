@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Mangaf Clinic, Ahmadi
+Specimen Collection Date: 07/07/2026
+Result Date: 09/07/2026
+
+Patient Age: 4 years
+Specimen Type: Nasopharyngeal Swab
+Test: Influenza Rapid Antigen Test
+Result: Negative

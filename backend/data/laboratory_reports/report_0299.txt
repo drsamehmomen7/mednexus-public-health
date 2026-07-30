@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Ardiya Clinic, Farwaniya
+Specimen Collection Date: 28/12/2025
+Result Date: 30/12/2025
+
+Patient Age: 16 years
+Specimen Type: Vesicle Fluid
+Test: Chickenpox PCR
+Result: Positive
+Pathogen Identified: Chickenpox

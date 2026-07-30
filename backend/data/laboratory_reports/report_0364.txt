@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Qibla Health Centre, Al Asimah
+Specimen Collection Date: 09 March 2026
+Result Date: 13 March 2026
+
+Patient Age: 35 years
+Specimen Type: Blood
+Test: Typhoid Widal Test
+Result: Positive
+Pathogen Identified: Typhoid fever

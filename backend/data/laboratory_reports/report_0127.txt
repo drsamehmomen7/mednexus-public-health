@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Salmiya Health Centre, Hawalli
+Specimen Collection Date: 2025-06-09
+Result Date: 2025-06-13
+
+Patient Age: 43 years
+Specimen Type: Serum
+Test: Dengue IgM Serology
+Result: Indeterminate — repeat testing recommended

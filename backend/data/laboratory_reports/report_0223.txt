@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Qibla Health Centre, Al Asimah
+Specimen Collection Date: 03/10/2025
+Result Date: 07/10/2025
+
+Patient Age: 58 years
+Specimen Type: Blood
+Test: Dengue NS1 Antigen Test
+Result: Negative

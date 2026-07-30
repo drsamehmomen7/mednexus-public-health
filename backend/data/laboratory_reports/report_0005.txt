@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Bayan Clinic, Hawalli
+Specimen Collection Date: 31 Jan 2025
+Result Date: 01 Feb 2025
+
+Patient Age: 12 years
+Specimen Type: Serum
+Test: Rubella IgM Serology
+Result: Positive
+Pathogen Identified: Rubella

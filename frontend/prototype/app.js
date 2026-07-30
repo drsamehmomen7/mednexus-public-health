@@ -33,6 +33,12 @@ const ENDPOINTS = {
     batches: "/reports/immunization/batches",
     savePayloadKey: "record",
   },
+  laboratory: {
+    extract: "/reports/laboratory/extract",
+    save: "/reports/laboratory/save",
+    batches: "/reports/laboratory/batches",
+    savePayloadKey: "report",
+  },
 };
 
 // Per-type field type map, so the Save step converts each edited text
@@ -52,6 +58,9 @@ const FIELD_TYPES = {
     patient_age: "int",
     patient_age_months: "int",
     adverse_event_reported: "bool",
+  },
+  laboratory: {
+    patient_age: "int",
   },
 };
 
@@ -232,6 +241,7 @@ const uploadStatus = document.getElementById("upload-status");
 const TYPE_LABELS_FOR_DETECTION = {
   notifiable: "Notifiable Disease",
   immunization: "Immunization",
+  laboratory: "Laboratory",
   unknown: null,
 };
 

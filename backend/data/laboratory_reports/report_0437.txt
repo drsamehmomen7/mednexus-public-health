@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Ardiya Clinic, Farwaniya
+Specimen Collection Date: 2026-05-13
+Result Date: 2026-05-18
+
+Patient Age: 3 years
+Specimen Type: CSF
+Test: Meningococcal Gram Stain
+Result: Positive
+Pathogen Identified: Meningococcal disease

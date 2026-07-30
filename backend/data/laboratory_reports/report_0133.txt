@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Eastern General Hospital, Hawalli
+Specimen Collection Date: 2025-06-21
+Result Date: 2025-06-22
+
+Patient Age: 5 years
+Specimen Type: Serum
+Test: Mumps IgM Serology
+Result: Negative

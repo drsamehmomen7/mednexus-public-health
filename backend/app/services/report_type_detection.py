@@ -28,12 +28,17 @@ from app.services.gazetteer import Gazetteer
 # gazetteer term matches, so detection isn't solely dependent on the
 # specific disease/vaccine name matching this deployment's known lists.
 _DISEASE_SIGNAL_WORDS = [
-    "notifiable", "diagnosis", "confirmed", "suspected", "probable",
-    "onset", "lab-confirmed", "case report",
+    "notifiable", "diagnosis", "confirmed", "confirming", "suspected",
+    "probable", "onset", "began", "lab-confirmed", "case report",
+    "occupation", "travel history", "outcome",
 ]
 _IMMUNIZATION_SIGNAL_WORDS = [
     "vaccine", "vaccination", "dose", "administered", "immunization",
     "aefi", "adverse event following immunization", "booster",
+]
+_LABORATORY_SIGNAL_WORDS = [
+    "specimen", "laboratory report", "test result", "pathogen identified",
+    "collected", "culture", "pcr", "serology",
 ]
 
 _WORD_BOUNDARY = r"(?<!\w){}(?!\w)"
@@ -51,32 +56,41 @@ def detect_report_type(
     text: str,
     disease_gazetteer: Optional[Gazetteer] = None,
     vaccine_gazetteer: Optional[Gazetteer] = None,
-) -> Tuple[str, Dict[str, int]]:
+    lab_test_gazetteer: Optional[Gazetteer] = None,
+) -> Tuple[str, Dict[str, object]]:
     """
     Returns (detected_type, scores) where detected_type is
-    "notifiable" | "immunization" | "unknown", and scores shows the raw
-    numbers behind the call — surfaced to the reviewer so "why did it
-    guess that" is never a mystery.
+    "notifiable" | "immunization" | "laboratory" | "unknown", and scores
+    shows the raw numbers behind the call — surfaced to the reviewer so
+    "why did it guess that" is never a mystery.
 
     Gazetteer term matches count double relative to signal words: an
-    exact match against a known disease/vaccine name is stronger
-    evidence than a generic word like "dose" appearing once.
+    exact match against a known disease/vaccine/lab-test name is
+    stronger evidence than a generic word like "dose" appearing once.
+    Ties (including a three-way or all-zero tie) resolve to "unknown"
+    rather than guessing — this heuristic works best as a strong
+    suggestion, not a forced pick when the evidence is thin or split.
     """
     disease_terms = disease_gazetteer.find_all(text) if disease_gazetteer else []
     vaccine_terms = vaccine_gazetteer.find_all(text) if vaccine_gazetteer else []
+    lab_test_terms = lab_test_gazetteer.find_all(text) if lab_test_gazetteer else []
 
-    disease_score = 2 * len(disease_terms) + _count_signal_words(text, _DISEASE_SIGNAL_WORDS)
-    immunization_score = 2 * len(vaccine_terms) + _count_signal_words(text, _IMMUNIZATION_SIGNAL_WORDS)
-
-    scores = {
-        "notifiable": disease_score,
-        "immunization": immunization_score,
-        "matched_diseases": disease_terms,
-        "matched_vaccines": vaccine_terms,
+    scores_by_type = {
+        "notifiable": 2 * len(disease_terms) + _count_signal_words(text, _DISEASE_SIGNAL_WORDS),
+        "immunization": 2 * len(vaccine_terms) + _count_signal_words(text, _IMMUNIZATION_SIGNAL_WORDS),
+        "laboratory": 2 * len(lab_test_terms) + _count_signal_words(text, _LABORATORY_SIGNAL_WORDS),
     }
 
-    if disease_score == 0 and immunization_score == 0:
+    scores = {
+        **scores_by_type,
+        "matched_diseases": disease_terms,
+        "matched_vaccines": vaccine_terms,
+        "matched_lab_tests": lab_test_terms,
+    }
+
+    top_type, top_score = max(scores_by_type.items(), key=lambda kv: kv[1])
+    runner_up_score = sorted(scores_by_type.values(), reverse=True)[1]
+
+    if top_score == 0 or top_score == runner_up_score:
         return "unknown", scores
-    if disease_score == immunization_score:
-        return "unknown", scores
-    return ("notifiable" if disease_score > immunization_score else "immunization"), scores
+    return top_type, scores

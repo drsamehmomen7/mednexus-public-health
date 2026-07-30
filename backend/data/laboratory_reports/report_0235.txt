@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Salmiya Health Centre, Hawalli
+Specimen Collection Date: 17/10/2025
+Result Date: 18/10/2025
+
+Patient Age: 4 years
+Specimen Type: Serum
+Test: Rubella IgM Serology
+Result: Negative

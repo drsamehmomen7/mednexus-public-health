@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Fahaheel Health Centre, Ahmadi
+Specimen Collection Date: 18/02/2025
+Result Date: 21/02/2025
+
+Patient Age: 44 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Positive
+Pathogen Identified: Salmonellosis

@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Messila Clinic, Mubarak Al-Kabeer
+Specimen Collection Date: 2026-01-21
+Result Date: 2026-01-24
+
+Patient Age: 46 years
+Specimen Type: Serum
+Test: Rubella IgM Serology
+Result: Positive
+Pathogen Identified: Rubella

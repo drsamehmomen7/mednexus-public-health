@@ -25,6 +25,19 @@ def test_detects_immunization_report():
     assert scores["immunization"] > scores["notifiable"]
 
 
+LAB_TEST_GAZETTEER = Gazetteer(["Influenza PCR", "Measles IgM Serology"])
+
+
+def test_detects_laboratory_report():
+    text = "Nasopharyngeal swab specimen collected for Influenza PCR. Result: Positive."
+    detected, scores = detect_report_type(
+        text, DISEASE_GAZETTEER, VACCINE_GAZETTEER, LAB_TEST_GAZETTEER
+    )
+    assert detected == "laboratory"
+    assert scores["laboratory"] > scores["notifiable"]
+    assert scores["laboratory"] > scores["immunization"]
+
+
 def test_no_signal_returns_unknown():
     text = "The weather today was mild with occasional cloud cover."
     detected, scores = detect_report_type(text, DISEASE_GAZETTEER, VACCINE_GAZETTEER)

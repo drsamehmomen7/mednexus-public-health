@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Mangaf Clinic, Ahmadi
+Specimen Collection Date: 18 May 2026
+Result Date: 23 May 2026
+
+Patient Age: 11 years
+Specimen Type: CSF
+Test: Meningococcal CSF Culture
+Result: Negative

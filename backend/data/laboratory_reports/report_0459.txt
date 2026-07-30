@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Jahra Health Centre, Jahra
+Specimen Collection Date: 06 June 2026
+Result Date: 11 June 2026
+
+Patient Age: 70 years
+Specimen Type: Vesicle Fluid
+Test: Chickenpox PCR
+Result: Positive
+Pathogen Identified: Chickenpox

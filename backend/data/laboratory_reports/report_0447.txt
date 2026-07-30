@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Mangaf Clinic, Ahmadi
+Specimen Collection Date: 28 May 2026
+Result Date: 31 May 2026
+
+Patient Age: 69 years
+Specimen Type: Serum
+Test: Mumps IgM Serology
+Result: Negative

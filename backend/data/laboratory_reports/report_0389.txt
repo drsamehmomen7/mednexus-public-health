@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Central District Hospital, Al Asimah
+Specimen Collection Date: 2/4/26
+Result Date: 5/4/26
+
+Patient Age: 14 years
+Specimen Type: Serum
+Test: Hepatitis A IgM Serology
+Result: Negative

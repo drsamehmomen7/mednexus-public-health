@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: North Clinic, Al Asimah
+Specimen Collection Date: 29/3/26
+Result Date: 3/4/26
+
+Patient Age: 4 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Positive
+Pathogen Identified: Measles

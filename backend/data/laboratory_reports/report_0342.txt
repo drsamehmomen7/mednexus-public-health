@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Western General Hospital, Farwaniya
+Specimen Collection Date: 12/02/2026
+Result Date: 13/02/2026
+
+Patient Age: 62 years
+Specimen Type: Serum
+Test: Hepatitis A IgM Serology
+Result: Positive
+Pathogen Identified: Hepatitis A

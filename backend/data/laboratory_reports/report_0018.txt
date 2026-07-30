@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Qibla Health Centre, Al Asimah
+Specimen Collection Date: 14/02/2025
+Result Date: 15/02/2025
+
+Patient Age: 71 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Positive
+Pathogen Identified: Measles

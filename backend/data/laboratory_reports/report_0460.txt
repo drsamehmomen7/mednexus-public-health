@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Mangaf Clinic, Ahmadi
+Specimen Collection Date: 2026-06-08
+Result Date: 2026-06-11
+
+Patient Age: 43 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Negative

@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Central District Hospital, Al Asimah
+Specimen Collection Date: 5/5/25
+Result Date: 8/5/25
+
+Patient Age: 9 years
+Specimen Type: CSF
+Test: Meningococcal Gram Stain
+Result: Positive
+Pathogen Identified: Meningococcal disease

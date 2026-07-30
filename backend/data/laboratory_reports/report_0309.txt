@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Eastern General Hospital, Hawalli
+Specimen Collection Date: 03 January 2026
+Result Date: 06 January 2026
+
+Patient Age: 22 years
+Specimen Type: Vesicle Fluid
+Test: Chickenpox PCR
+Result: Positive
+Pathogen Identified: Chickenpox

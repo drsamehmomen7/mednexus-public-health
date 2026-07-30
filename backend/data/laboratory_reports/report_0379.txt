@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Western General Hospital, Farwaniya
+Specimen Collection Date: 23 Mar 2026
+Result Date: 28 Mar 2026
+
+Patient Age: 61 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Positive
+Pathogen Identified: Salmonellosis

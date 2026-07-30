@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Messila Clinic, Mubarak Al-Kabeer
+Specimen Collection Date: 18/6/26
+Result Date: 19/6/26
+
+Patient Age: 75 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Positive
+Pathogen Identified: Salmonellosis

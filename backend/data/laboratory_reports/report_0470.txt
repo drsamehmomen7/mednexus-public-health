@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Khaitan Health Centre, Farwaniya
+Specimen Collection Date: 13 Jun 2026
+Result Date: 18 Jun 2026
+
+Patient Age: 22 years
+Specimen Type: Blood
+Test: Typhoid Widal Test
+Result: Positive
+Pathogen Identified: Typhoid fever

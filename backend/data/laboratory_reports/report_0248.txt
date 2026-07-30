@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Bayan Clinic, Hawalli
+Specimen Collection Date: 2025-10-26
+Result Date: 2025-10-31
+
+Patient Age: 29 years
+Specimen Type: Serum
+Test: Hepatitis A IgM Serology
+Result: Positive
+Pathogen Identified: Hepatitis A

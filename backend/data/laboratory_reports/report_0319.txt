@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Northern General Hospital, Jahra
+Specimen Collection Date: 18 January 2026
+Result Date: 20 January 2026
+
+Patient Age: 27 years
+Specimen Type: Serum
+Test: Hepatitis A IgM Serology
+Result: Positive
+Pathogen Identified: Hepatitis A

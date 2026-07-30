@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Jahra Health Centre, Jahra
+Specimen Collection Date: 07 April 2026
+Result Date: 09 April 2026
+
+Patient Age: 66 years
+Specimen Type: Serum
+Test: Dengue IgM Serology
+Result: Positive
+Pathogen Identified: Dengue fever

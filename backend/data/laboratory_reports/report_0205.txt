@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Ardiya Clinic, Farwaniya
+Specimen Collection Date: 15/09/2025
+Result Date: 19/09/2025
+
+Patient Age: 43 years
+Specimen Type: Serum
+Test: Rubella IgM Serology
+Result: Positive
+Pathogen Identified: Rubella

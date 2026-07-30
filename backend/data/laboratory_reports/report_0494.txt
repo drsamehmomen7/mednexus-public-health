@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Western General Hospital, Farwaniya
+Specimen Collection Date: 15 July 2026
+Result Date: 16 July 2026
+
+Patient Age: 43 years
+Specimen Type: Serum
+Test: Rubella IgM Serology
+Result: Positive
+Pathogen Identified: Rubella

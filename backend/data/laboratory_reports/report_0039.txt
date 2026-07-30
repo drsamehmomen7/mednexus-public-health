@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Fahaheel Health Centre, Ahmadi
+Specimen Collection Date: 15 March 2025
+Result Date: 20 March 2025
+
+Patient Age: 50 years
+Specimen Type: Blood
+Test: Typhoid Widal Test
+Result: Positive
+Pathogen Identified: Typhoid fever

@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Southern General Hospital, Ahmadi
+Specimen Collection Date: 12/8/25
+Result Date: 17/8/25
+
+Patient Age: 36 years
+Specimen Type: Serum
+Test: Mumps IgM Serology
+Result: Positive
+Pathogen Identified: Mumps

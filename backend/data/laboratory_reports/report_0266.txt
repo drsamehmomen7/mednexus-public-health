@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Salmiya Health Centre, Hawalli
+Specimen Collection Date: 17/11/2025
+Result Date: 21/11/2025
+
+Patient Age: 8 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Positive
+Pathogen Identified: Salmonellosis

@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Central District Hospital, Al Asimah
+Specimen Collection Date: 27 May 2026
+Result Date: 28 May 2026
+
+Patient Age: 15 years
+Specimen Type: Vesicle Fluid
+Test: Chickenpox PCR
+Result: Positive
+Pathogen Identified: Chickenpox

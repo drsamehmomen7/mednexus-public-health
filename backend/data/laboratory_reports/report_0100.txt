@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Fahaheel Health Centre, Ahmadi
+Specimen Collection Date: 12 May 2025
+Result Date: 16 May 2025
+
+Patient Age: 22 years
+Specimen Type: Nasopharyngeal Swab
+Test: Influenza Rapid Antigen Test
+Result: Positive
+Pathogen Identified: Influenza

@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Southern General Hospital, Ahmadi
+Specimen Collection Date: 15/06/2026
+Result Date: 16/06/2026
+
+Patient Age: 56 years
+Specimen Type: Vesicle Fluid
+Test: Chickenpox PCR
+Result: Negative

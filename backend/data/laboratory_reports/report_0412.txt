@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Western General Hospital, Farwaniya
+Specimen Collection Date: 23/4/26
+Result Date: 25/4/26
+
+Patient Age: 38 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Negative

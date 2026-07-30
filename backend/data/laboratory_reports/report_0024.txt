@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Sulaibiya Clinic, Jahra
+Specimen Collection Date: 17 February 2025
+Result Date: 22 February 2025
+
+Patient Age: 25 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Negative

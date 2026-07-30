@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Jahra Health Centre, Jahra
+Specimen Collection Date: 18/11/2025
+Result Date: 20/11/2025
+
+Patient Age: 82 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Negative

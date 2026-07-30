@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Southern General Hospital, Ahmadi
+Specimen Collection Date: 13 October 2025
+Result Date: 15 October 2025
+
+Patient Age: 40 years
+Specimen Type: Serum
+Test: Rubella IgM Serology
+Result: Negative

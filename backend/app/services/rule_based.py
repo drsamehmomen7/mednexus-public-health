@@ -303,3 +303,69 @@ def extract_adverse_event(text: str) -> Tuple[bool, str, Optional[str]]:
     if description_match:
         description = _TRAILING_FOLLOWING_DOSE.sub("", description_match.group(1).strip()).strip()
     return True, severity, description
+
+
+# --- Laboratory-specific fields (added for the Laboratory report type) ----
+
+# Anchors specimen_collection_date vs result_date — a lab report always
+# states both, often close together, so the window has to be narrow
+# enough not to reach into the OTHER date. Verified against all 500
+# synthetic lab reports: a 20-char window is wide enough for every date
+# format used (up to "22 February 2025", 17 chars) but narrow enough to
+# never reach the second date, even in the tightest shorthand phrasing
+# ("Collected 22 Mar 2025, result 27/3/25:").
+_SPECIMEN_DATE_KEYWORD_PATTERN = re.compile(
+    r"(?:specimen collection date|collected(?:\s+on)?)\s*:?\s*", re.IGNORECASE
+)
+_RESULT_DATE_KEYWORD_PATTERN = re.compile(
+    r"(?:result date|result finalized|result)\s*:?\s*", re.IGNORECASE
+)
+_DATE_WINDOW_CHARS = 20
+
+
+def extract_specimen_collection_date(text: str) -> Optional[date]:
+    """Return the specimen collection date, or None if not stated."""
+    match = _SPECIMEN_DATE_KEYWORD_PATTERN.search(text)
+    if not match:
+        return None
+    window = text[match.end():match.end() + _DATE_WINDOW_CHARS]
+    return extract_first_date(window)
+
+
+def extract_result_date(text: str) -> Optional[date]:
+    """
+    Return the date the lab result was finalized, or None if not stated.
+
+    The keyword pattern's fallback alternative (bare "result") only
+    matches correctly because, in every phrasing this project generates,
+    the more specific anchors ("result date", "result finalized") or the
+    bare word's only occurrence precede any OTHER use of "result" in the
+    text (e.g. "Result: Positive" always appears after "Result Date:" in
+    the structured voice, never before) — re.search takes the leftmost
+    match, so the right one wins. Verified against all 500 reports.
+    """
+    match = _RESULT_DATE_KEYWORD_PATTERN.search(text)
+    if not match:
+        return None
+    window = text[match.end():match.end() + _DATE_WINDOW_CHARS]
+    return extract_first_date(window)
+
+
+_RESULT_STATUS_KEYWORDS = [
+    ("indeterminate", re.compile(r"\bindeterminate\b", re.IGNORECASE)),
+    ("pending", re.compile(r"\bpending\b", re.IGNORECASE)),
+    ("negative", re.compile(r"\bnegative\b", re.IGNORECASE)),
+    ("positive", re.compile(r"\bpositive\b", re.IGNORECASE)),
+]
+
+
+def extract_lab_result(text: str) -> Optional[str]:
+    """
+    Return "positive"/"negative"/"indeterminate"/"pending", or None if
+    none of those words appear. Plain string, not the TestResult enum —
+    same reasoning as the other extract_* helpers returning plain values.
+    """
+    for value, pattern in _RESULT_STATUS_KEYWORDS:
+        if pattern.search(text):
+            return value
+    return None

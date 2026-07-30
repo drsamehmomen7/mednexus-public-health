@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Eastern General Hospital, Hawalli
+Specimen Collection Date: 10 September 2025
+Result Date: 13 September 2025
+
+Patient Age: 34 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Positive
+Pathogen Identified: Measles

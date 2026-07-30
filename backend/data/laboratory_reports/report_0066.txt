@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: North Clinic, Al Asimah
+Specimen Collection Date: 2025-04-14
+Result Date: 2025-04-19
+
+Patient Age: 54 years
+Specimen Type: Serum
+Test: Hepatitis A IgM Serology
+Result: Negative

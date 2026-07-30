@@ -36,9 +36,13 @@ from app.services.gazetteer import Gazetteer
 _region_gazetteer_cache: Optional[Gazetteer] = None
 _disease_gazetteer_cache: Optional[Gazetteer] = None
 _vaccine_gazetteer_cache: Optional[Gazetteer] = None
+_lab_test_gazetteer_cache: Optional[Gazetteer] = None
+_specimen_type_gazetteer_cache: Optional[Gazetteer] = None
 
 _DISEASE_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "notifiable_diseases.json"
 _VACCINE_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "vaccines.json"
+_LAB_TEST_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "lab_tests.json"
+_SPECIMEN_TYPE_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "specimen_types.json"
 
 
 def load_region_gazetteer(db: Session, aliases: Optional[Dict[str, str]] = None,
@@ -137,3 +141,53 @@ def clear_vaccine_cache() -> None:
     """Call after changing the vaccine reference data, and in tests."""
     global _vaccine_gazetteer_cache
     _vaccine_gazetteer_cache = None
+
+
+def load_lab_test_gazetteer(aliases: Optional[Dict[str, str]] = None,
+                            refresh: bool = False) -> Gazetteer:
+    """
+    Build (or return the cached) lab-test vocabulary for the Laboratory
+    report type — data/lab_tests.json, a synthetic placeholder (like the
+    disease gazetteer) covering the panel of tests realistic for this
+    project's 10 tracked diseases. A real deployment would replace this
+    with its own test catalogue.
+    """
+    global _lab_test_gazetteer_cache
+
+    if _lab_test_gazetteer_cache is not None and not refresh:
+        return _lab_test_gazetteer_cache
+
+    try:
+        terms = json.loads(_LAB_TEST_VOCAB_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        terms = []
+
+    _lab_test_gazetteer_cache = Gazetteer(terms, aliases=aliases)
+    return _lab_test_gazetteer_cache
+
+
+def clear_lab_test_cache() -> None:
+    global _lab_test_gazetteer_cache
+    _lab_test_gazetteer_cache = None
+
+
+def load_specimen_type_gazetteer(aliases: Optional[Dict[str, str]] = None,
+                                 refresh: bool = False) -> Gazetteer:
+    """Same pattern as load_lab_test_gazetteer, for specimen types."""
+    global _specimen_type_gazetteer_cache
+
+    if _specimen_type_gazetteer_cache is not None and not refresh:
+        return _specimen_type_gazetteer_cache
+
+    try:
+        terms = json.loads(_SPECIMEN_TYPE_VOCAB_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        terms = []
+
+    _specimen_type_gazetteer_cache = Gazetteer(terms, aliases=aliases)
+    return _specimen_type_gazetteer_cache
+
+
+def clear_specimen_type_cache() -> None:
+    global _specimen_type_gazetteer_cache
+    _specimen_type_gazetteer_cache = None

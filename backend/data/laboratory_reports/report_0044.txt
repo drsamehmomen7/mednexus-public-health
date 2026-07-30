@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Central District Hospital, Al Asimah
+Specimen Collection Date: 23/3/25
+Result Date: 25/3/25
+
+Patient Age: 4 years
+Specimen Type: Serum
+Test: Dengue IgM Serology
+Result: Negative

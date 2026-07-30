@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Salmiya Health Centre, Hawalli
+Specimen Collection Date: 2026-02-05
+Result Date: 2026-02-07
+
+Patient Age: 60 years
+Specimen Type: Serum
+Test: Hepatitis A IgM Serology
+Result: Negative

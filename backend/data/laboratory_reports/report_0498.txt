@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Khaitan Health Centre, Farwaniya
+Specimen Collection Date: 16/07/2026
+Result Date: 19/07/2026
+
+Patient Age: 23 years
+Specimen Type: Blood
+Test: Typhoid Widal Test
+Result: Negative

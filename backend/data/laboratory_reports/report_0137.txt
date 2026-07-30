@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Bayan Clinic, Hawalli
+Specimen Collection Date: 29 June 2025
+Result Date: 01 July 2025
+
+Patient Age: 60 years
+Specimen Type: Vesicle Fluid
+Test: Chickenpox PCR
+Result: Negative

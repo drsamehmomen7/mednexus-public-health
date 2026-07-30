@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Ardiya Clinic, Farwaniya
+Specimen Collection Date: 19/05/2026
+Result Date: 21/05/2026
+
+Patient Age: 20 years
+Specimen Type: Nasopharyngeal Swab
+Test: Influenza PCR
+Result: Positive
+Pathogen Identified: Influenza

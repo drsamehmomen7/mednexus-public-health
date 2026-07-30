@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Salmiya Health Centre, Hawalli
+Specimen Collection Date: 16/08/2025
+Result Date: 19/08/2025
+
+Patient Age: 22 years
+Specimen Type: Serum
+Test: Mumps IgM Serology
+Result: Negative

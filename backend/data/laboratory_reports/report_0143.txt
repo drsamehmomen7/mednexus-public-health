@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Northern General Hospital, Jahra
+Specimen Collection Date: 03 Jul 2025
+Result Date: 06 Jul 2025
+
+Patient Age: 19 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Positive
+Pathogen Identified: Salmonellosis

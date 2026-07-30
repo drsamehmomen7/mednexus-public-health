@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: North Clinic, Al Asimah
+Specimen Collection Date: 16/02/2026
+Result Date: 17/02/2026
+
+Patient Age: 6 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Negative

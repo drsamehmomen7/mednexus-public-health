@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Sulaibiya Clinic, Jahra
+Specimen Collection Date: 05/03/2026
+Result Date: 07/03/2026
+
+Patient Age: 10 years
+Specimen Type: Blood
+Test: Typhoid Widal Test
+Result: Positive
+Pathogen Identified: Typhoid fever

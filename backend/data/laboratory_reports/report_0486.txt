@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Mangaf Clinic, Ahmadi
+Specimen Collection Date: 03/07/2026
+Result Date: 07/07/2026
+
+Patient Age: 18 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Negative

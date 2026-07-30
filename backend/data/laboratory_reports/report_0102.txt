@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Qurain Health Centre, Mubarak Al-Kabeer
+Specimen Collection Date: 17/05/2025
+Result Date: 18/05/2025
+
+Patient Age: 77 years
+Specimen Type: Serum
+Test: Hepatitis A IgM Serology
+Result: Negative

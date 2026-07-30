@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Khaitan Health Centre, Farwaniya
+Specimen Collection Date: 10/4/26
+Result Date: 15/4/26
+
+Patient Age: 15 years
+Specimen Type: Blood
+Test: Typhoid Blood Culture
+Result: Negative

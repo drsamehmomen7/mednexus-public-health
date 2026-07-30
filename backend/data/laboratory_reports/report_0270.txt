@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Salmiya Health Centre, Hawalli
+Specimen Collection Date: 2025-11-23
+Result Date: 2025-11-27
+
+Patient Age: 41 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Negative

@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Sulaibiya Clinic, Jahra
+Specimen Collection Date: 23 July 2025
+Result Date: 26 July 2025
+
+Patient Age: 53 years
+Specimen Type: Nasopharyngeal Swab
+Test: Influenza PCR
+Result: Negative

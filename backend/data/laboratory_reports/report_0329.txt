@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Central District Hospital, Al Asimah
+Specimen Collection Date: 27 Jan 2026
+Result Date: 31 Jan 2026
+
+Patient Age: 68 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Positive
+Pathogen Identified: Measles

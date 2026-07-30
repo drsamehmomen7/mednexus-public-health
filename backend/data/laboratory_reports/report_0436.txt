@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Western General Hospital, Farwaniya
+Specimen Collection Date: 15/5/26
+Result Date: 17/5/26
+
+Patient Age: 85 years
+Specimen Type: CSF
+Test: Meningococcal Gram Stain
+Result: Negative

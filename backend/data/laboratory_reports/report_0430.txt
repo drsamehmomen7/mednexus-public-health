@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Northern General Hospital, Jahra
+Specimen Collection Date: 07 May 2026
+Result Date: 11 May 2026
+
+Patient Age: 38 years
+Specimen Type: Blood
+Test: Typhoid Blood Culture
+Result: Negative

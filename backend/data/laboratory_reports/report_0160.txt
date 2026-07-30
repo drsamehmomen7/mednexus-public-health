@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Central District Hospital, Al Asimah
+Specimen Collection Date: 2025-08-06
+Result Date: 2025-08-09
+
+Patient Age: 40 years
+Specimen Type: Nasopharyngeal Swab
+Test: Influenza PCR
+Result: Positive
+Pathogen Identified: Influenza

@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Eastern General Hospital, Hawalli
+Specimen Collection Date: 03/05/2026
+Result Date: 06/05/2026
+
+Patient Age: 28 years
+Specimen Type: Serum
+Test: Mumps IgM Serology
+Result: Positive
+Pathogen Identified: Mumps

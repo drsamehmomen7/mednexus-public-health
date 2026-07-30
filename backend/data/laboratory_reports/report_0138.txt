@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Bayan Clinic, Hawalli
+Specimen Collection Date: 29/6/25
+Result Date: 1/7/25
+
+Patient Age: 20 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Negative

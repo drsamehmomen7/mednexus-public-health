@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Sulaibiya Clinic, Jahra
+Specimen Collection Date: 2025-10-10
+Result Date: 2025-10-13
+
+Patient Age: 9 years
+Specimen Type: CSF
+Test: Meningococcal CSF Culture
+Result: Positive
+Pathogen Identified: Meningococcal disease

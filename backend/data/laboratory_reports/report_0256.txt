@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Central District Hospital, Al Asimah
+Specimen Collection Date: 07/11/2025
+Result Date: 09/11/2025
+
+Patient Age: 21 years
+Specimen Type: Vesicle Fluid
+Test: Chickenpox PCR
+Result: Negative

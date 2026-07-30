@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Fahaheel Health Centre, Ahmadi
+Specimen Collection Date: 07/06/2026
+Result Date: 11/06/2026
+
+Patient Age: 52 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Negative

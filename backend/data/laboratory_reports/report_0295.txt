@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Qibla Health Centre, Al Asimah
+Specimen Collection Date: 23 Dec 2025
+Result Date: 26 Dec 2025
+
+Patient Age: 71 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Positive
+Pathogen Identified: Salmonellosis

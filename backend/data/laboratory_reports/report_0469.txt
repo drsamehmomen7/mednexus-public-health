@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Sulaibiya Clinic, Jahra
+Specimen Collection Date: 15 Jun 2026
+Result Date: 18 Jun 2026
+
+Patient Age: 29 years
+Specimen Type: Stool
+Test: Salmonella Stool Culture
+Result: Negative

@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Western General Hospital, Farwaniya
+Specimen Collection Date: 13 Aug 2025
+Result Date: 16 Aug 2025
+
+Patient Age: 19 years
+Specimen Type: Serum
+Test: Mumps IgM Serology
+Result: Negative

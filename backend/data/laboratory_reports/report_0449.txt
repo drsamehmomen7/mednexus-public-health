@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Bayan Clinic, Hawalli
+Specimen Collection Date: 01/06/2026
+Result Date: 02/06/2026
+
+Patient Age: 74 years
+Specimen Type: Nasopharyngeal Swab
+Test: Influenza PCR
+Result: Negative

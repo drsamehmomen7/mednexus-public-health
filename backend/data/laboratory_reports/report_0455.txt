@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Khaitan Health Centre, Farwaniya
+Specimen Collection Date: 06 Jun 2026
+Result Date: 07 Jun 2026
+
+Patient Age: 50 years
+Specimen Type: Blood
+Test: Dengue NS1 Antigen Test
+Result: Positive
+Pathogen Identified: Dengue fever

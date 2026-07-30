@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Salmiya Health Centre, Hawalli
+Specimen Collection Date: 2025-08-28
+Result Date: 2025-09-02
+
+Patient Age: 24 years
+Specimen Type: Serum
+Test: Measles IgM Serology
+Result: Negative

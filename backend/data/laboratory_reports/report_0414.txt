@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Qurain Health Centre, Mubarak Al-Kabeer
+Specimen Collection Date: 21/04/2026
+Result Date: 26/04/2026
+
+Patient Age: 70 years
+Specimen Type: Blood
+Test: Typhoid Blood Culture
+Result: Negative

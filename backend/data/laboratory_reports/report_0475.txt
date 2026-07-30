@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Mangaf Clinic, Ahmadi
+Specimen Collection Date: 2026-06-18
+Result Date: 2026-06-23
+
+Patient Age: 69 years
+Specimen Type: Serum
+Test: Dengue IgM Serology
+Result: Positive
+Pathogen Identified: Dengue fever

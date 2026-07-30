@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Adan District Hospital, Mubarak Al-Kabeer
+Specimen Collection Date: 23/7/25
+Result Date: 25/7/25
+
+Patient Age: 38 years
+Specimen Type: Nasopharyngeal Swab
+Test: Influenza Rapid Antigen Test
+Result: Negative

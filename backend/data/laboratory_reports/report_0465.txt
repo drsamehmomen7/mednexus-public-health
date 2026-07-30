@@ -1,0 +1,9 @@
+LABORATORY REPORT
+Facility: Ardiya Clinic, Farwaniya
+Specimen Collection Date: 10/6/26
+Result Date: 15/6/26
+
+Patient Age: 83 years
+Specimen Type: Serum
+Test: Hepatitis A IgM Serology
+Result: Negative

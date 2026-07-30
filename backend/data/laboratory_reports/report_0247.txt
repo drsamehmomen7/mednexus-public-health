@@ -1,0 +1,10 @@
+LABORATORY REPORT
+Facility: Salmiya Health Centre, Hawalli
+Specimen Collection Date: 28 Oct 2025
+Result Date: 31 Oct 2025
+
+Patient Age: 65 years
+Specimen Type: CSF
+Test: Meningococcal Gram Stain
+Result: Positive
+Pathogen Identified: Meningococcal disease
