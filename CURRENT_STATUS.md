@@ -298,6 +298,18 @@ blocking). Metabase (Terminal 3) is no longer part of the routine.
   `python -c "..."` are fragile — PowerShell doesn't treat `\"` as an
   escaped quote the way bash does. Write a short `.py` file instead of a
   multi-statement inline command, every time.
+- Local startup no longer needs `$env:DATABASE_URL` typed per session —
+  `backend/.env` (gitignored; copy from `.env.example`) holds it, loaded
+  automatically by `app/db.py` via python-dotenv. Starting the backend is
+  now just `cd backend` then `.\start_backend.ps1` (that script activates
+  the venv AND starts uvicorn itself — no separate `Activate.ps1` step
+  needed). Two one-time local machine settings this depended on, both
+  already done as of 2026-07-30 but worth knowing if set up on a NEW
+  machine: `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy
+  RemoteSigned` (PowerShell blocks running any local .ps1 by default),
+  and `Unblock-File -Path .\start_backend.ps1` (Windows flags any file
+  downloaded from a browser, .ps1 included, as untrusted even after the
+  execution policy is relaxed).
 
 ## How to resume in a new chat
 

@@ -6,3 +6,4 @@ sqlalchemy==2.0.51
 psycopg2-binary==2.9.10
 python-docx==1.2.0
 python-multipart==0.0.9
+python-dotenv==1.0.1

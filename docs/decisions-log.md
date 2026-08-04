@@ -1016,3 +1016,43 @@ scratch. Recovery after that was the by-now-standard sequence: generate
 + load all three report types fresh. Confirmed back to 100% on all
 fields (Laboratory explicitly re-verified; Disease and Immunization
 completed without errors in the same run).
+
+### 2026-07-30 — Local dev workflow stabilized (.env + startup script)
+Prompted by the user wanting reliability rather than re-running the same
+handful of commands every session, and asking whether upgrading Render
+to a paid plan would prevent future resets.
+
+**Render pricing/policy, confirmed via search (current as of this
+date):** free Postgres databases expire 30 days after creation with a
+14-day grace period before permanent deletion — matches what's already
+been observed twice. Paid instances don't expire and get real backups.
+Compute (web service) and Postgres are billed and upgraded separately —
+upgrading only one doesn't fix the other's failure mode. Cheapest paid
+tier for each is roughly $6-7/month, ~$13-14/month total for both. This
+is the user's call to make (cost vs. reliability trade-off), not
+something to decide unilaterally — presented the facts and left the
+decision open.
+
+**Local workflow fix (implemented):** `app/db.py` now loads
+`python-dotenv` at import time, so `DATABASE_URL` can live in
+`backend/.env` (gitignored; `.env.example` is the committed template)
+instead of being retyped into `$env:DATABASE_URL` every new terminal
+session — a real environment variable, if one happens to be set, still
+takes priority over the `.env` file. `start_backend.ps1` bundles venv
+activation and starting uvicorn into one script, so starting the
+backend is `cd backend` then `.\start_backend.ps1` — no separate
+activation step.
+
+**Getting there took several real, worth-remembering PowerShell/Windows
+gotchas**, all now in the ground rules above so they don't get
+rediscovered from scratch next time: a browser download strips the
+leading dot from `.env.example`, landing as `env.example`; PowerShell
+blocks running any local `.ps1` by default
+(`Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`,
+one-time per machine); Windows separately flags any downloaded file,
+`.ps1` included, as untrusted even after that policy change
+(`Unblock-File`, one-time per file); and pasting multiple PowerShell
+statements as one block can silently merge them onto one line in a way
+that breaks argument parsing — the fix throughout this whole session
+was the same one, run every command separately and wait for its result
+before the next.
