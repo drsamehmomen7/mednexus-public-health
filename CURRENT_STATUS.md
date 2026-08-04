@@ -284,12 +284,20 @@ blocking). Metabase (Terminal 3) is no longer part of the routine.
 - Commit after every complete, tested change — not at end of day. See
   decisions-log.md's most recent entries for exactly what's changed and why.
 - `init_db()` (`Base.metadata.create_all()`) only creates MISSING tables —
-  it never alters an existing table when the model changes. Any time the
-  Render database gets reset (free-tier 30-day expiry — see "Where we are
-  right now") and a schema mismatch error appears (a column "does not
-  exist"), drop the affected table and let `init_db()` recreate it, rather
-  than assuming the model code is wrong. Switch to Alembic migrations once
-  real (non-synthetic) data exists and dropping tables is no longer safe.
+  it never alters an existing table when the model changes. The Render
+  database has reset twice now (2026-07-28, 2026-07-30 — under a new
+  service/database name the second time, so it's a full recreation, not
+  an in-place wipe). When a schema mismatch error appears (a column
+  "does not exist"), run `python -m scripts.add_batch_label_column`
+  first (safe, idempotent, adds the one column that keeps going missing)
+  — only drop-and-recreate a table if the error is about a DIFFERENT
+  missing column that script doesn't cover. Switch to Alembic migrations
+  once real (non-synthetic) data exists and dropping tables is no longer
+  safe.
+- PowerShell one-liners with nested double-quoted strings inside
+  `python -c "..."` are fragile — PowerShell doesn't treat `\"` as an
+  escaped quote the way bash does. Write a short `.py` file instead of a
+  multi-statement inline command, every time.
 
 ## How to resume in a new chat
 

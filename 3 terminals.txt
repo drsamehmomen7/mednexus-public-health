@@ -1,7 +1,12 @@
 we must open 3 terminals at the same time  :
 
 1-
-(venv) PS C:\mednexus-public-health\backend> $env:DATABASE_URL = "postgresql://mednexus_public_health_user:X8N85J2MswwWjw54zLXVhYd4WhmL88Fh@dpg-d9iu2u741pts73bqta50-a.oregon-postgres.render.com/mednexus_public_health"
+(venv) PS C:\mednexus-public-health\backend>
+
+ $env:DATABASE_URL =  $env:DATABASE_URL = "postgresql://mednexus_public_health_user:X8N85J2MswwWjw54zLXVhYd4WhmL88Fh@dpg-d9iu2u741pts73bqta50-a.oregon-postgres.render.com/mednexus_public_health"
+
+Then : -
+
 >> python -m uvicorn app.main:app --reload --port 8001
 
 

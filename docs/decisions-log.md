@@ -936,3 +936,83 @@ exactly this: which vocabularies are real vs. synthetic-placeholder,
 and where the real ones come from — matches the project's existing
 transparency practice (the AI-collaboration disclosure) rather than
 letting a demo audience assume every list is equally authoritative.
+
+### 2026-07-30 — Real-world text stress test (not synthetic) — findings for later
+Ran two genuinely real, published texts through the Notifiable Disease
+pipeline — not to replace the synthetic generator (still the right tool
+for measuring accuracy against a known answer), but to check whether the
+gazetteer/rule-based logic generalizes past the phrasing this project's
+own generator happens to use. No individual-level de-identified case
+report datasets are freely available without a formal data use agreement
+(confirmed via search — e.g. MIMIC-IV requires PhysioNet credentialing);
+CDC's own public notifiable-disease data is aggregate statistical tables,
+not narrative text. Settled on real published outbreak narratives
+instead: a Wikipedia article on the 2026 Kent (England) meningococcal
+disease outbreak, sourced from UKHSA/press reporting, and a WHO Disease
+Outbreak News report on the 2025-26 Marburg virus disease outbreak in
+Ethiopia (published 26 January 2026) — both real, both public, neither
+requiring credentialed access.
+
+**What generalized well:** disease_name (gazetteer) correctly matched
+"meningococcal disease" and "Marburg virus disease" in both real texts
+with no changes needed. patient_age correctly parsed "19-year-old" from
+real prose. lab_confirmed correctly picked up "laboratory confirmed" /
+"laboratory confirmation" phrasing in both. region correctly returned
+Unknown for non-Kuwait locations (Kent, Jinka) — expected behaviour, not
+a failure, since the gazetteer is deliberately Kuwait-scoped.
+
+**What didn't, and should get a follow-up pass:**
+1. `onset_date` — its keyword anchors ("onset", "symptoms began on",
+   "date of symptom onset") come from this project's OWN generator's
+   phrasing. Neither real text used any of them: the UK article said "a
+   case... presented in East Kent"; the WHO report said "developed
+   symptoms on 23 October." Both real, both never matched. Worth adding
+   "developed symptoms" and "presented with/in" as additional anchor
+   phrases once there's time to verify they don't introduce false
+   matches elsewhere.
+2. `diagnosis_status` — the WHO Marburg text describes 14 confirmed and
+   5 probable cases together; keyword-priority order picked up
+   "probable" (checked first, per the existing rule that a cautious
+   classification shouldn't be overridden by an unrelated "confirmed"
+   elsewhere) even though the specific FIRST case being described was
+   confirmed. This isn't really a bug in the priority logic — it's the
+   schema's single-patient assumption meeting a text that narrates
+   multiple patients with different statuses at once. Worth remembering
+   if real free-text intake ever includes multi-case outbreak summaries
+   rather than one-patient reports, which is the shape this schema
+   currently assumes throughout.
+
+Both source files kept as-is (with citation) for whoever wants to re-run
+this check after future rule_based.py changes.
+
+### 2026-07-30 — Second Render reset; migration script made permanent
+Same symptom as 2026-07-28: uploads started failing with "Not Found" /
+`Could not reach the backend`, traced to `column "batch_label" does not
+exist` once uvicorn came up — confirming the Render web service AND
+database had both been recreated under new names
+(`mednexus-public-health-api`, `mednexus-public-health-db`), not just
+reset in place. Same root cause as before: `init_db()`'s
+`create_all()` only creates missing tables, never alters an existing
+one, so a freshly-created table reflects whatever `db_models.py` looked
+like the moment the very first request hit it — if that's before
+`batch_label` existed, the column is simply absent until patched
+manually.
+
+One new wrinkle this time: the first fix attempt used a `python -c
+"..."` one-liner with a nested double-quoted SQL string
+(`\"SELECT ...\"`) inside an already-double-quoted PowerShell argument.
+PowerShell doesn't treat backslash as a quote-escape character the way
+bash does, so the string broke and Python saw an unclosed paren. Lesson:
+don't hand-write multi-statement inline `-c` commands with mixed
+quoting for PowerShell — write a short `.py` file instead, every time,
+even for something that looks like a one-liner.
+
+Fixed properly this time: `scripts/add_batch_label_column.py` is now a
+permanent, reusable, idempotent script (`ADD COLUMN IF NOT EXISTS` on
+all three tables, then confirms by name) rather than a throwaway
+command — next time this happens, it's `python -m
+scripts.add_batch_label_column`, not reconstructing the fix from
+scratch. Recovery after that was the by-now-standard sequence: generate
++ load all three report types fresh. Confirmed back to 100% on all
+fields (Laboratory explicitly re-verified; Disease and Immunization
+completed without errors in the same run).
