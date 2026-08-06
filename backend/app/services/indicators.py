@@ -5,10 +5,11 @@ dashboard (dashboard.html, immunization-dashboard.html,
 laboratory-dashboard.html).
 
 Kept in its own service module (not stuffed into main.py) because these
-queries join across tables that belong to different report types
-(immunization_records + population_strata here; laboratory_records +
-notifiable_disease_records for the next indicator), which is a different
-shape of logic from a single report type's own dashboard-data endpoint.
+are cross-cutting, decision-facing metrics — sometimes joining across
+report-type tables (like the first indicator below), sometimes a
+breakdown of a single report type that its own per-type dashboard
+doesn't already surface (like the second) — a different shape of logic
+from a single report type's own dashboard-data endpoint either way.
 
 First indicator: vaccination coverage % by region.
     coverage % = doses administered in a region / that region's total
@@ -74,6 +75,58 @@ def vaccination_coverage_by_region(
                 GROUP BY region
             ) doses ON doses.region = pop.region
             ORDER BY pop.region
+            """
+        ),
+        params,
+    ).mappings()
+
+    return [dict(row) for row in rows]
+
+
+def test_positivity_by_region(
+    db: Session, test_name: Optional[str] = None
+) -> list[dict]:
+    """
+    Returns one row per region: positive, negative, resolved (=
+    positive + negative), positivity_pct.
+
+    positivity_pct = 100 * positive / (positive + negative) — pending and
+    indeterminate results are excluded from the denominator, same
+    convention already used for the single-number pct_positive in
+    app/main.py's laboratory_dashboard_data, so this indicator's numbers
+    stay consistent with what the Laboratory dashboard already reports
+    (just broken down by region here, which that dashboard doesn't do —
+    its own region breakdown is a raw test COUNT, not a positivity rate).
+
+    test_name=None (default) pools every test type together per region.
+    Passing a specific test_name narrows to that test only — not called
+    anywhere yet, but real positivity tracking (e.g. "% positive for PCR
+    - Influenza A specifically") is usually test-specific, same reasoning
+    as vaccine_name on vaccination_coverage_by_region above.
+    """
+    params: dict = {}
+    test_filter = ""
+    if test_name:
+        test_filter = "AND test_name = :test_name"
+        params["test_name"] = test_name
+
+    rows = db.execute(
+        text(
+            f"""
+            SELECT
+                region,
+                SUM(CASE WHEN result = 'positive' THEN 1 ELSE 0 END) AS positive,
+                SUM(CASE WHEN result = 'negative' THEN 1 ELSE 0 END) AS negative,
+                SUM(CASE WHEN result IN ('positive', 'negative') THEN 1 ELSE 0 END) AS resolved,
+                ROUND(
+                    100.0 * SUM(CASE WHEN result = 'positive' THEN 1 ELSE 0 END)
+                        / NULLIF(SUM(CASE WHEN result IN ('positive', 'negative') THEN 1 ELSE 0 END), 0),
+                    2
+                ) AS positivity_pct
+            FROM laboratory_records
+            WHERE 1=1 {test_filter}
+            GROUP BY region
+            ORDER BY region
             """
         ),
         params,
