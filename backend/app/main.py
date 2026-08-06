@@ -24,6 +24,7 @@ from app.services.confidence import needs_review
 from app.services.document_parsing import UnsupportedDocumentType, extract_text
 from app.services.extraction import extract_notifiable_disease_with_confidence
 from app.services.immunization_extraction import extract_immunization_with_confidence
+from app.services.indicators import test_positivity_by_region, vaccination_coverage_by_region
 from app.services.laboratory_extraction import extract_laboratory_with_confidence
 from app.services.ner_client import NerBackendUnavailable
 from app.services.report_type_detection import detect_report_type
@@ -1262,4 +1263,29 @@ def laboratory_dashboard_data(
         "tests_over_time": tests_over_time,
         "results_by_status": results_by_status,
         "pathogens_identified": pathogens_identified,
+    }
+
+
+@app.get("/indicators/dashboard-data")
+def indicators_dashboard_data(
+    vaccine_name: Optional[str] = None,
+    test_name: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """
+    Combined payload for the Indicators layer — metrics that cross-
+    reference or sit above individual report types, separate from each
+    report type's own per-type dashboard.
+
+    Deliberately thin: it just calls the two indicator functions in
+    app/services/indicators.py and returns their results side by side.
+    Each indicator keeps its own optional filter (vaccine_name /
+    test_name) rather than sharing one, since they filter different
+    things on different tables — a shared "filter" param would be
+    misleading here.
+    """
+    return {
+        "filters": {"vaccine_name": vaccine_name, "test_name": test_name},
+        "vaccination_coverage": vaccination_coverage_by_region(db, vaccine_name=vaccine_name),
+        "test_positivity": test_positivity_by_region(db, test_name=test_name),
     }
