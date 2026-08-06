@@ -43,6 +43,9 @@ _DISEASE_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "notifiable
 _VACCINE_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "vaccines.json"
 _LAB_TEST_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "lab_tests.json"
 _SPECIMEN_TYPE_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "specimen_types.json"
+_ICD10_LOOKUP_PATH = Path(__file__).resolve().parents[2] / "data" / "icd10_codes.json"
+
+_icd10_lookup_cache: Optional[Dict[str, str]] = None
 
 
 def load_region_gazetteer(db: Session, aliases: Optional[Dict[str, str]] = None,
@@ -103,6 +106,41 @@ def clear_disease_cache() -> None:
     """Call after changing the disease reference data, and in tests."""
     global _disease_gazetteer_cache
     _disease_gazetteer_cache = None
+
+
+def load_icd10_lookup(refresh: bool = False) -> Dict[str, str]:
+    """
+    Build (or return the cached) disease-name -> ICD-10 code lookup, from
+    data/icd10_codes.json.
+
+    Deliberately separate from load_disease_gazetteer(): the gazetteer
+    drives NAME MATCHING during extraction (unaffected by this file
+    existing or not), while this lookup is only consulted at SAVE time to
+    populate icd10_code once a disease name is already matched. Keeping
+    them separate means a mistake in the code mapping can never break
+    extraction itself.
+
+    Skips '_comment' and any '*_flag' keys — the flag entries are notes
+    for a human reviewing the mapping (see icd10_codes.json), not disease
+    names to look up. Returns an empty dict (not an error) if the file is
+    missing or malformed, so icd10_code is simply left unpopulated rather
+    than breaking saves — same fail-safe pattern as the other loaders here.
+    """
+    global _icd10_lookup_cache
+
+    if _icd10_lookup_cache is not None and not refresh:
+        return _icd10_lookup_cache
+
+    try:
+        raw = json.loads(_ICD10_LOOKUP_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        raw = {}
+
+    _icd10_lookup_cache = {
+        k: v for k, v in raw.items()
+        if k != "_comment" and not k.endswith("_flag")
+    }
+    return _icd10_lookup_cache
 
 
 def load_vaccine_gazetteer(aliases: Optional[Dict[str, str]] = None,

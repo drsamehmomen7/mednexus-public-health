@@ -1,0 +1,80 @@
+{
+  "_comment": "WHO ICD-10 codes (three-character category level, not the US-billing ICD-10-CM extended subcodes) for the 54 diseases in notifiable_diseases.json. Kept as a SEPARATE lookup file on purpose -- notifiable_diseases.json stays a flat name list that drives gazetteer matching untouched; this file is only consulted at save time to populate icd10_code once a disease name is already matched. Entries with a '_flag' need Dr. Sameh's clinical sign-off before use in extraction, because the single 3-character code hides a real clinical choice (acute vs chronic, site of infection, confirmation status) that a general-purpose case report can't resolve automatically. Sourced from WHO ICD-10 category-level codes; the flagged entries were cross-checked against ICD-10-CM's more granular subcodes to identify exactly what nuance is being collapsed.",
+
+  "Anthrax": "A22",
+  "Botulism": "A05.1",
+  "Brucellosis": "A23",
+  "Campylobacteriosis": "A04.5",
+  "Chancroid": "A57",
+  "Chickenpox": "B01",
+  "Chikungunya virus disease": "A92.0",
+  "Chlamydia trachomatis infection": "A56",
+  "Cholera": "A00",
+  "Cryptosporidiosis": "A07.2",
+  "Cyclosporiasis": "A07.4",
+  "Dengue fever": "A90",
+  "Diphtheria": "A36",
+  "Ebola virus disease": "A98.4",
+  "Giardiasis": "A07.1",
+  "Gonorrhea": "A54",
+
+  "HIV infection": "B20",
+  "HIV infection_flag": "B20 is 'HIV disease resulting in infectious/parasitic diseases' -- the ICD-10 B20-B24 range actually distinguishes HIV disease BY WHICH resulting condition it caused (B20 infectious, B21 malignancies, B22 other, B23 other conditions, B24 unspecified). B24 (HIV disease, unspecified) is arguably the more honest default for a case report that isn't tracking a specific complication. Needs a decision: B20 or B24 as the default.",
+
+  "Haemophilus influenzae invasive disease": "A49.2",
+  "Haemophilus influenzae invasive disease_flag": "No single WHO ICD-10 code means 'invasive H. influenzae disease' the way the surveillance case definition means it -- the real code depends on site (meningitis = G00.0, sepsis = A41.3, pneumonia = J14). A49.2 ('Hemophilus influenzae infection, unspecified site') is the closest general fallback but is a real approximation, not a precise match.",
+
+  "Hantavirus pulmonary syndrome": "B33.4",
+  "Hepatitis A": "B15",
+  "Hepatitis A_flag": "B15 splits into B15.0 (with hepatic coma) / B15.9 (without) -- B15 alone is valid as a category but confirm this granularity is enough.",
+
+  "Hepatitis B": "B16",
+  "Hepatitis B_flag": "B16 is ACUTE hepatitis B only. Chronic hepatitis B is a different code (B18.1). A notifiable-disease case report is typically reporting a new/acute event, so B16 is probably right, but this assumption needs confirming -- chronic carriers identified through screening would need B18.1 instead.",
+
+  "Hepatitis C": "B17.1",
+  "Hepatitis C_flag": "Same acute/chronic split as Hepatitis B -- B17.1 is acute, B18.2 is chronic. Same assumption and same need for confirmation.",
+
+  "Influenza": "J11",
+  "Influenza_flag": "Influenza is NOT in the A00-B99 infectious-disease chapter at all -- it's chapter X (diseases of the respiratory system), J09-J11. J10 is influenza with an identified virus, J11 is influenza with virus not identified. J11 is the safer default since lab confirmation of the specific strain often isn't available at report time, but confirm.",
+
+  "Legionellosis": "A48.1",
+  "Leprosy": "A30",
+  "Leptospirosis": "A27",
+  "Listeriosis": "A32",
+  "Lyme disease": "A69.2",
+
+  "Malaria": "B54",
+  "Malaria_flag": "B54 is 'Unspecified malaria' -- ICD-10 actually has separate codes per Plasmodium species (B50 falciparum, B51 vivax, B52 malariae, B53 other/mixed). B54 is the safe default when species isn't stated, but species-specific coding would be more clinically useful if that data is ever captured.",
+
+  "Marburg virus disease": "A98.3",
+  "Measles": "B05",
+  "Melioidosis": "A24.9",
+  "Meningococcal disease": "A39",
+  "Mpox": "B04",
+  "Mumps": "B26",
+  "Pertussis": "A37",
+  "Plague": "A20",
+  "Poliomyelitis": "A80",
+  "Psittacosis": "A70",
+  "Q fever": "A78",
+  "Rabies": "A82",
+  "Rubella": "B06",
+  "Salmonellosis": "A02",
+  "Shigellosis": "A03",
+  "Smallpox": "B03",
+
+  "Syphilis": "A53.9",
+  "Syphilis_flag": "Syphilis codes are STAGE-dependent (A50 congenital, A51 early, A52 late, A53 unspecified). A53.9 ('Syphilis, unspecified') is the safe default when stage isn't captured by extraction yet, but this is a real simplification worth confirming.",
+
+  "Tetanus": "A35",
+  "Trichinellosis": "B75",
+
+  "Tuberculosis": "A16.9",
+  "Tuberculosis_flag": "TB codes split by site (respiratory vs other) AND by confirmation method (bacteriologically/histologically confirmed = A15, confirmed by other means = A16, unspecified = A16.9). A16.9 is the safe unconfirmed-site default, but this is one of the most consequential simplifications in the whole list given TB's public-health weight -- worth the most scrutiny of any entry here.",
+
+  "Tularemia": "A21",
+  "Typhoid fever": "A01.0",
+  "West Nile virus disease": "A92.3",
+  "Yellow fever": "A95",
+  "Zika virus disease": "A92.5"
+}

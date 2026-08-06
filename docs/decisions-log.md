@@ -1056,3 +1056,129 @@ statements as one block can silently merge them onto one line in a way
 that breaks argument parsing — the fix throughout this whole session
 was the same one, run every command separately and wait for its result
 before the next.
+
+### 2026-08-06 — Indicators layer built end-to-end
+Fourth planned pillar, agreed in advance: metrics that cross-reference or
+sit above individual report types, distinct from each report type's own
+dashboard. Kept in a new `backend/app/services/indicators.py` rather
+than folded into `main.py`'s existing dashboard-data functions, since
+the logic shape is different — sometimes a join across report-type
+tables, sometimes a breakdown a single report type's own dashboard
+doesn't already surface, but always cross-cutting rather than
+per-report.
+
+Two indicators built, one at a time, each verified against real data via
+a throwaway check script before moving on:
+- `vaccination_coverage_by_region` — doses from `immunization_records`
+  joined against `population_strata`, the same denominator table
+  Notifiable Disease/Immunization already use for rate-per-100k.
+  Deliberately grouped by region only, not also by age_group — the
+  population table's age bands (0-4/5-14/...) are the adult-oriented
+  buckets from the Notifiable Disease dashboard, not Immunization's
+  under-2-focused month bands, so splitting by age_group here would
+  compare doses against a denominator shaped for a different purpose.
+- `test_positivity_by_region` — positive/(positive+negative) from
+  `laboratory_records`, same definition the Laboratory dashboard's
+  headline `pct_positive` already uses, just broken out by region (that
+  dashboard's own region breakdown was a raw count, not a rate).
+
+Combined `GET /indicators/dashboard-data` in `main.py` just calls both
+functions and returns them side by side — deliberately thin, no shared
+"filter" parameter across the two, since they filter different things
+on different tables and a shared filter would be misleading.
+
+**Frontend layout decided by direct comparison, not guessed.** Three
+rough concepts were sketched (bar charts / one comparison table / a card
+per region) and shown with the real numbers before building anything;
+the user picked a combination of the bar-chart and per-region-card
+concepts. `frontend/prototype/indicators-dashboard.html` was then built
+as the real file (not a mockup) reusing `style.css` and the exact same
+CSS classes/colors as the other three dashboards — no new design system
+introduced. Linked into the nav on all three other dashboard pages
+(one line each) so navigation between all four is symmetric.
+
+**Real data caught a real gap in the demo numbers.** With only 500
+synthetic immunization doses spread across Kuwait's actual governorate
+populations (600k-1.2M each), `coverage_pct` came out to ~0.01% in every
+region — technically correct, but visually useless for a bar chart since
+every bar looks the same height. The dashboard charts
+`doses_administered` instead for now (which does vary meaningfully
+region to region) and keeps `coverage_pct` in the underlying data for
+when a more realistic data volume exists. Not treated as a bug to fix
+now — the indicator's math is right, the input volume just isn't
+representative yet.
+
+### 2026-08-06 — Render Postgres reset a third time; both services upgraded to paid
+Third occurrence (2026-07-28, 2026-07-30, now this one) of the same
+failure shape: `immunization_records` and `laboratory_records` found
+empty while `notifiable_disease_records` was untouched. Root cause still
+not conclusively identified across any of the three resets. Recovered
+via the existing `load_immunization_reports.py` /
+`load_laboratory_reports.py` loaders — full 500-report reload each,
+re-confirmed 100% accuracy on every field, same as every prior run.
+
+**New gotcha found during recovery, not previously documented:** both
+loaders only `INSERT`, they never clear existing rows first. Running
+`--limit 10` as a quick trial and then the full run right after (without
+clearing in between) left 10 duplicated rows in each table — caught by
+noticing the region totals from a check script summed to 510, not 500.
+Fixed with a new one-off `scripts/clear_immunization_and_lab_records.py`
+that empties both tables before a clean reload. Documented as a standing
+rule in `CURRENT_STATUS.md`, not just a one-time fix, since the same
+--limit-then-full pattern will keep coming up.
+
+**Decision made, not just discussed this time:** both Render services
+(web service and Postgres) upgraded to paid instance types, specifically
+to stop the recurring free-tier expiry going forward. Confirmed this
+does NOT retroactively restore data already lost in a reset — it only
+prevents the *next* one. Both services were also grouped under one
+Render Project ("mednexus-public-health") via Render's Projects feature,
+for easier billing/management in the dashboard — purely organizational,
+no code or connection-string changes involved.
+
+### 2026-08-06 — Terminology normalization started: ICD-10 for Notifiable Disease
+First of three planned terminology domains (ICD-10 for diseases, LOINC
+for lab tests, vaccine codes — likely CVX — for immunization), taken one
+at a time. `icd10_code` had existed as an unpopulated column since the
+schema was first written; this is the first time it's actually filled.
+
+**Standard chosen: WHO ICD-10, not US ICD-10-CM.** Consistent with the
+project's existing system-agnostic/international-standards ground rule
+(2026-07-23 entry above) — ICD-10-CM is a US clinical-billing extension
+of WHO ICD-10 with extra digits for billing granularity that don't apply
+here. Used three-character WHO category codes throughout.
+
+**All 54 diseases mapped in a new `backend/data/icd10_codes.json`, kept
+deliberately separate from `notifiable_diseases.json`.** The gazetteer
+file continues to drive name matching during extraction, completely
+unaffected by this addition; the new lookup is only consulted at SAVE
+time (`main.py`) via a new `load_icd10_lookup()` in `vocabularies.py`,
+following the same caching/fail-safe pattern as the existing gazetteer
+loaders (missing or malformed file just means `icd10_code` stays empty,
+never a crash). Sourced from WHO ICD-10 category codes; the two
+diseases the model was least confident on from memory (Melioidosis,
+Hantavirus pulmonary syndrome, Chikungunya) were verified via search
+before including them, rather than guessed.
+
+**9 of the 54 flagged for Dr. Sameh's clinical review, not silently
+defaulted.** A single 3-character code can't always represent a real
+clinical distinction the case-report schema doesn't currently capture:
+Hepatitis A/B/C (acute vs chronic — different codes entirely), HIV
+infection (which resulting condition), Haemophilus influenzae invasive
+disease (no single WHO code fits — depends on site: meningitis, sepsis,
+pneumonia), Influenza (not even in the same ICD-10 chapter — J09-J11,
+respiratory, not A00-B99), Malaria (species not captured), Syphilis
+(stage not captured), and Tuberculosis (site + confirmation method not
+captured — flagged as the highest-scrutiny one given TB's public-health
+weight). Each flag entry in the JSON file documents exactly what
+clinical nuance the default is collapsing, so the reviewer isn't
+starting from scratch. Provisional approval given to proceed with the
+defaults while full review of the 9 stays open — matches the project's
+established pattern of shipping a defensible, documented default rather
+than blocking on perfect data (same approach as the CDC-sourced disease
+list itself).
+
+**Not yet verified against a real save** — the code path exists and the
+lookup logic was checked directly against the real data files, but an
+actual extract → save → confirm-icd10_code-in-Export-JSON pass hasn't
+been run yet. That's the next immediate step before starting LOINC.

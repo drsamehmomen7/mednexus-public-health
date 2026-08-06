@@ -1,6 +1,6 @@
 # Current Status — read this first in any new chat
 
-Last updated: 2026-07-30
+Last updated: 2026-08-06
 
 ## Where we are right now
 
@@ -8,10 +8,76 @@ Notifiable Disease, Immunization, AND Laboratory are all end-to-end
 complete, each with a measured 100% field-accuracy figure on their own
 full 500-report run, PLUS a working document-upload pipeline with
 automatic (3-way) report-type detection, a batch/cohort system, data
-export, and a fully redesigned frontend (landing page, three dashboards,
-brand identity). Same extraction pipeline shape for all three report
-types: raw text -> GLiNER NER + gazetteer(s) + rule-based fields ->
-confidence report -> save to Postgres.
+export, an Indicators layer sitting above all three report types, and a
+fully redesigned frontend (landing page, four dashboards, brand
+identity). Same extraction pipeline shape for all three report types:
+raw text -> GLiNER NER + gazetteer(s) + rule-based fields -> confidence
+report -> save to Postgres.
+
+**Indicators layer built end-to-end (2026-08-06).** New
+`backend/app/services/indicators.py` holds two cross-cutting metrics,
+kept separate from each report type's own dashboard query logic:
+`vaccination_coverage_by_region` (immunization_records doses joined
+against population_strata — same denominator table Notifiable
+Disease/Immunization already use for rate-per-100k) and
+`test_positivity_by_region` (laboratory_records positive/(positive+
+negative) by region, same pct_positive definition the Laboratory
+dashboard already uses, just broken out by region where that dashboard
+only had a raw count). Combined `GET /indicators/dashboard-data` in
+main.py returns both. New `frontend/prototype/indicators-dashboard.html`
+renders them (bar charts + a per-region card grid — the region-level
+comparison shape didn't fit the other dashboards' time/filter-driven
+layout), matches the existing brand system exactly (same style.css, no
+new CSS framework), and is linked from the nav on all three other
+dashboards. Noted for later: with only 500 synthetic immunization doses
+against Kuwait's real population, coverage_pct is ~0.01% everywhere and
+not visually differentiated yet — the chart shows doses_administered
+instead for now; revisit once data volume is realistic.
+
+**Render Postgres reset again — 3rd time (2026-08-06).**
+immunization_records and laboratory_records were found empty (0 rows)
+while notifiable_disease_records was untouched (501 rows) — same failure
+shape as the first reset (2026-07-28), cause still not conclusively
+identified. Both tables repopulated via the existing
+`load_immunization_reports.py` / `load_laboratory_reports.py` loaders
+(full 500 each, re-confirmed 100% accuracy on every field). Real gotcha
+hit and fixed along the way: those loaders only INSERT, they never clear
+existing rows first — running a `--limit 10` trial and then the full run
+without clearing in between left 10 duplicated rows in each table.
+New one-off `scripts/clear_immunization_and_lab_records.py` clears both
+tables before a clean reload; worth remembering as a standing gotcha,
+not just a one-time fix. Separately, both Render services (web service
+and Postgres) were upgraded to paid instance types specifically to stop
+the recurring free-tier expiry — this does NOT undo data already lost,
+only prevents the *next* reset. Both services are now grouped under one
+Render Project ("mednexus-public-health") for easier billing/management
+— organizational only, no code or URL changes.
+
+**Terminology normalization started (2026-08-06) — ICD-10 for Notifiable
+Disease done, LOINC and vaccine codes not started yet.** New
+`backend/data/icd10_codes.json` maps all 54 notifiable diseases to WHO
+ICD-10 codes (three-character category level, not the US-billing
+ICD-10-CM extended subcodes — matches the project's system-agnostic/
+international-standards ground rule). Kept as a lookup file SEPARATE
+from `notifiable_diseases.json` on purpose: the gazetteer still drives
+name matching during extraction untouched, and the new
+`load_icd10_lookup()` in `vocabularies.py` is only consulted at SAVE time
+in `main.py` to auto-populate `icd10_code` when the request didn't
+already supply one. 9 of the 54 codes are flagged in the file itself
+(`_flag` keys) because a single 3-character code can't cleanly represent
+a real clinical distinction the case-report schema doesn't currently
+capture — Hepatitis A/B/C (acute vs chronic), HIV infection (which
+resulting condition), Haemophilus influenzae invasive disease (site-
+dependent, no single WHO code fits), Influenza (different ICD-10 chapter
+entirely — J09-J11, not A00-B99), Malaria (species not captured),
+Syphilis (stage not captured), and Tuberculosis (site + confirmation
+method not captured — the highest-scrutiny one given TB's public-health
+weight). Dr. Sameh gave provisional approval on the defaults; full
+clinical review of the 9 flagged entries is still open. Not yet
+end-to-end tested against a real save — next step is confirming
+icd10_code actually populates correctly via the UI + an Export JSON
+check. LOINC (lab tests) and vaccine codes (likely CVX) are the next two
+domains, each planned as its own separate step the same way ICD-10 was.
 
 **Data sourcing reviewed 2026-07-30.** `vaccines.json` was already a real
 source (Kuwait MOH's 2025 Childhood Immunization Schedule).
@@ -183,19 +249,33 @@ button to reduce what a repeat would cost.
 
 126 backend tests passing.
 
-**IMMEDIATE NEXT STEP:** None fixed — the four originally-planned steps
-(app.js routing, Immunization dashboard, visual redesign, landing page)
-plus the upload/detection/batch/export/DOCX work triggered by testing
-are ALL done as of today. Open questions, rough priority order:
-1. Lower-priority fields still not extracted: Notifiable Disease's
-   occupation/travel_related/travel_country/vaccination_status/outcome,
-   and Immunization's vaccine_code/lot_number.
-2. More report types (Laboratory, Syndromic, Outbreak — schemas exist,
-   no extraction logic), or terminology normalization (ICD-10 / LOINC).
-3. PDF/CSV document upload (currently DOCX/TXT only).
-4. Point the frontend at the deployed Render URL instead of
-   `http://127.0.0.1:8001` (still hardcoded in `app.js` and both
-   dashboards).
+**IMMEDIATE NEXT STEP:** Confirm ICD-10 auto-population actually works
+end-to-end (extract/save a real Notifiable Disease report, check
+icd10_code in Export JSON) — done in code, not yet verified against a
+real save as of this update. After that, rough priority order:
+1. Terminology normalization, continued: LOINC codes for the 15 lab
+   tests (data/lab_tests.json also still needs the real-source review
+   that notifiable_diseases.json already got — it's still a synthetic
+   placeholder), then vaccine codes (likely CVX) for the 12 vaccines.
+   Same pattern as ICD-10: separate lookup file, doesn't touch gazetteer
+   matching, populated at save time.
+2. No pytest coverage yet for the newest code (indicators.py,
+   load_icd10_lookup, the /indicators/dashboard-data endpoint) — the 126
+   passing tests predate all of it. Worth closing before this drifts
+   further from "everything measured."
+3. Syndromic/Outbreak report types (schemas exist, no extraction logic).
+4. PDF/CSV document upload (currently DOCX/TXT only).
+5. Point the frontend at the deployed Render URL instead of
+   `http://127.0.0.1:8001` (still hardcoded in `app.js` and all four
+   dashboards) — more relevant now that indicators-dashboard.html exists
+   too. Deploying the frontend itself as a Render Static Site (raised
+   2026-08-06, not yet done) would make demos to decision-makers a
+   shared link instead of a two-terminal local setup.
+6. Lower-priority extraction fields still not attempted: Notifiable
+   Disease's occupation/travel_related/travel_country/vaccination_status/
+   outcome, and Immunization's vaccine_code/lot_number (the latter will
+   naturally get picked up once vaccine terminology normalization
+   happens above).
 
 ## What's already working (locally)
 
@@ -223,9 +303,20 @@ are ALL done as of today. Open questions, rough priority order:
   gazetteer matches. Immunization's vaccine_name doesn't need this.
 - Closed-vocabulary matching via data-driven gazetteers for region,
   disease name, AND vaccine name — regions come from population_strata,
-  diseases from `backend/data/notifiable_diseases.json` (synthetic
-  placeholder), vaccines from `backend/data/vaccines.json` (real, from
-  the Kuwait MOH schedule). None hardcoded in extraction.
+  diseases from `backend/data/notifiable_diseases.json` (54 diseases,
+  real — curated from CDC's 2025 Nationally Notifiable Conditions list,
+  see 2026-07-30 entry above), vaccines from `backend/data/vaccines.json`
+  (real, from the Kuwait MOH schedule). None hardcoded in extraction.
+- **ICD-10 codes for Notifiable Disease** (2026-08-06): all 54 diseases
+  mapped in `backend/data/icd10_codes.json`, auto-populated at save time
+  via `load_icd10_lookup()` — separate from the gazetteer, doesn't touch
+  extraction matching. 9 entries flagged for Dr. Sameh's clinical review
+  (see 2026-08-06 entry above); not yet verified against a real save.
+- **Indicators layer** (2026-08-06): `services/indicators.py`
+  (vaccination coverage % by region, test positivity % by region),
+  combined `GET /indicators/dashboard-data`, and
+  `frontend/prototype/indicators-dashboard.html` — linked from all four
+  dashboards' nav.
 - Rule-based patient_age, patient_sex, onset_date (Notifiable Disease),
   and patient_age_months, dose_number, route, adverse_event_* fields
   (Immunization) — all in `rule_based.py`, all 100% on their full
@@ -241,19 +332,33 @@ are ALL done as of today. Open questions, rough priority order:
   visually refreshed with a shared design language. Distinct from the
   sibling de-identification tool (shares only the base green palette).
 - Custom dashboards at `frontend/prototype/dashboard.html` (Notifiable
-  Disease) and `immunization-dashboard.html` — combined filters
-  including Batch, Chart.js charts, count/rate toggle, Export buttons.
+  Disease), `immunization-dashboard.html`, `laboratory-dashboard.html`,
+  and `indicators-dashboard.html` — combined filters including Batch,
+  Chart.js charts, count/rate toggle, Export buttons (Indicators page is
+  filter-free for now — see 2026-08-06 entry above for why).
 
 ## What's not built yet
 
-- Laboratory, Syndromic, Outbreak report types (schemas exist in
+- Syndromic, Outbreak report types (schemas exist in
   `backend/app/schemas/`, no extraction logic yet — reuse
   `entity_selection.py` and `confidence.py`, don't reimplement them).
-- Terminology normalization (ICD-10, LOINC, vaccine codes) — includes
-  Immunization's vaccine_code and lot_number fields, not attempted.
+- Terminology normalization: ICD-10 done for Notifiable Disease
+  (2026-08-06, 9 entries still need clinical sign-off). LOINC (lab
+  tests) and vaccine codes (likely CVX) not started — includes
+  Immunization's vaccine_code and lot_number fields.
+- `lab_tests.json` is still a synthetic placeholder (mirrors the original
+  10 diseases, not sourced from anything real) — needs the same
+  real-source review notifiable_diseases.json already got, ideally
+  alongside the LOINC work above rather than as a separate pass.
+- No pytest coverage yet for indicators.py, load_icd10_lookup(), or
+  /indicators/dashboard-data — the 126 passing tests predate all of it.
 - PDF and CSV document upload — only DOCX and TXT are parsed today.
-- Frontend is not yet pointed at the deployed Render URL — still hardcoded
-  to `http://127.0.0.1:8001` in `app.js` and both dashboard pages.
+- Frontend is not yet pointed at the deployed Render URL — still
+  hardcoded to `http://127.0.0.1:8001` in `app.js` and all four
+  dashboard pages. Frontend itself also isn't deployed anywhere yet
+  (still local-only via `python -m http.server`) — raised 2026-08-06 as
+  worth doing (Render Static Site, free) once there's something ready to
+  demo, not urgent before that.
 - Lower-priority extraction fields: Notifiable Disease's
   occupation/travel_related/travel_country/vaccination_status/outcome,
   Immunization's vaccine_code/lot_number.
@@ -262,15 +367,23 @@ are ALL done as of today. Open questions, rough priority order:
 - Dashboard refresh takes 3-4s: ~12 separate queries against Render's
   free-tier Postgres in Oregon. Latency, not a code problem.
 
-## Local dev routine (two terminals, every session)
+## Local dev routine (two terminals running servers, every session)
 
 See `README.md`. Terminal 1 (backend, port 8001) needs `$env:DATABASE_URL`
 set to the Render external connection string before starting uvicorn, so
 saves and dashboard queries hit the same database — otherwise it falls
 back to a local Postgres URL that isn't set up. Terminal 2: frontend
-static server, port 5500 (serves both `index.html` and `dashboard.html`).
-Never open the HTML files as a `file://` path (CORS/private-network
+static server, port 5500 (serves `index.html` and all four dashboard
+pages). Never open the HTML files as a `file://` path (CORS/private-network
 blocking). Metabase (Terminal 3) is no longer part of the routine.
+
+A third terminal is still needed whenever typing an actual command (git,
+a one-off script, pytest) — Terminals 1 and 2 are permanently occupied
+running their server process and won't accept input while running. This
+third terminal doesn't need to stay open between sessions the way the
+first two do; open/close it as needed. Clarified 2026-08-06 after real
+confusion about why "two terminals" didn't match needing to run git
+commands somewhere.
 
 ## Key ground rules established (see docs/decisions-log.md for full reasoning)
 
@@ -285,15 +398,23 @@ blocking). Metabase (Terminal 3) is no longer part of the routine.
   decisions-log.md's most recent entries for exactly what's changed and why.
 - `init_db()` (`Base.metadata.create_all()`) only creates MISSING tables —
   it never alters an existing table when the model changes. The Render
-  database has reset twice now (2026-07-28, 2026-07-30 — under a new
-  service/database name the second time, so it's a full recreation, not
-  an in-place wipe). When a schema mismatch error appears (a column
-  "does not exist"), run `python -m scripts.add_batch_label_column`
-  first (safe, idempotent, adds the one column that keeps going missing)
-  — only drop-and-recreate a table if the error is about a DIFFERENT
-  missing column that script doesn't cover. Switch to Alembic migrations
-  once real (non-synthetic) data exists and dropping tables is no longer
-  safe.
+  database has reset three times now (2026-07-28, 2026-07-30, and
+  2026-08-06 — the second one under a new service/database name, so a
+  full recreation, not an in-place wipe). Both Render services were
+  upgraded to paid plans 2026-08-06 specifically to stop this recurring;
+  root cause across all three resets still isn't conclusively confirmed.
+  When a schema mismatch error appears (a column "does not exist"), run
+  `python -m scripts.add_batch_label_column` first (safe, idempotent,
+  adds the one column that keeps going missing) — only drop-and-recreate
+  a table if the error is about a DIFFERENT missing column that script
+  doesn't cover. Switch to Alembic migrations once real (non-synthetic)
+  data exists and dropping tables is no longer safe.
+- `load_immunization_reports.py` / `load_laboratory_reports.py` only
+  INSERT — they never clear existing rows first. Running `--limit N` as
+  a trial and then the full run without clearing in between leaves N
+  duplicated rows behind (hit and fixed 2026-08-06). Run
+  `python -m scripts.clear_immunization_and_lab_records` before any full
+  reload that follows a limited trial run, every time.
 - PowerShell one-liners with nested double-quoted strings inside
   `python -c "..."` are fragile — PowerShell doesn't treat `\"` as an
   escaped quote the way bash does. Write a short `.py` file instead of a

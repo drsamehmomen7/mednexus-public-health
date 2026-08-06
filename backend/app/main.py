@@ -30,6 +30,7 @@ from app.services.ner_client import NerBackendUnavailable
 from app.services.report_type_detection import detect_report_type
 from app.services.vocabularies import (
     load_disease_gazetteer,
+    load_icd10_lookup,
     load_lab_test_gazetteer,
     load_region_gazetteer,
     load_specimen_type_gazetteer,
@@ -268,7 +269,7 @@ def save_notifiable_disease_record(
     """
     record = NotifiableDiseaseRecord(
         disease_name=request.case.disease_name,
-        icd10_code=request.case.icd10_code,
+        icd10_code=request.case.icd10_code or load_icd10_lookup().get(request.case.disease_name),
         diagnosis_status=request.case.diagnosis_status.value,
         onset_date=request.case.onset_date,
         report_date=request.case.report_date,
