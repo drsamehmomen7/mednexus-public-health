@@ -44,8 +44,10 @@ _VACCINE_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "vaccines.j
 _LAB_TEST_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "lab_tests.json"
 _SPECIMEN_TYPE_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "specimen_types.json"
 _ICD10_LOOKUP_PATH = Path(__file__).resolve().parents[2] / "data" / "icd10_codes.json"
+_LOINC_LOOKUP_PATH = Path(__file__).resolve().parents[2] / "data" / "loinc_codes.json"
 
 _icd10_lookup_cache: Optional[Dict[str, str]] = None
+_loinc_lookup_cache: Optional[Dict[str, dict]] = None
 
 
 def load_region_gazetteer(db: Session, aliases: Optional[Dict[str, str]] = None,
@@ -141,6 +143,61 @@ def load_icd10_lookup(refresh: bool = False) -> Dict[str, str]:
         if k != "_comment" and not k.endswith("_flag")
     }
     return _icd10_lookup_cache
+
+
+def load_loinc_lookup(refresh: bool = False) -> Dict[str, dict]:
+    """
+    Build (or return the cached) lab-test-name -> LOINC mapping, from
+    data/loinc_codes.json.
+
+    Unlike load_icd10_lookup(), each entry here is a small object, not
+    just a code string:
+        {"loinc": "<code>" | null, "status": "<mapping status>", "notes": "<why>"}
+
+    This richer shape exists because LOINC codes are specimen+method
+    specific in a way ICD-10 codes aren't, and several of the 71 lab
+    tests genuinely don't have a single clean code -- deliberately
+    reviewed and decided per-test by Dr. Sameh rather than defaulted.
+    "loinc" is null for entries with no usable code at all (e.g.
+    Poliovirus Stool PCR -- the only available code is a CULTURE method,
+    which would be a real method mismatch, not just a granularity
+    compromise; Leprosy Skin Biopsy -- histopathology, not a discrete
+    lab analyte; Hantavirus IgM Serology -- the only code found is
+    Sin-Nombre-subtype-specific, and defaulting to it would silently
+    narrow every case to one viral subtype without evidence).
+
+    Mapping status values (see loinc_codes.json for the full picture):
+    EXACT, ACCEPTABLE_GENERIC_SPECIMEN, ACCEPTABLE_GENUS_LEVEL, PROXY,
+    COMPOSITE, NO_DIRECT_LOINC, REJECTED_MISMATCH.
+
+    Same fail-safe pattern as load_icd10_lookup(): a missing or
+    malformed file returns an empty dict rather than raising, so
+    test_code is simply left unpopulated rather than breaking saves.
+    """
+    global _loinc_lookup_cache
+
+    if _loinc_lookup_cache is not None and not refresh:
+        return _loinc_lookup_cache
+
+    try:
+        raw = json.loads(_LOINC_LOOKUP_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        raw = {}
+
+    _loinc_lookup_cache = raw
+    return _loinc_lookup_cache
+
+
+def get_loinc_code(test_name: str) -> Optional[str]:
+    """
+    Convenience helper for the save endpoint: returns just the LOINC
+    code string for a test name, or None if there isn't a usable one
+    (either the test isn't in loinc_codes.json at all, or it's there
+    with "loinc": null -- see load_loinc_lookup() docstring for why
+    that happens deliberately for a few tests).
+    """
+    entry = load_loinc_lookup().get(test_name)
+    return entry["loinc"] if entry else None
 
 
 def load_vaccine_gazetteer(aliases: Optional[Dict[str, str]] = None,

@@ -29,6 +29,7 @@ from app.services.laboratory_extraction import extract_laboratory_with_confidenc
 from app.services.ner_client import NerBackendUnavailable
 from app.services.report_type_detection import detect_report_type
 from app.services.vocabularies import (
+    get_loinc_code,
     load_disease_gazetteer,
     load_icd10_lookup,
     load_lab_test_gazetteer,
@@ -1033,7 +1034,7 @@ def save_laboratory_record(
     """Persist a record AFTER human review — same convention as the other two save endpoints."""
     record = SavedLaboratoryRecord(
         test_name=request.report.test_name,
-        test_code=request.report.test_code,
+        test_code=request.report.test_code or get_loinc_code(request.report.test_name),
         specimen_type=request.report.specimen_type,
         result=request.report.result.value,
         pathogen_identified=request.report.pathogen_identified,

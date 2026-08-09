@@ -1,0 +1,357 @@
+{
+  "Chickenpox PCR": {
+    "loinc": "11483-5",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Same organism/code as Varicella PCR (VZV). Generic specimen, probe-detection method assumed; not confirmed against actual lab platform."
+  },
+  "Varicella PCR": {
+    "loinc": "11483-5",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Same organism/code as Chickenpox PCR -- these are the same real-world test under two vocabulary entries (see decisions-log.md, 2026-07-29)."
+  },
+  "Dengue IgM Serology": {
+    "loinc": "25338-5",
+    "status": "EXACT",
+    "notes": "Qualitative Presence in Serum, matches result field shape."
+  },
+  "Dengue NS1 Antigen Test": {
+    "loinc": "75377-2",
+    "status": "EXACT",
+    "notes": "Presence in Serum/Plasma/Blood by Rapid immunoassay."
+  },
+  "Hepatitis A IgM Serology": {
+    "loinc": "22314-9",
+    "status": "EXACT",
+    "notes": "Qualitative Presence in Serum."
+  },
+  "Influenza PCR": {
+    "loinc": "48509-4",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Generic-specimen code. A respiratory-specimen-specific variant exists; revisit once specimen_type data for this test is reviewed."
+  },
+  "Influenza Rapid Antigen Test": {
+    "loinc": "72367-6",
+    "status": "EXACT",
+    "notes": "A+B combined, Presence in Nose by Rapid immunoassay."
+  },
+  "Measles IgM Serology": {
+    "loinc": "21503-8",
+    "status": "EXACT",
+    "notes": "Qualitative Presence in Serum."
+  },
+  "Meningococcal CSF Culture": {
+    "loinc": "86581-6",
+    "status": "EXACT",
+    "notes": "Neisseria meningitidis Presence in CSF by Organism specific culture."
+  },
+  "Meningococcal Gram Stain": {
+    "loinc": "664-3",
+    "status": "NO_DIRECT_LOINC",
+    "notes": "Fully generic 'Microscopic observation in Specimen by Gram stain' -- not CSF-specific and not Meningococcus-specific (Gram stain identifies morphology, not species, so a more specific code may not exist even in principle)."
+  },
+  "Mumps IgM Serology": {
+    "loinc": "22418-8",
+    "status": "EXACT",
+    "notes": "Qualitative Presence in Serum."
+  },
+  "Rubella IgM Serology": {
+    "loinc": "31616-6",
+    "status": "EXACT",
+    "notes": "Qualitative Presence in Serum."
+  },
+  "Salmonella Stool Culture": {
+    "loinc": "82301-3",
+    "status": "EXACT",
+    "notes": "Salmonella sp Presence in Stool by Culture."
+  },
+  "Typhoid Blood Culture": {
+    "loinc": "600-7",
+    "status": "NO_DIRECT_LOINC",
+    "notes": "Closest available is fully generic 'Bacteria identified in Blood by Culture' -- not Salmonella typhi-specific. No species-specific blood-culture LOINC code was found."
+  },
+  "Typhoid Widal Test": {
+    "loinc": "17566-1",
+    "status": "ACCEPTABLE_GENUS_LEVEL",
+    "notes": "Captures the O-antigen titer only (Salmonella typhi O Ab [Presence] in Serum). Widal is really two separate titers (O antigen + H antigen, 13284-5) -- current one-code-per-test schema can't represent both. Also flagged by Dr. Sameh as a legacy/optional test clinically, not primary (see decisions-log.md)."
+  },
+  "Anthrax Blood Culture": {
+    "loinc": "11469-4",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Bacillus anthracis Presence in Specimen by Organism specific culture -- generic specimen, not Blood-specific, but organism-specific."
+  },
+  "Botulism Toxin Assay": {
+    "loinc": "33696-6",
+    "status": "EXACT",
+    "notes": "Clostridium botulinum toxin Presence in Specimen by Mouse bioassay. Approved by Dr. Sameh."
+  },
+  "Brucellosis Blood Culture": {
+    "loinc": "551-2",
+    "status": "EXACT",
+    "notes": "Brucella sp identified in Blood by Organism specific culture."
+  },
+  "Brucellosis Serology": {
+    "loinc": "19053-8",
+    "status": "EXACT",
+    "notes": "Brucella sp Ab [Titer] in Serum by Agglutination."
+  },
+  "Campylobacter Stool Culture": {
+    "loinc": "6331-3",
+    "status": "EXACT",
+    "notes": "Campylobacter sp identified in Stool by Organism specific culture."
+  },
+  "Chlamydia NAAT": {
+    "loinc": "21613-5",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Generic-specimen NAA code; genital/urine-specific variants exist if needed later."
+  },
+  "Gonorrhea NAAT": {
+    "loinc": "24111-7",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Generic-specimen NAA code."
+  },
+  "HIV Antigen/Antibody Combo Immunoassay": {
+    "loinc": "56888-1",
+    "status": "EXACT",
+    "notes": "HIV 1+2 Ab+HIV1 p24 Ag Presence in Serum or Plasma by Immunoassay."
+  },
+  "HIV RNA PCR": {
+    "loinc": "25836-8",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Viral load, generic specimen; Serum/Plasma-specific variant (20447-9) available if needed."
+  },
+  "Syphilis RPR Test": {
+    "loinc": "20507-0",
+    "status": "EXACT",
+    "notes": "Reagin Ab Presence in Serum by RPR -- standard screening test."
+  },
+  "Chancroid PCR": {
+    "loinc": "29559-2",
+    "status": "EXACT",
+    "notes": "Haemophilus ducreyi DNA Presence by NAA. Approved."
+  },
+  "Chikungunya PCR": {
+    "loinc": "60260-7",
+    "status": "EXACT",
+    "notes": "Serum/Plasma molecular test; actual specimen kept as metadata. Approved."
+  },
+  "Cholera Stool Culture": {
+    "loinc": "6579-7",
+    "status": "ACCEPTABLE_GENUS_LEVEL",
+    "notes": "Vibrio sp identified in Stool by Organism specific culture -- genus-level, not V. cholerae-specific. Dr. Sameh: approve, but the specific organism result (V. cholerae) must be stored separately from the LOINC observation."
+  },
+  "Cryptosporidium Stool Antigen Test": {
+    "loinc": "6371-9",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Cyclospora Stool PCR": {
+    "loinc": "82206-4",
+    "status": "EXACT",
+    "notes": "Cyclospora cayetanensis DNA Presence in Stool by NAA with non-probe detection. Dr. Sameh: non-probe method is not a reason to reject -- LOINC itself documents this as the qualitative molecular detection code (created for platforms like FilmArray GI Panel). Approved as-is, not as a compromise."
+  },
+  "Diphtheria Throat Culture": {
+    "loinc": "105619-1",
+    "status": "EXACT",
+    "notes": "Corynebacterium diphtheriae Presence in Throat by Culture. Approved."
+  },
+  "Diphtheria PCR": {
+    "loinc": "67561-1",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Ebola PCR": {
+    "loinc": "41636-2",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Generic specimen accepted per Dr. Sameh."
+  },
+  "Giardia Stool Antigen Test": {
+    "loinc": "6412-1",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Haemophilus influenzae Culture": {
+    "loinc": "69410-9",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Organism-specific, correct; specimen generic (not Blood/CSF-specific). Dr. Sameh: approve, store actual specimen (Blood/CSF/etc.) separately."
+  },
+  "Hantavirus IgM Serology": {
+    "loinc": null,
+    "status": "NO_DIRECT_LOINC",
+    "notes": "REJECTED as default by Dr. Sameh: 101216-0 is Hantavirus SIN NOMBRE-specific (Line blot method), not a generic Hantavirus IgM code -- using it as the default would silently narrow every case to one specific viral subtype without evidence. Left unmapped (test_code stays null) until the actual assay used by the lab is confirmed; may need a local/institutional code in the meantime, not a forced LOINC match."
+  },
+  "Hepatitis B Surface Antigen Test": {
+    "loinc": "5196-1",
+    "status": "EXACT",
+    "notes": "HBsAg. Approved."
+  },
+  "Hepatitis B Core IgM Antibody Test": {
+    "loinc": "24113-3",
+    "status": "EXACT",
+    "notes": "Anti-HBc IgM. Approved."
+  },
+  "Hepatitis B e-Antigen Test": {
+    "loinc": "13954-3",
+    "status": "EXACT",
+    "notes": "HBeAg. Approved."
+  },
+  "Hepatitis B DNA PCR": {
+    "loinc": "29610-3",
+    "status": "EXACT",
+    "notes": "Qualitative HBV DNA. Approved -- do not reuse for viral-load/quantitative reporting."
+  },
+  "Hepatitis C Antibody Test": {
+    "loinc": "13955-0",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Hepatitis C RNA PCR": {
+    "loinc": "11259-9",
+    "status": "EXACT",
+    "notes": "Qualitative HCV RNA. Approved -- do not reuse for viral-load/quantitative reporting."
+  },
+  "Legionella Urine Antigen Test": {
+    "loinc": "6447-7",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Leprosy Skin Biopsy": {
+    "loinc": null,
+    "status": "NO_DIRECT_LOINC",
+    "notes": "No analyte LOINC exists -- this is histopathology, not a discrete lab analyte. Dr. Sameh: treat as a pathology/biopsy report workflow, not an organism-test LOINC. Left unmapped by design, not an oversight."
+  },
+  "Leptospirosis IgM Serology": {
+    "loinc": "23202-5",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Leptospirosis PCR": {
+    "loinc": "35491-0",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Listeria Culture": {
+    "loinc": "6609-2",
+    "status": "ACCEPTABLE_GENUS_LEVEL",
+    "notes": "Listeria sp identified in Specimen by Organism specific culture -- genus-level, not L. monocytogenes-specific. Dr. Sameh: approve, store the specific organism result separately."
+  },
+  "Lyme Disease Two-Tier Serology": {
+    "loinc": "83081-0",
+    "status": "EXACT",
+    "notes": "Tier-1 screening EIA (Borrelia burgdorferi IgG+IgM Ab Presence in Serum). Dr. Sameh: this is genuinely a TWO-CODE test -- Tier 2 (confirmatory) is 18203-0 (immunoblot) or a second EIA per a modified algorithm. Current schema only stores one test_code; Tier 2 result is not yet representable. This is the strongest case in the whole file for a schema change (a second result field), matching the same gap already flagged for the Widal test."
+  },
+  "Malaria Blood Smear Microscopy": {
+    "loinc": "32206-5",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Malaria Rapid Diagnostic Test": {
+    "loinc": "70569-9",
+    "status": "EXACT",
+    "notes": "Genus-level Plasmodium sp Ag [Identifier] -- Dr. Sameh: acceptable as the general concept; species-specific result (e.g. P. falciparum, 76772-3) stored separately when available."
+  },
+  "Marburg PCR": {
+    "loinc": "41638-8",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Melioidosis Culture": {
+    "loinc": "70851-1",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Meningococcal Blood Culture": {
+    "loinc": "16134-9",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Organism correct (Neisseria meningitidis); specimen generic, not Blood-specific. Approved, store Blood as specimen metadata."
+  },
+  "Meningococcal PCR": {
+    "loinc": "49671-1",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Mpox PCR": {
+    "loinc": "100383-9",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Pertussis PCR": {
+    "loinc": "23826-1",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Plague Culture": {
+    "loinc": "33685-9",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Organism and method correct (Yersinia pestis, culture); specimen generic. Approved."
+  },
+  "Poliovirus Stool PCR": {
+    "loinc": null,
+    "status": "REJECTED_MISMATCH",
+    "notes": "REJECTED by Dr. Sameh: 53645-8 is a CULTURE code ('Polio virus identified in Stool by Organism specific culture'), not a PCR/molecular code -- using it for a test named 'PCR' would be a genuine method mismatch, not just a granularity compromise. No poliovirus-specific RNA/NAA LOINC code exists; molecular detection is typically reported under a broader Enterovirus RNA code (29591-5) at other labs, but that changes the analyte, not just the method, so it is NOT substituted here either. Left unmapped (test_code null) pending a local test concept or confirmation of what the actual lab assay reports."
+  },
+  "Psittacosis PCR": {
+    "loinc": "35729-3",
+    "status": "PROXY",
+    "notes": "Chlamydia sp DNA Presence -- genus-level fallback, NOT C. psittaci-specific (no organism-specific NAA code exists for C. psittaci). Dr. Sameh: approve only as a fallback, with the understanding that the specific organism/disease context must be carried as separate metadata, not implied by the LOINC code alone."
+  },
+  "Q Fever Serology": {
+    "loinc": "31314-8",
+    "status": "ACCEPTABLE_GENUS_LEVEL",
+    "notes": "Coxiella burnetii Phase II IgG Ab Presence in Serum. Dr. Sameh: appropriate for ACUTE infection screening (matches CDC guidance that Phase II IgG dominates acute response), but should be treated as ONE COMPONENT of Q fever serology, not the definition of the whole test -- Phase I IgG/IgM (relevant for chronic/persistent infection) and Phase II IgM are separate LOINC observations not currently captured. Revisit if the platform starts tracking chronic Q fever."
+  },
+  "Rabies Direct Fluorescent Antibody Test": {
+    "loinc": "6528-4",
+    "status": "EXACT",
+    "notes": "Rabies virus Ag Presence in Tissue by Immunofluorescence. Approved."
+  },
+  "Rabies Saliva RT-PCR": {
+    "loinc": "51646-8",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Molecular concept correct; specimen generic, not Saliva-specific. Approved, store Saliva as specimen metadata."
+  },
+  "Shigella Stool Culture": {
+    "loinc": "82300-5",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Smallpox PCR": {
+    "loinc": "100370-6",
+    "status": "PROXY",
+    "notes": "Orthopoxvirus DNA [Identifier] -- deliberate surveillance proxy, since NO Variola-specific LOINC code exists at all. Dr. Sameh: approve as proxy, but the LOINC observation itself must not be labeled 'Smallpox' in the data model -- the specific Variola interpretation belongs in a separate result/organism field (LOINC's own answer list for this code includes 'Presumptive positive identification of Variola virus', supporting this as the correct surveillance-level term)."
+  },
+  "Trichinellosis IgG Serology": {
+    "loinc": "8043-2",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Tuberculosis Sputum Culture": {
+    "loinc": "539-7",
+    "status": "ACCEPTABLE_GENUS_LEVEL",
+    "notes": "Mycobacterium sp identified in Sputum by Organism specific culture -- genus-level, not M. tuberculosis-specific. Dr. Sameh: approve as the culture OBSERVATION; MTB complex/species identification belongs in the result field, not the LOINC code."
+  },
+  "Tuberculosis GeneXpert MTB/RIF": {
+    "loinc": "38379-4",
+    "status": "COMPOSITE",
+    "notes": "This assay is genuinely TWO observations, not one: MTB detection (38379-4, Mycobacterium tuberculosis complex DNA Presence by NAA) AND rifampin-resistance-gene detection (33634-7, separate LOINC code). Dr. Sameh: do not collapse these into a single observation. Primary test_code stores the MTB-detection result (38379-4); the rifampin-resistance result (33634-7) is NOT YET representable by the current single-test_code schema -- flagged as the clearest concrete case (along with Lyme Tier 2 and Widal H-antigen) for a future schema change adding a second result field per lab record."
+  },
+  "Tularemia Serology": {
+    "loinc": "23124-1",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "West Nile Virus IgM Serology": {
+    "loinc": "29567-5",
+    "status": "EXACT",
+    "notes": "Approved."
+  },
+  "Yellow Fever PCR": {
+    "loinc": "8057-2",
+    "status": "EXACT",
+    "notes": "Serum-specific molecular term. Approved."
+  },
+  "Zika Virus PCR": {
+    "loinc": "79190-5",
+    "status": "ACCEPTABLE_GENERIC_SPECIMEN",
+    "notes": "Generic specimen; Serum-specific variant (85622-9) available if needed. Approved."
+  }
+}
