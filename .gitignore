@@ -4,6 +4,10 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
+# Project-local portable Python runtime (recovery environment)
+.runtime/
+backend/venv_recovery/
+
 # Downloaded model weights — reproducible via scripts/download_gliner_model.py,
 # not source code. Also far too large for a normal git repo (600MB+).
 backend/models/
