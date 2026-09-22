@@ -222,6 +222,20 @@
     </div>
   </section>
 
+  <!-- ============ MODE SWITCH ============ -->
+  <!-- Two alternative paths, not one 1-2-3-4 sequence: Batch never reads Step 1 or 2 (it detects each file's type), so those live only in the single pane. -->
+  <div class="mode-switch" role="group" aria-label="Choose how to add reports">
+    <button class="mode-tab" data-mode="single" aria-pressed="true" aria-controls="mode-single">
+      <span class="mode-title">Single report</span>
+      <span class="mode-hint">One report at a time: pick the type, paste or upload, review, save.</span>
+    </button>
+    <button class="mode-tab" data-mode="batch" aria-pressed="false" aria-controls="mode-batch">
+      <span class="mode-title">Batch upload</span>
+      <span class="mode-hint">Up to 10 files at once: each one still reviewed individually.</span>
+    </button>
+  </div>
+
+  <div id="mode-single">
   <!-- ============ STEP 1: REPORT TYPE ============ -->
   <section class="panel">
     <div class="panel-header">
@@ -287,9 +301,9 @@
     <div class="tab-panel" data-panel="upload">
       <div class="dropzone" id="dropzone">
         <span>Drag a file here, or click to browse</span>
-        <span class="dropzone-hint">DOCX and TXT supported. PDF and CSV planned for a later phase.</span>
+        <span class="dropzone-hint">DOCX, TXT and PDF supported (PDFs need selectable text; scans aren't read yet). CSV planned for a later phase.</span>
       </div>
-      <input type="file" id="file-input" accept=".docx,.txt" hidden>
+      <input type="file" id="file-input" accept=".docx,.txt,.pdf" hidden>
       <div id="upload-status" style="margin-top:10px; font-size:13px;"></div>
     </div>
   </section>
@@ -323,6 +337,89 @@
       </div>
     </div>
   </section>
+  </div> <!-- /mode-single -->
+
+  <div id="mode-batch" hidden>
+  <!-- ============ BATCH UPLOAD ============
+       Deliberately its own path (chosen via the mode switch), not a tab
+       inside the single-report flow — separate feature, separate visual
+       identity (slate accent vs. the single-report flow's green).
+       Per-report human review before save is mandatory here exactly as
+       it is for the single-report flow: every card's "Reviewed" checkbox
+       starts unchecked and only the reviewer's own click ever checks
+       it — there is deliberately no select-all/mark-all-reviewed
+       control anywhere in this section. -->
+  <section class="panel batch-panel">
+    <div class="panel-header">
+      <div>
+        <h2>Batch Upload</h2>
+        <p class="panel-desc">Process up to 10 reports at once — any mix of Notifiable
+          Disease, Immunization, and Laboratory. Each one still gets its own individual
+          review before anything saves; this only speeds up getting them here.</p>
+      </div>
+    </div>
+
+    <!-- Read-only twin of the Step 1 cards: Batch detects each file's type itself, so nothing here is selectable. -->
+    <p class="type-info-note">Each file's type is recognised automatically. Nothing to select here.</p>
+    <ul class="type-info-grid" aria-label="Report types Batch upload recognises">
+      <li class="type-info">
+        <div class="type-info-top"><span class="report-icon" aria-hidden="true">&#9878;</span><span class="cap-status live">Live</span></div>
+        <span class="report-title">Notifiable Disease</span>
+        <span class="report-desc">Case reports for infectious diseases requiring mandatory reporting.</span>
+      </li>
+      <li class="type-info">
+        <div class="type-info-top"><span class="report-icon" aria-hidden="true">&#128137;</span><span class="cap-status live">Live</span></div>
+        <span class="report-title">Immunization</span>
+        <span class="report-desc">Vaccination records, doses, lots, and coverage data.</span>
+      </li>
+      <li class="type-info">
+        <div class="type-info-top"><span class="report-icon" aria-hidden="true">&#129514;</span><span class="cap-status live">Live</span></div>
+        <span class="report-title">Laboratory</span>
+        <span class="report-desc">Test results feeding surveillance and case confirmation.</span>
+      </li>
+      <li class="type-info dim">
+        <div class="type-info-top"><span class="report-icon" aria-hidden="true">&#128200;</span><span class="cap-status soon">Coming next</span></div>
+        <span class="report-title">Syndromic</span>
+        <span class="report-desc">Symptom-based reports for early outbreak detection.</span>
+      </li>
+      <li class="type-info dim">
+        <div class="type-info-top"><span class="report-icon" aria-hidden="true">&#9888;</span><span class="cap-status soon">Coming next</span></div>
+        <span class="report-title">Outbreak / Cluster</span>
+        <span class="report-desc">Group-level reports covering a detected outbreak event.</span>
+      </li>
+    </ul>
+
+    <!-- Native label activation, deliberately no script .click(): that version didn't open the picker in one real Chrome profile (cause not established). -->
+    <label class="dropzone batch-dropzone" id="batch-dropzone" for="batch-file-input">
+      <span>Drag up to 10 files here, or click to browse</span>
+      <span class="dropzone-hint">DOCX, TXT and PDF supported (PDFs need selectable text; scans aren't read yet). CSV planned for a later phase.</span>
+    </label>
+    <input type="file" id="batch-file-input" class="visually-hidden" accept=".docx,.txt,.pdf" multiple>
+
+    <div id="batch-selection-summary" class="batch-selection-summary" hidden>
+      <div id="batch-selection-list"></div>
+      <button class="btn-primary" id="batch-start-btn">Process Files</button>
+    </div>
+
+    <div id="batch-overall-progress" class="batch-overall-progress" hidden></div>
+    <div id="batch-progress-grid" class="batch-progress-grid"></div>
+
+    <div id="batch-save-section" class="batch-save-section" hidden>
+      <div class="batch-save-picker">
+        <label for="batch-save-select">Save to</label>
+        <select id="batch-save-select">
+          <option value="">Original data (no batch)</option>
+          <option value="__new__">+ New batch...</option>
+        </select>
+        <input id="batch-save-new-input" type="text" placeholder="Batch name, e.g. Farwaniya Q1 2026" hidden>
+      </div>
+      <button class="btn-primary" id="batch-save-btn" disabled>Save 0 Reviewed Reports</button>
+      <div id="batch-save-note" class="batch-save-note" aria-live="polite"></div>
+      <div id="batch-save-status" class="batch-save-run-status"></div>
+      <div id="batch-save-links" class="save-cta"></div>
+    </div>
+  </section>
+  </div> <!-- /mode-batch -->
 
   <footer class="site-footer">
     <p class="footer-credit">

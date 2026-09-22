@@ -249,7 +249,7 @@
   </div>
 
 <script>
-const API_BASE = "http://127.0.0.1:8001";
+const API_BASE = "http://127.0.0.1:8002";
 const ENDPOINT = API_BASE + "/reports/laboratory/dashboard-data";
 
 const GREEN_DARK = "#146c43";
@@ -332,6 +332,13 @@ async function load() {
       fillSelect(document.getElementById("f-region"), data.options.regions,    document.getElementById("f-region").value);
       fillSelect(document.getElementById("f-batch"),  data.options.batches,    document.getElementById("f-batch").value);
       optionsLoaded = true;
+
+      // Deep link (?batch=<label>), e.g. from the upload page's "View Dashboard" button.
+      const wantedBatch = new URLSearchParams(location.search).get("batch");
+      if (wantedBatch && data.options.batches.includes(wantedBatch)) {
+        document.getElementById("f-batch").value = wantedBatch;
+        return load();
+      }
     }
 
     draw(data);
@@ -343,7 +350,7 @@ async function load() {
     state.className = "dash-state error";
     state.textContent =
       "Couldn't load dashboard data: " + err.message +
-      ". Check that the backend is running on port 8001.";
+      ". Check that the backend is running on port 8002.";
   }
 }
 

@@ -288,6 +288,49 @@ body {
   flex-shrink: 0;
 }
 
+/* ---------- Mode switch: Single report vs Batch upload ---------- */
+.mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 0 40px 24px;
+  padding: 6px;
+  background: var(--success-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.mode-tab {
+  --mode-accent: var(--brand-blue);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-soft);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.mode-tab[data-mode="batch"] { --mode-accent: var(--accent-slate); }
+.mode-tab:hover { background: rgba(255, 255, 255, 0.6); }
+.mode-tab:focus-visible { outline: 2px solid var(--mode-accent); outline-offset: 2px; }
+.mode-tab[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-card), inset 0 -3px 0 var(--mode-accent);
+}
+
+.mode-title { font-weight: 700; font-size: 15px; }
+.mode-tab[aria-pressed="true"] .mode-title { color: var(--mode-accent); }
+.mode-hint { font-size: 12px; }
+
+/* The Batch panel used to sit mid-flow (24px gap to the next panel); as the
+   last thing before the footer it needs the same 40px the single flow ends with. */
+#mode-batch .batch-panel { margin-bottom: 40px; }
+
 /* ---------- Report type cards ---------- */
 .report-type-grid {
   display: grid;
@@ -357,6 +400,19 @@ textarea {
   resize: vertical;
 }
 
+/* Hidden from view but still focusable/accessible — the real file input behind a dropzone label. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .dropzone {
   border: 1.5px dashed var(--border);
   border-radius: var(--radius);
@@ -394,6 +450,22 @@ textarea {
   cursor: pointer;
 }
 
+/* Post-save "View ... Dashboard" links: a link styled as a secondary button, so it doesn't compete with the primary Save button. */
+.btn-link {
+  display: inline-block;
+  padding: 10px 18px;
+  border: 1.5px solid var(--brand-blue);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--brand-blue);
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+}
+.btn-link:hover { background: #f0f8ec; }
+.save-cta { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; margin-top: 10px; }
+.save-cta:empty { display: none; }
+
 .result-area {
   min-height: 160px;
   border: 1.5px dashed var(--border);
@@ -406,7 +478,296 @@ textarea {
 
 .placeholder-text { color: var(--ink-soft); font-size: 13px; text-align: center; }
 
+/* ---------- Batch Upload ----------
+   Deliberately its own accent (slate) rather than the single-report
+   flow's green/teal — a visual cue that this is a separate area of the
+   app, not a variant of the extraction page above it. */
+.batch-panel {
+  border-left: 4px solid var(--accent-slate);
+}
+
+/* Read-only twin of the Step 1 report-type cards (same icon/title/description
+   classes and border); not a button, so no hover, pointer or selected state. */
+.type-info-note { margin: 0 0 10px; font-size: 12.5px; color: var(--ink-soft); }
+.type-info-grid {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+.type-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.type-info.dim { opacity: 0.62; }
+.type-info-top { display: flex; align-items: center; justify-content: space-between; }
+.type-info .cap-status { margin: 0; }
+
+.batch-dropzone {
+  border-color: var(--accent-slate-soft);
+}
+.batch-dropzone:hover { border-color: var(--accent-slate); }
+.batch-dropzone-locked { opacity: 0.5; pointer-events: none; }
+
+/* :not([hidden]) so this doesn't fight the hidden attribute's own
+   display:none — a plain class selector here would otherwise win the
+   cascade over the UA stylesheet's [hidden] rule and show it anyway. */
+.batch-selection-summary:not([hidden]) {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.batch-selection-warning { color: var(--accent-rust); font-weight: 600; }
+
+.batch-overall-progress {
+  margin-top: 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-slate);
+}
+
+.batch-progress-grid {
+  display: grid;
+  /* Wide enough for a full editable field table (Milestone 4's "ready"
+     cards) — narrower processing/error cards just don't fill it. */
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+  align-items: start;
+}
+
+.batch-progress-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+}
+
+.batch-progress-filename {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 8px;
+  min-width: 0;
+}
+
+.batch-progress-status {
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.4;
+}
+
+/* ---------- Batch review card (Milestone 4) ---------- */
+.batch-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.batch-card-header .batch-progress-filename { flex: 1; margin-bottom: 0; }
+
+.batch-type-pill {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--success-bg);
+  color: var(--success-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Unchecked = amber dashed "this needs a look" treatment; checked =
+   solid green "confirmed" — the hard constraint (no card is ever
+   checked except by the reviewer's own click) made visible, not just
+   enforced in code. */
+.batch-reviewed-label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1.5px dashed var(--accent-amber);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+.batch-reviewed-label:has(input:checked) {
+  border: 1.5px solid var(--success-ink);
+  border-style: solid;
+  background: var(--success-bg);
+  color: var(--success-ink);
+}
+.batch-reviewed-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--success-ink);
+  flex-shrink: 0;
+}
+
+.batch-type-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.batch-type-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: inherit;
+}
+.batch-type-btn:hover { border-color: var(--accent-slate); background: #f4f6f7; }
+
+.batch-remove-btn {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--accent-rose);
+  background: var(--surface);
+  color: var(--accent-rose);
+  cursor: pointer;
+  font-family: inherit;
+}
+.batch-remove-btn:hover { background: #fdecea; }
+
+.batch-status-waiting { color: var(--ink-soft); }
+.batch-status-active { color: var(--accent-slate); }
+.batch-status-cold { color: var(--accent-amber); font-weight: 600; }
+.batch-status-warn { color: var(--accent-rust); font-weight: 600; }
+.batch-status-ready { color: var(--success-ink); font-weight: 600; }
+.batch-status-error { color: var(--accent-rose); font-weight: 600; }
+
+/* Small, fast spinner for warm calls — deliberately quick so it reads
+   as "in progress, nearly done," the opposite feeling from the slower
+   cold-start spinner below. This is the visual half of the cold/warm
+   asymmetry the timing numbers alone don't communicate. */
+.batch-spinner {
+  width: 12px; height: 12px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent-slate);
+  border-radius: 50%;
+  display: inline-block;
+  animation: batch-spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+/* Bigger, slower, amber-colored spinner for the cold-start (model
+   loading) case — reads as "this one's different, settle in" rather
+   than the quick warm-call spinner above. */
+.batch-spinner-slow {
+  width: 16px; height: 16px;
+  border-width: 3px;
+  border-top-color: var(--accent-amber);
+  animation-duration: 1.6s;
+}
+
+@keyframes batch-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Batch Upload: save step (Milestone 5) ---------- */
+/* :not([hidden]) so this doesn't fight the hidden attribute's own
+   display:none — the exact same specificity bug found and fixed on
+   .batch-selection-summary in Milestone 3, recurred here because that
+   fix was never retroactively applied when this section was added in
+   Milestone 5. Found live (2026-09-17) while diagnosing an unrelated
+   dropzone bug report — this section was visibly showing "Save 0
+   Reviewed Reports" on initial page load, before any file had ever been
+   selected. */
+.batch-save-section:not([hidden]) {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.batch-save-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.batch-save-picker label { font-weight: 600; }
+.batch-save-picker select,
+.batch-save-picker input[type="text"] {
+  padding: 7px 10px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+}
+
+.batch-save-note { width: 100%; margin-top: -6px; font-size: 12px; color: var(--ink-soft); }
+.batch-save-note:empty { display: none; }
+
+.batch-save-run-status {
+  width: 100%;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.batch-card-save-status {
+  margin-top: 8px;
+  font-size: 12.5px;
+}
+.batch-save-inprogress { color: var(--accent-slate); font-weight: 600; }
+.batch-save-success { color: var(--success-ink); font-weight: 600; }
+.batch-save-error { color: var(--accent-rose); font-weight: 600; }
+
+/* A saved card's inputs are disabled (see lockSavedCard in app.js) —
+   this just makes that state visually obvious too, not only inert. */
+.batch-card-saved {
+  background: var(--success-bg);
+}
+.batch-card-saved input:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
 @media (max-width: 800px) {
   .panel-row { flex-direction: column; }
   .site-header, .hero, .panel, .panel-row { padding-left: 20px; padding-right: 20px; margin-left: 20px; margin-right: 20px; }
+  .mode-switch { margin-left: 20px; margin-right: 20px; }
+}
+
+@media (max-width: 560px) {
+  .mode-switch { grid-template-columns: 1fr; }
 }

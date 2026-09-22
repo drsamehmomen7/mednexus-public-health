@@ -193,7 +193,7 @@
   </div>
 
 <script>
-const API_BASE = "http://127.0.0.1:8001";
+const API_BASE = "http://127.0.0.1:8002";
 const ENDPOINT = API_BASE + "/indicators/dashboard-data";
 
 const GREEN_DARK = "#146c43";
@@ -235,7 +235,7 @@ async function load() {
     state.className = "dash-state error";
     state.textContent =
       "Couldn't load indicators data: " + err.message +
-      ". Check that the backend is running on port 8001.";
+      ". Check that the backend is running on port 8002.";
   }
 }
 
