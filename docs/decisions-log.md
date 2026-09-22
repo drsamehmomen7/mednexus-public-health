@@ -1861,3 +1861,309 @@ through the same detect → extract → review → save path as DOCX/TXT and
 nothing downstream changed. Own-browser confirmation: CONFIRMED
 (2026-09-21). OCR, CSV upload and PDF accuracy testing are not built or
 run.
+
+### 2026-09-21/22 — Terminology-code preview: live in the review table, in_vocabulary tells "unmatched" apart from "deliberately uncoded", built in 4 verified milestones
+Requested as a written plan first, no implementation until reviewed,
+approved in full including four judgment calls left open in the plan
+(below) — same process as PDF and Batch Upload. The ask: icd10_code /
+vaccine_code / test_code are computed ONLY at save time today, and are
+invisible everywhere except a saved record's Export JSON. Show a live
+preview of that same value in the review table, during review, without
+weakening the hard architectural rule that EXTRACT stays
+terminology-independent (docs/mednexus-integration/clinical-extraction-
+contract-v0.1.md Section 3: "A terminology mapping error or gap must
+never alter extraction recognition or extraction confidence"). Built as
+four milestones, each reported and approved before the next: M1 backend
+(the lookups and the endpoint), M2 the single-report flow, M3 Batch
+Upload, M4 this polish-and-docs pass.
+
+**What was built, and what stayed untouched.** Three new functions in
+`vocabularies.py` — `get_icd10_entry()`, `get_loinc_entry()`,
+`get_cvx_entry()` — each return a uniform
+`{code, status, note, in_vocabulary}` for a disease/vaccine/test name,
+built directly on the lookups the save endpoints already call
+(`load_icd10_lookup()`, `get_loinc_code()`, `get_cvx_code()`), never a
+second implementation of them. Those three save-time functions are
+byte-for-byte unchanged; the save endpoints in `main.py` were not
+touched at all. `load_icd10_lookup()` gained one additive side effect —
+it now also caches the `*_flag` reviewer notes it already reads off
+disk and already discards, in a sibling `_icd10_flag_cache`, so
+`get_icd10_entry()` can surface a disease's flag note without a second
+file read — the function's own signature, return value and every
+existing caller are unaffected. New `GET /terminology/preview` in
+`main.py` returns a plain dict (`{"system": ..., **entry}`), deliberately
+NOT a Pydantic `response_model` — checked against the file's own
+convention first rather than assumed: no endpoint in this file uses
+`response_model`, and `/reports/detect-type`, the closest sibling (also
+a cheap, stateless, read-only suggestion consulted before a real
+action), also just returns a plain dict. A GET with two query params,
+not a POST with a body, because unlike `/reports/detect-type`'s
+free-text payload, `value` here is a short vocabulary term — genuinely
+idempotent, read-only "preview" semantics, not a payload-size concern
+forcing POST. No DB dependency at all (unlike most of this file's other
+routes) — pure in-memory dict lookups once loaded.
+
+**Why an endpoint, not the lookup tables shipped to the frontend.** The
+alternative considered: serve `icd10_codes.json`/`loinc_codes.json`/
+`cvx_codes.json` as static files and do the `.get()` client-side, saving
+a network round trip. Rejected — it would mean reimplementing the
+lookup's own rules (skip `_flag`/`_comment` keys, exact-match, the
+null-handling) a second time in JavaScript, which is precisely the
+"duplicate lookup implementation" the plan ruled out from the start; any
+future change to how a mapping is computed would then need building
+twice or the client-side preview would silently drift from what save
+actually does. An endpoint keeps STANDARDIZE's mapping logic and
+reference data entirely server-side, mirrors `/reports/detect-type`'s
+own established shape, and costs a few milliseconds given the lookups
+are already in-memory-cached — cheap enough that "not on every
+keystroke" (below) is about UI noise, not about this cost.
+
+**Why a 4th field, `in_vocabulary`, beyond {code, status, note}.** The
+approved plan's own risk list flagged that surfacing "no code" live
+would make an existing, pre-existing exact-match brittleness visible
+for the first time — and Dr. Sameh's approval was conditional on one
+explicit requirement: the copy MUST clearly distinguish "this wording
+doesn't match the vocabulary yet" from "no code exists by deliberate
+clinical decision," specifically for the 9 flagged ICD-10 diseases and
+the 3 null-LOINC tests. Relying on "does `note` happen to be present"
+as the signal was considered and rejected — it works for today's data
+(the 3 null-LOINC tests always have a note; an unmatched value never
+does) but is an indirect inference the frontend would have to encode
+itself, and it would silently break if a future matched-but-uncoded
+entry ever lacked a note. `in_vocabulary` makes the distinction
+explicit and structural instead: `false` when the value matches nothing
+in the lookup; `true` whenever it does, whether or not `code` ended up
+null. The frontend renders two genuinely different headlines from it —
+*"Not available yet for this wording."* (unmatched) vs. *"Reviewed —
+none applies."* plus the real note (deliberate) — not just different
+note text.
+
+**The ICD-10 status question, decided in scope.** `icd10_codes.json`
+already had reviewer notes for 9 of 54 diseases, via a `"<disease>_flag"`
+sibling key `load_icd10_lookup()` already read off disk and discarded
+(kept out of the returned lookup dict on purpose, since a flag key isn't
+a disease name). Surfacing that existing text was a few lines — the
+JSON file's shape didn't change, and no new taxonomy had to be invented.
+Approved separately, and explicitly NOT attempted: a real per-entry
+ICD-10 mapping-status taxonomy mirroring LOINC/CVX's EXACT /
+ACCEPTABLE_GENERIC_SPECIMEN / NO_DIRECT_LOINC / etc. That would mean
+classifying all 54 entries, which is the same kind of clinical-editorial
+work Dr. Sameh already did by hand for LOINC and CVX — not something to
+retrofit silently. `status` is `null` for every ICD-10 response until
+that separate review happens.
+
+**Frontend: one shared rendering path, not two.** `renderFieldsTable()`
+— already the one function both the single-report flow and every batch
+card use to render the field table itself — gained two parameters,
+`type` and `previewIdSuffix` (default `""`), and now also emits the
+preview block, so the HTML-emission logic lives in exactly one place for
+both flows, not duplicated at each call site. The block is a sibling
+`<div>` placed after `</table>`, not another `<tr>` inside it —
+approved specifically because any row in that table reads as "another
+extracted field" regardless of styling, no matter how it's colored; a
+separate block was the only design that could satisfy "must not be
+mistakable for a normal field." It contains no `<input>` at all, so
+`collectEditedRecord()` (which only ever reads `input[data-field]`
+elements) cannot pick it up — the "zero changes to save logic"
+requirement holds by construction, not by a guard that has to be kept
+correct by hand. A new `refreshTerminologyPreview(container, type,
+previewIdSuffix)` does the fetch and patches only the preview's own
+`[data-preview-body]` cell: called once right after a table's HTML is
+inserted (single-flow: right after `resultArea.innerHTML` is set;
+batch: from inside `updateBatchCard()`, guarded to fire only the one
+time an item's status becomes `"ready"` — the single moment its
+placeholder actually exists in the DOM), and again from one delegated
+`change` listener per flow whenever the watched field is edited. Firing
+it on that first render at all — showing a preview for the as-extracted
+value before the reviewer has touched anything — was itself a judgment
+call: the original plan only required recomputing on edit, but showing
+it immediately serves the feature's actual goal (surface the code
+*earlier in review*) better than the literal spec did, and was approved
+on that reasoning rather than built to the letter of the original ask. Batch's
+listener reuses the exact isolation already proven for the Reviewed
+checkbox and the type/remove buttons —
+`e.target.closest(".batch-progress-card")` then
+`currentBatchItems.find(...)` — no new per-card mechanism invented.
+`previewIdSuffix` was added to `renderFieldsTable()`'s signature in M2,
+one milestone before Batch actually needed it, specifically so Batch
+(M3) would not need a second signature change to a function two call
+sites already depend on — a deliberate, narrow exception to
+building-only-what's-approved, flagged to Dr. Sameh at the time as a
+judgment call rather than decided silently.
+
+**Verification, not assumption, for every stage.** M1: every response
+shape hand-checked against the real data files, including the real
+`cvx_codes.json` `_comment` string (not a simulated case) to prove the
+defensive `isinstance(entry, dict)` guard actually matters, not just
+theoretically. M2 (single-report flow), live against the real running
+backend: Anthrax → A22, no note (plain coded case); edited to Influenza
+→ J11 plus its real flag note; a Laboratory extraction that came back
+`test_name: "Unknown"` → *"Not available yet for this wording."*, edited
+to Poliovirus Stool PCR → *"Reviewed — none applies."* plus Dr. Sameh's
+real note — the exact pairing the approval's requirement was about,
+shown side by side from real edits, not asserted from code reading.
+Editing back to a no-note entry (Dengue IgM Serology) confirmed the note
+paragraph cleared rather than lingering (`innerHTML` is fully replaced,
+not appended, each time). M3 (Batch Upload), a real 3-file batch:
+Malaria → B54 plus its real flag note and Botulism → A05.1 with no
+note came up unplanned from real extraction on two cards of the SAME
+report type — confirming independence isn't just "different config."
+Editing card 0's disease_name to Syphilis changed only card 0 (cards 1
+and 2 byte-identical to their prior state); editing card 2's test_name
+to Poliovirus Stool PCR changed only card 2. Structurally re-confirmed
+per card: the preview is a sibling immediately after that card's own
+`<table>`, zero `<input>` elements inside it, and each card's
+`input[data-field]` count scoped to itself only. M4: the stale-response
+race guard (a `dataset.forValue` marker, written synchronously before
+each fetch and checked after it resolves) was proven, not just read —
+`window.fetch` was temporarily wrapped (page-lifetime only, cleared by
+the next reload, never touching the shipped code) to delay one specific
+response 3 seconds behind a second, faster edit fired immediately after
+it; the fast result showed correctly right away, and the slow response,
+arriving roughly 10 seconds later, was confirmed to leave it untouched.
+Long-note wrapping was checked against the actual longest note in the
+whole dataset — 971 characters, CVX's Meningococcal ACWY entry, found by
+querying all three lookup files rather than guessing which note was
+longest — `scrollWidth === clientWidth` on both the note paragraph and
+its containing block, zero horizontal overflow, no CSS change needed.
+
+**Two tooling problems hit and worked around, both worth keeping on
+record.** (1) Batch Upload needs real files, and this session's browser
+tool has no native file-picker automation. Rather than skip real
+verification or hand-build fake batch-item objects, real in-memory
+`File` objects were constructed and a genuine `drop` `DragEvent`
+carrying them was dispatched at the dropzone — the same technique
+standard drag-and-drop test harnesses use, landing on the page's own
+unmodified `e.dataTransfer.files` handler, not a shortcut around it.
+Parsing, detection, extraction and rendering all then ran for real. (2)
+Pointer clicks on the five Report Type cards specifically were
+unreliable in this pane (other clicks, typing and keyboard input worked
+throughout) — worked around by using the app's own real auto-detect
+path (paste text of the target type, click Extract, let the app switch
+the card itself), a genuine user-facing flow, not a workaround around
+the feature under test.
+
+**One dev-environment gotcha, likely to recur.** This frontend is
+served by a plain static file server with no live-reload (`python -m
+http.server`) — a browser tab opened once and left open across a whole
+editing session keeps running the JS it loaded at the *start* of that
+session. Mid-M3, freshly edited `app.js` produced no preview blocks at
+all in a tab that had been open since M2; the fix was recognizing the
+tab was stale and reloading it, not a code change. Worth remembering
+for any future live-verification session: reload between milestones,
+not just between page loads.
+
+**One pre-existing issue noticed, explicitly not touched.** While
+processing the M3 batch, the browser console showed CORS-shaped errors
+on `GET /reports/*/batches`. Checked directly (not assumed): the
+endpoint returns 200 fine, just slowly (about 3.1 s against Render's
+remote Postgres), matching this log's own 2026-08-06 entry ("Dashboard
+refresh takes 3-4s ... Latency, not a code problem") almost exactly —
+not a regression from this feature, and `fetchBatchRecords()` already
+degrades gracefully (empty list) rather than breaking anything. Left
+untouched: unrelated to terminology preview, and fixing Render latency
+was never part of this milestone's scope.
+
+**What is verified, and what is not.** Verified: 263 passed + 2
+expected xfails; every response shape against real data files including
+the real `_comment` edge case; live, real-backend behavior for both
+flows, including a genuine artificial-delay race test and the actual
+worst-case note length. NOT verified: PDF-style deploy/Render behavior
+(this feature makes no new deploy-relevant change, but was not
+specifically checked there either); Dr. Sameh's own-browser confirmation
+(pending, same process as PDF's — his own live check before any
+commit).
+
+Terminology-code preview is now IMPLEMENTED for all three report types,
+both Single and Batch: read-only, additive, zero changes to extraction,
+confidence, needs_review or save. A real per-entry ICD-10 status
+taxonomy remains separate, later work.
+
+### 2026-09-22 — Batch Upload regression: file selection was replacing instead of accumulating; git history could not date it
+Found by Dr. Sameh's own testing, before the terminology-preview live
+check even started — unrelated to that feature, investigated and fixed
+separately. The bug: selecting files in Batch Upload a second time (via
+Browse again, or a second drag-and-drop) REPLACED the first selection
+instead of adding to it. Example: 3 Laboratory files selected, then 3
+Immunization files selected — expected 6 files total, actually ended up
+with only the 3 most recent.
+
+**Root cause, confirmed via git, not guessed — with an honest limit on
+what git could actually answer.** Requested explicitly: confirm via git
+history before touching anything, rather than assume. `git blame` on
+`showBatchSelection()`/`pendingBatchFiles`/the file-input and dropzone
+handlers, and `git log --all -- frontend/prototype/app.js`, both show
+every line of this code was introduced in exactly ONE commit —
+`afdcfc1` ("Migrate frontend to port 8002, add Batch Upload feature...
+", 2026-09-22), part of this session's own bulk-commit sequence — and
+never appeared in any commit before that. The Batch Upload feature (see
+the 2026-09-17 entry above) had been built and left uncommitted in the
+working tree since that earlier session; this session committed it
+as-is, bug included. **This means git history cannot say WHEN the
+regression was introduced or which specific edit caused it — there is
+no earlier commit to diff or blame against.** Reported that limit
+honestly rather than naming a specific "breaking" edit unsupported by
+evidence. Dr. Sameh's own hypothesis about the MECHANISM was confirmed
+true and is exactly the kind of change that could cause this symptom: a
+native `<input type="file" multiple>` always hands back only the LATEST
+picker result as its own `.files` — true regardless of whether the
+picker is opened via a scripted `.click()` or a native `<label for>`
+(confirmed: that only changes how the picker is OPENED, never what the
+browser reports once it closes) — so correct accumulation could only
+ever have come from JS-side merge logic reading each new selection onto
+a persistent array. The code found had none: `showBatchSelection()` did
+a plain `pendingBatchFiles = files` (full replace) on every call, from
+both the file-input `change` handler and the dropzone `drop` handler.
+
+**The fix, two parts (20 insertions, 7 deletions, isolated from the
+same-session terminology-preview changes in the same file).**
+(1) `showBatchSelection()` now does `pendingBatchFiles =
+pendingBatchFiles.concat(newFiles)`; the existing 10-file-cap check and
+its warning message now operate on that accumulated total, not just the
+newest selection's size, so adding 5 files to an existing 6 correctly
+reports "Selected 11 files," not "Selected 5" — the exact same
+wipe-to-empty-on-over-limit behavior the single-shot case already had,
+just fed the right number. (2) A second, self-found fix, not part of
+the original report: when a batch run actually starts,
+`pendingBatchFiles` is now snapshotted into a local `filesToProcess`
+and cleared, and `processBatchFiles()` is called with `filesToProcess`.
+Without this, a plain accumulate-only fix would have introduced a NEW
+regression: after one batch run finished, selecting fresh files for a
+second, separate run would have silently re-included the
+already-submitted files from the first run, since nothing had ever
+cleared `pendingBatchFiles` after processing started (harmless before,
+because the old replace-based code overwrote it on the next selection
+regardless). Caught by re-reading the whole `batchStartBtn` click
+handler after the first edit, not by further live testing. Everything
+else about existing behavior was left untouched on purpose: the
+native-`<label>` click-to-browse mechanism, the 10-file cap message's
+wording and the wipe-on-over-limit pattern, and drag-and-drop.
+
+**Live-verified, not just read** (Browser pane; this pane's tools have
+no native OS file-picker automation — see the 2026-09-21/22 entry above
+for the drop-event technique already established for this; a
+correction found here: `input.files = dataTransfer.files` followed by a
+real dispatched `change` event DOES work in this pane's Chromium-based
+browser, driving the actual native file-picker code path directly,
+not only the `drop` path):
+- 3 files via Browse, then 3 more via Browse → 6 total, both sets shown
+  in order, "Process Files" button correctly enabled.
+- 6 accumulated, then +5 more (→ 11, over the cap) → correctly wiped,
+  message reads "Selected 11 files — pick 10 or fewer," reflecting the
+  true accumulated total, not the 5 just added.
+- Recovery after that wipe: a fresh selection right after showed only
+  what was newly picked, no contamination from the wiped state.
+- Drop and Browse mixed (2 via Browse, then 1 via drop) → 3 total,
+  confirming both pathways share the same accumulating state.
+- A real 3-file batch was run to completion, then one more file was
+  selected: the new selection showed only that 1 file, not the 3
+  already-submitted ones reappearing — proving fix (2) above actually
+  works, not just that it compiles.
+- Zero console errors throughout; full backend suite unaffected (pure
+  frontend fix): still 263 passed + 2 expected xfails.
+
+The Batch Upload regression is now FIXED and verified against its exact
+reported scenario plus the over-cap and cross-run cases it implied.
+Batch Upload's original 2026-09-17 entry remains accurate for
+everything else about that feature; this entry documents only what
+changed here.

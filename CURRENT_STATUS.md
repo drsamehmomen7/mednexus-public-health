@@ -1,6 +1,6 @@
 # Current Status — read this first in any new chat
 
-Last updated: 2026-09-21
+Last updated: 2026-09-22
 
 ## MedNexus Seven — cross-project architecture status (added 2026-08-16)
 
@@ -65,6 +65,94 @@ dashboards, brand
 identity). Same extraction pipeline shape for all three report types:
 raw text -> GLiNER NER + gazetteer(s) + rule-based fields -> confidence
 report -> save to Postgres.
+
+**Batch Upload regression fixed: file selection now accumulates again
+(2026-09-22).** Found by Dr. Sameh's own testing: selecting files a
+second time (Browse again, or another drag-and-drop) was REPLACING the
+first selection instead of adding to it. `git blame`/`git log --all`
+confirmed every line of the relevant code was introduced in one commit
+this session (`afdcfc1`) and never existed before — the feature had
+been built and left uncommitted since an earlier session, so git
+history could not date the regression, only confirm there's no earlier
+version to compare against. Fixed in two parts: `showBatchSelection()`
+now accumulates onto `pendingBatchFiles` instead of replacing it (the
+10-file-cap check/message now reflect the true accumulated total); and
+`pendingBatchFiles` is now cleared when a batch actually starts
+processing, otherwise a later, separate run would have silently
+re-included already-submitted files — a second problem found and fixed
+while fixing the first, not part of the original report. Live-verified:
+3 files then 3 more → 6 total; 6 then +5 (over the cap) → correctly
+wiped, message reflects the true total of 11, not 5; drop and Browse
+mixed correctly; a fresh selection after a completed run did not
+re-include that run's files. Full detail: decisions-log.md, 2026-09-22.
+
+**Terminology-code preview, live in the review table (2026-09-21/22).**
+New `GET /terminology/preview?report_type=...&value=...` shows what
+icd10_code / vaccine_code / test_code WOULD resolve to right now, while
+a report is still being reviewed — Single and Batch both — not just
+after save. Planned first (written plan approved before code, same
+process as PDF/Batch Upload) and built in 4 verified milestones: M1
+backend, M2 single-report wiring, M3 Batch Upload wiring, M4 this
+polish-and-docs pass. Zero changes to extraction, confidence,
+needs_review or save: the three save-time lookups
+(`load_icd10_lookup().get()`, `get_loinc_code()`, `get_cvx_code()`) are
+untouched; three new, additive functions —
+`get_icd10_entry()`/`get_loinc_entry()`/`get_cvx_entry()` in
+`vocabularies.py` — reshape those SAME lookups' results for the preview
+endpoint, which holds no lookup logic of its own. The preview renders as
+a block below the field table, not another row in it — deliberately, so
+it never reads as an editable extracted field — appears immediately for
+the as-extracted value, and recomputes on every edit of the field it
+watches (`disease_name` / `vaccine_name` / `test_name`) via one
+delegated `change` listener per flow, reusing the exact per-card
+isolation (`closest(".batch-progress-card")`) Batch Upload's own
+Reviewed-checkbox listener already used. Proven independent across
+multiple simultaneous batch cards, including two cards of the SAME
+report type edited one after the other.
+
+The response carries a 4th field beyond `{code, status, note}`:
+**`in_vocabulary`**. It exists specifically to tell apart two different
+"no code" situations that would otherwise look identical: a value that
+simply doesn't match the vocabulary yet (`in_vocabulary: false` — a
+typo, or a value still mid-edit) versus a value that IS recognized but
+genuinely has no usable code by deliberate clinical decision
+(`in_vocabulary: true, code: null` — true today for exactly 3 of 71 lab
+tests: Poliovirus Stool PCR, Hantavirus IgM Serology, Leprosy Skin
+Biopsy, each shown with Dr. Sameh's own reviewer note). Conflating those
+two would be misleading, not just imprecise, so the UI gives them
+different headline text ("Not available yet for this wording." vs.
+"Reviewed — none applies." plus the real note) rather than relying on
+note text alone to carry the distinction. ICD-10 gets a `note` (the
+existing 9 diseases' `*_flag` reviewer text, exposed for the first time)
+but no `status` — there is still no per-entry ICD-10 mapping-status
+taxonomy the way LOINC/CVX have (EXACT / NO_DIRECT_LOINC / ...);
+inventing one is a separate, later task needing the same kind of
+clinical review LOINC/CVX already got, not retrofitted here.
+
+Tests: 220 → **263 passed + 2 expected xfails** (43 new: 25 in
+`test_vocabularies.py` against the real data files directly, 18 in
+`test_terminology_preview_endpoint.py` over HTTP). Found and handled in
+passing: `get_cvx_entry()`/`get_loinc_entry()` guard against a
+non-dict raw entry, because `cvx_codes.json`'s own top-level `_comment`
+key is a plain string (unlike `icd10_codes.json`'s, already filtered
+out by `load_icd10_lookup()`) — the SAME gap already exists in the
+shipped `get_cvx_code()` the save endpoint uses, just never hit because
+no real vaccine is named `_comment`; not fixed there (save logic stays
+untouched), but the new preview-only functions don't carry the same
+risk forward. M4 polish, both checked against their real worst case
+rather than assumed correct: the stale-response race guard was proven
+by artificially delaying one response 3 seconds behind a second, faster
+edit and confirming the slow one — arriving about 10 seconds later —
+never overwrote the newer result; long-note wrapping was checked at the
+actual longest note in the whole dataset (971 characters, CVX's
+Meningococcal ACWY entry), zero horizontal overflow, no CSS change
+needed. One dev-environment gotcha worth recording: this frontend is
+served with no live-reload (`python -m http.server`), so a browser tab
+left open across an editing session keeps running the JS it loaded at
+the START of that session — mid-M3, batch cards briefly showed no
+preview at all until a stale tab (open since M2) was reloaded. Not a
+code defect. Not verified: on Render (no deploy run); Dr. Sameh's own
+Chrome check is still pending, same process as PDF's.
 
 **PDF document upload built (2026-09-20/21) — ingestion only; own-browser
 check CONFIRMED.** `POST /reports/parse-document` now accepts `.pdf`
@@ -412,8 +500,9 @@ Recovery steps documented in the ground rules below; the same steps
 apply regardless of root cause if it recurs — and now there's an Export
 button to reduce what a repeat would cost.
 
-220 backend tests passing, plus 2 expected xfails (126 in the last
-commit; 138 when the PDF work began — see the PDF entry above).
+263 backend tests passing, plus 2 expected xfails (126 in the last
+commit; 138 when the PDF work began, 220 when the PDF work finished —
+see the PDF and terminology-preview entries above).
 
 **IMMEDIATE NEXT STEP:** Confirmed — ICD-10 auto-population verified
 end-to-end against a real save (Influenza → J11 confirmed in Export
@@ -476,8 +565,15 @@ not separately tracked. Remaining, in order:
 - **Export**: JSON/CSV download per batch (or everything) on both
   dashboards — the safety net for manually-saved records with no other
   backup.
-- 220 backend tests passing plus 2 expected xfails (`pytest tests/ -v`
+- 263 backend tests passing plus 2 expected xfails (`pytest tests/ -v`
   from `backend/`); 126 in the last commit.
+- **Terminology-code preview** (2026-09-21/22): `GET
+  /terminology/preview` shows what icd10_code/vaccine_code/test_code
+  would resolve to live, in the review table (Single and Batch), before
+  save — built on the SAME save-time lookups, via three new additive
+  `get_*_entry()` functions in `vocabularies.py`; nothing about
+  extraction, confidence or save changed. See the dated entry above for
+  the `in_vocabulary` design and the M4 verification detail.
 - Negation-aware extraction in BOTH directions ("ruled out dengue" and
   "dengue was ruled out"), bounded to the sentence so a negation can't leak
   onto a neighbouring diagnosis — applies to both NER entities and
