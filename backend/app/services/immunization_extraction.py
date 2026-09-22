@@ -51,7 +51,7 @@ from app.services.rule_based import (
 NER_LABELS = ["vaccine", "region", "facility"]
 
 RULE_BASED_FIELDS = (
-    "administration_date", "patient_age", "patient_age_months",
+    "patient_age", "patient_age_months",
     "dose_number", "route", "adverse_event_reported",
     "adverse_event_severity", "adverse_event_description",
 )
@@ -102,7 +102,11 @@ def extract_immunization_with_confidence(
     gazetteer_region = region_gazetteer.find(text) if region_gazetteer else None
     gazetteer_vaccine = vaccine_gazetteer.find(text) if vaccine_gazetteer else None
 
-    administration_date = extract_first_date(text)
+    # administration_date is a required schema field, so a value always
+    # has to be supplied even when nothing parses — see
+    # rule_based_confidence()'s found= parameter for how that fallback
+    # stays visible to a reviewer instead of silently passing as genuine.
+    administration_date_parsed = extract_first_date(text)
     age_months = extract_age_months(text)
     # Years is derived from months when the report is infant-phrased,
     # rather than trying extract_age() first — a report saying "2-month-
@@ -118,7 +122,7 @@ def extract_immunization_with_confidence(
             gazetteer_vaccine or (vaccine_entity.text if vaccine_entity else "Unknown")
         ),
         dose_number=dose_number,
-        administration_date=administration_date or date.today(),
+        administration_date=administration_date_parsed or date.today(),
         route=(InjectionRoute(route) if route else InjectionRoute.UNKNOWN),
         patient_age=patient_age,
         patient_age_months=age_months,
@@ -144,6 +148,7 @@ def extract_immunization_with_confidence(
             else model_confidence(region_entity)
         ),
         "facility_name": model_confidence(facility_entity),
+        "administration_date": rule_based_confidence(found=administration_date_parsed is not None),
         **{field: rule_based_confidence() for field in RULE_BASED_FIELDS},
     }
 

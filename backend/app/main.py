@@ -10,6 +10,7 @@ from datetime import date, datetime
 from typing import Optional
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
@@ -21,7 +22,13 @@ from app.schemas.immunization import ImmunizationRecord
 from app.schemas.laboratory import LaboratoryReport
 from app.schemas.notifiable_disease import NotifiableDiseaseCase
 from app.services.confidence import needs_review
-from app.services.document_parsing import UnsupportedDocumentType, extract_text
+from app.services.document_parsing import (
+    MAX_UPLOAD_BYTES,
+    DocumentTooLarge,
+    UnreadableDocument,
+    UnsupportedDocumentType,
+    extract_text,
+)
 from app.services.extraction import extract_notifiable_disease_with_confidence
 from app.services.immunization_extraction import extract_immunization_with_confidence
 from app.services.indicators import test_positivity_by_region, vaccination_coverage_by_region
@@ -29,6 +36,7 @@ from app.services.laboratory_extraction import extract_laboratory_with_confidenc
 from app.services.ner_client import NerBackendUnavailable
 from app.services.report_type_detection import detect_report_type
 from app.services.vocabularies import (
+    get_cvx_code,
     get_loinc_code,
     load_disease_gazetteer,
     load_icd10_lookup,
@@ -178,17 +186,23 @@ def health_check():
 @app.post("/reports/parse-document")
 async def parse_document(file: UploadFile = File(...)):
     """
-    Extracts plain text from an uploaded document (DOCX/TXT today), so
+    Extracts plain text from an uploaded document (DOCX, TXT and PDF), so
     the frontend can feed the result into the same extract flow it
     already uses for pasted text. Deliberately does NOT extract
     structured fields or guess the report type here — one endpoint, one
     job. Call /reports/detect-type next with the returned text.
     """
-    file_bytes = await file.read()
+    # One byte past the limit is enough to know it's too big, without loading the whole upload into memory.
+    file_bytes = await file.read(MAX_UPLOAD_BYTES + 1)
     try:
-        extracted_text = extract_text(file.filename, file_bytes)
+        # Parsing is CPU-bound (PDFs especially): keep it off the event loop so /health and other requests aren't blocked meanwhile.
+        extracted_text = await run_in_threadpool(extract_text, file.filename, file_bytes)
     except UnsupportedDocumentType as exc:
         raise HTTPException(status_code=415, detail=str(exc)) from exc
+    except DocumentTooLarge as exc:
+        raise HTTPException(status_code=413, detail=str(exc)) from exc
+    except UnreadableDocument as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     if not extracted_text.strip():
         raise HTTPException(
@@ -362,7 +376,7 @@ def save_immunization_record(
     """
     record = SavedImmunizationRecord(
         vaccine_name=request.record.vaccine_name,
-        vaccine_code=request.record.vaccine_code,
+        vaccine_code=request.record.vaccine_code or get_cvx_code(request.record.vaccine_name),
         dose_number=request.record.dose_number,
         lot_number=request.record.lot_number,
         administration_date=request.record.administration_date,

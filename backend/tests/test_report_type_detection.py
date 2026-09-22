@@ -66,3 +66,27 @@ def test_scores_surface_matched_terms_for_transparency():
     _, scores = detect_report_type(text, DISEASE_GAZETTEER, VACCINE_GAZETTEER)
     assert "Measles" in scores["matched_diseases"]
     assert scores["matched_vaccines"] == []
+
+
+# --- Regression coverage for the paste-path misclassification bug -------
+# (found real via blind testing 2026-08-17 — see decisions-log.md). The
+# detection SCORING was never actually wrong here — this pins the exact
+# real-phrasing text that triggered the bug report, so a future change to
+# the signal-word/gazetteer weighting can't silently regress it. The
+# actual bug was that app.js never called this function at all for
+# pasted text (only for uploads); that half of the fix has no pytest
+# coverage since this project has no frontend test framework — see
+# decisions-log.md for how it was verified instead (live UI + network
+# inspection).
+def test_real_phrasing_immunization_report_is_not_misdetected_as_laboratory():
+    text = (
+        "Vaccination given today at Bayan Clinic (Hawalli) to a 7-month-old infant. "
+        "Product administered: Hexa vaccine, this being her second dose. "
+        "Administered intramuscularly in the thigh. Date: 20/02/2025. "
+        "Parent reports mild fever the following day but no other concerns "
+        "— a known, expected reaction, not classified as a serious adverse event."
+    )
+    lab_gazetteer = Gazetteer(["Influenza PCR", "Measles IgM Serology"])
+    detected, scores = detect_report_type(text, DISEASE_GAZETTEER, VACCINE_GAZETTEER, lab_gazetteer)
+    assert detected == "immunization"
+    assert scores["laboratory"] == 0

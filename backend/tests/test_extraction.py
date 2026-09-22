@@ -5,6 +5,9 @@ Uses a fake `ner_fn` instead of the real OpenMed/GLiNER model, so these
 tests run instantly and do not require any model download.
 """
 
+from datetime import date
+
+from app.services.confidence import needs_review
 from app.services.extraction import (
     _infer_diagnosis_status,
     _infer_lab_confirmed,
@@ -95,6 +98,29 @@ def test_confidence_report_marks_rule_based_fields_distinctly():
     for field in ("report_date", "patient_age", "diagnosis_status", "lab_confirmed"):
         assert confidence[field]["source"] == "rule_based"
         assert confidence[field]["score"] is None
+
+
+# --- Regression coverage for the silent date.today() fallback bug -------
+# (found real via blind testing 2026-08-17 — see decisions-log.md).
+# report_date is a required schema field, so a value always has to be
+# supplied even when nothing parses; the fix is not changing that value,
+# it's making sure the fallback is flagged for review instead of hiding.
+
+def test_report_date_fallback_is_flagged_found_false_and_needs_review():
+    text = "Suspected measles case, no parseable date anywhere in this text."
+    case, confidence = extract_notifiable_disease_with_confidence(text, ner_fn=fake_ner)
+
+    assert case.report_date == date.today()
+    assert confidence["report_date"] == {"source": "rule_based", "score": None, "found": False}
+    assert needs_review(confidence) is True
+
+
+def test_report_date_found_true_when_genuinely_parsed():
+    text = "Confirmed measles case, reported 2026-06-15."
+    case, confidence = extract_notifiable_disease_with_confidence(text, ner_fn=fake_ner)
+
+    assert str(case.report_date) == "2026-06-15"
+    assert confidence["report_date"]["found"] is True
 
 
 # --- Regression tests from the first real messy-text test (2026-07-26) ---

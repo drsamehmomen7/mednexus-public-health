@@ -5,10 +5,14 @@ Uses a fake `ner_fn` instead of the real OpenMed/GLiNER model, so these
 tests run instantly and do not require any model download.
 """
 
+from datetime import date
+
+from app.services.confidence import needs_review
 from app.services.gazetteer import Gazetteer
 from app.services.immunization_extraction import (
     _strip_trailing_region,
     extract_immunization,
+    extract_immunization_with_confidence,
 )
 from app.services.ner_client import ExtractedEntity
 from app.schemas.immunization import InjectionRoute
@@ -46,6 +50,29 @@ def test_vaccine_gazetteer_takes_precedence_over_ner():
     text = "MMRV vaccine given 2026-06-15."
     record = extract_immunization(text, ner_fn=fake_ner, vaccine_gazetteer=vaccine_gazetteer)
     assert record.vaccine_name == "MMRV"
+
+
+# --- Regression coverage for the silent date.today() fallback bug -------
+# (found real via blind testing 2026-08-17 — see decisions-log.md).
+# administration_date is a required schema field, so a value always has
+# to be supplied even when nothing parses; the fix is not changing that
+# value, it's making sure the fallback is flagged for review, not hidden.
+
+def test_administration_date_fallback_is_flagged_found_false_and_needs_review():
+    text = "Hexa vaccine given, no parseable date anywhere in this text."
+    record, confidence = extract_immunization_with_confidence(text, ner_fn=fake_ner)
+
+    assert record.administration_date == date.today()
+    assert confidence["administration_date"] == {"source": "rule_based", "score": None, "found": False}
+    assert needs_review(confidence) is True
+
+
+def test_administration_date_found_true_when_genuinely_parsed():
+    text = "1st dose of Hexa vaccine given 2026-06-15."
+    record, confidence = extract_immunization_with_confidence(text, ner_fn=fake_ner)
+
+    assert str(record.administration_date) == "2026-06-15"
+    assert confidence["administration_date"]["found"] is True
 
 
 # --- Real bug found against an actual 500-report GLiNER run: the model's -

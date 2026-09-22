@@ -47,7 +47,7 @@ from app.services.rule_based import (
 NER_LABELS = ["region", "facility"]
 
 RULE_BASED_FIELDS = (
-    "specimen_collection_date", "result_date", "patient_age", "result",
+    "specimen_collection_date", "patient_age", "result",
 )
 
 
@@ -81,7 +81,15 @@ def extract_laboratory_with_confidence(
 
     result = extract_lab_result(text)
     specimen_collection_date = extract_specimen_collection_date(text)
-    result_date_value = extract_result_date(text)
+    # result_date is a required schema field (unlike specimen_collection_date,
+    # which is Optional and correctly stays None when not found), so a
+    # value always has to be supplied even when nothing parses — see
+    # rule_based_confidence()'s found= parameter for how that fallback
+    # stays visible to a reviewer instead of silently passing as genuine.
+    # found reflects whether extract_result_date() itself matched
+    # something, regardless of which fallback tier below ends up used.
+    result_date_parsed = extract_result_date(text)
+    result_date = result_date_parsed or specimen_collection_date or date.today()
     patient_age = extract_age(text)
 
     # Pathogen is only "identified" on a positive result — a gazetteer
@@ -99,7 +107,7 @@ def extract_laboratory_with_confidence(
         result=(TestResult(result) if result else TestResult.PENDING),
         pathogen_identified=pathogen_identified,
         specimen_collection_date=specimen_collection_date,
-        result_date=(result_date_value or specimen_collection_date or date.today()),
+        result_date=result_date,
         patient_age=patient_age,
         region=(gazetteer_region or (region_entity.text if region_entity else "Unknown")),
         facility_name=(facility_entity.text if facility_entity else None),
@@ -128,6 +136,7 @@ def extract_laboratory_with_confidence(
             else model_confidence(region_entity)
         ),
         "facility_name": model_confidence(facility_entity),
+        "result_date": rule_based_confidence(found=result_date_parsed is not None),
         **{field: rule_based_confidence() for field in RULE_BASED_FIELDS},
     }
 

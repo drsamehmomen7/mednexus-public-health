@@ -45,9 +45,11 @@ _LAB_TEST_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "lab_tests
 _SPECIMEN_TYPE_VOCAB_PATH = Path(__file__).resolve().parents[2] / "data" / "specimen_types.json"
 _ICD10_LOOKUP_PATH = Path(__file__).resolve().parents[2] / "data" / "icd10_codes.json"
 _LOINC_LOOKUP_PATH = Path(__file__).resolve().parents[2] / "data" / "loinc_codes.json"
+_CVX_LOOKUP_PATH = Path(__file__).resolve().parents[2] / "data" / "cvx_codes.json"
 
 _icd10_lookup_cache: Optional[Dict[str, str]] = None
 _loinc_lookup_cache: Optional[Dict[str, dict]] = None
+_cvx_lookup_cache: Optional[Dict[str, dict]] = None
 
 
 def load_region_gazetteer(db: Session, aliases: Optional[Dict[str, str]] = None,
@@ -198,6 +200,51 @@ def get_loinc_code(test_name: str) -> Optional[str]:
     """
     entry = load_loinc_lookup().get(test_name)
     return entry["loinc"] if entry else None
+
+
+def load_cvx_lookup(refresh: bool = False) -> Dict[str, dict]:
+    """
+    Build (or return the cached) vaccine-name -> CVX mapping, from
+    data/cvx_codes.json.
+
+    Same shape and reasoning as load_loinc_lookup(): each entry is a
+    small object, not just a code string --
+        {"cvx": "<code>", "status": "<mapping status>", "notes": "<why>"}
+    -- because several vaccines have more than one clinically valid CVX
+    code for different formulations/valencies/brands, deliberately
+    reviewed and decided per-vaccine by Dr. Sameh rather than defaulted.
+
+    Mapping status values (see cvx_codes.json for the full picture):
+    EXACT, ACCEPTABLE_GENERIC_FORMULATION.
+
+    Same fail-safe pattern as load_icd10_lookup() and load_loinc_lookup():
+    a missing or malformed file returns an empty dict rather than
+    raising, so vaccine_code is simply left unpopulated rather than
+    breaking saves.
+    """
+    global _cvx_lookup_cache
+
+    if _cvx_lookup_cache is not None and not refresh:
+        return _cvx_lookup_cache
+
+    try:
+        raw = json.loads(_CVX_LOOKUP_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        raw = {}
+
+    _cvx_lookup_cache = raw
+    return _cvx_lookup_cache
+
+
+def get_cvx_code(vaccine_name: str) -> Optional[str]:
+    """
+    Convenience helper for the save endpoint: returns just the CVX code
+    string for a vaccine name, or None if the vaccine isn't in
+    cvx_codes.json at all -- see load_cvx_lookup() docstring for the
+    entry shape.
+    """
+    entry = load_cvx_lookup().get(vaccine_name)
+    return entry["cvx"] if entry else None
 
 
 def load_vaccine_gazetteer(aliases: Optional[Dict[str, str]] = None,
