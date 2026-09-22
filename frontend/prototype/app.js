@@ -82,6 +82,16 @@ const FIELD_TYPES = {
   },
 };
 
+// Which extracted field each report type's terminology-code preview watches, and how to label and
+// describe it. Config only — holds no lookup logic itself; GET /terminology/preview
+// (services/vocabularies.py) is the one place that decides what a value actually resolves to, and
+// it's the SAME lookup the save endpoints already use — this block never duplicates it.
+const TERMINOLOGY_PREVIEW = {
+  notifiable: { field: "disease_name", label: "ICD-10 code", noun: "disease name" },
+  immunization: { field: "vaccine_name", label: "CVX code", noun: "vaccine name" },
+  laboratory: { field: "test_name", label: "LOINC code", noun: "test name" },
+};
+
 // ---------- Shared field-table rendering + edit collection ----------
 // Used by BOTH the single-report flow (extractBtn's handler, below) and
 // every batch review card (Milestone 4) — one implementation, not two.
@@ -92,7 +102,14 @@ const FIELD_TYPES = {
 // and reserved for future per-type widgets (e.g. a checkbox for a bool
 // field) — today every field still renders as a plain text input,
 // exactly as before; the type only matters when reading edits back out.
-function renderFieldsTable(fields, confidence, fieldTypes) {
+//
+// type and previewIdSuffix drive the terminology-code preview block appended after the table (see
+// TERMINOLOGY_PREVIEW above). previewIdSuffix defaults to "" for the single-report flow's one
+// instance; a Batch Upload card will pass its own item id so multiple cards' previews stay
+// independent DOM nodes (Milestone 3 — not built yet, this parameter just avoids a second
+// signature change to this shared function when it is). Passing a type with no TERMINOLOGY_PREVIEW
+// entry (or none at all) simply omits the block.
+function renderFieldsTable(fields, confidence, fieldTypes, type, previewIdSuffix = "") {
   const rows = Object.entries(fields)
     .filter(([, value]) => value !== null && value !== undefined)
     .map(([key, value]) => {
@@ -133,15 +150,107 @@ function renderFieldsTable(fields, confidence, fieldTypes) {
     })
     .join("");
 
+  const previewConfig = TERMINOLOGY_PREVIEW[type];
+  const previewBlock = previewConfig
+    ? renderTerminologyPreviewPlaceholder(previewConfig, `terminology-preview${previewIdSuffix}`)
+    : "";
+
   return `
     <table style="width:100%; text-align:left; font-size:13px; border-collapse:collapse;">
       ${rows}
     </table>
+    ${previewBlock}
     <p style="margin:12px 0 0; font-size:12px; color:var(--ink-soft);">
       Fields are editable. Anything below 60% confidence or marked
       "not found" should be checked against the original text before use.
     </p>
   `;
+}
+
+// The terminology-code preview: a separate block below the field table, not another row inside
+// it — deliberately, so it never reads as "another extracted field" the way every row in that
+// table does (real, editable, badge-confirmed). Starts in a neutral "Checking…" state; the actual
+// value is filled in by refreshTerminologyPreview() right after this HTML is inserted, and again
+// on every edit of the field it watches (see the delegated 'change' listeners near each caller).
+function renderTerminologyPreviewPlaceholder(config, id) {
+  return `
+    <div id="${id}" style="margin-top:12px; padding:10px 12px; border:1px dashed var(--border);
+         border-radius:8px; background:#f6f8f5; font-size:12.5px;">
+      <div style="text-transform:uppercase; letter-spacing:0.04em; font-size:10.5px; color:var(--ink-soft); margin-bottom:4px;">
+        Preview — not saved yet
+      </div>
+      <div data-preview-body>${_terminologyPreviewLine(config, "Checking…")}</div>
+    </div>
+  `;
+}
+
+function _terminologyPreviewLine(config, valueHtml) {
+  return `<strong style="color:var(--ink); font-weight:600;">${config.label}:</strong> <span style="color:var(--ink-soft);">${valueHtml}</span>`;
+}
+
+// Builds the resolved-state body for a terminology preview, from a GET /terminology/preview
+// response ({system, code, status, note, in_vocabulary}). The wording here is exactly what
+// distinguishes a genuinely uncoded term (in_vocabulary true, code null — a real clinical
+// decision, always paired with a note explaining it) from one that simply doesn't match anything
+// in the vocabulary yet (in_vocabulary false, never has a note) — conflating those two would be
+// actively misleading, not just imprecise; that distinction is the entire reason this exists.
+function renderTerminologyPreviewResult(config, entry) {
+  let valueHtml;
+  if (entry.code) {
+    valueHtml = entry.status ? `${entry.code} (${entry.status})` : entry.code;
+  } else if (entry.in_vocabulary) {
+    valueHtml = "Reviewed — none applies.";
+  } else {
+    valueHtml = "Not available yet for this wording.";
+  }
+
+  const noteHtml = entry.note
+    ? `<p style="margin:6px 0 0; color:var(--ink-soft); line-height:1.4;">${entry.note}</p>`
+    : "";
+
+  return `${_terminologyPreviewLine(config, valueHtml)}${noteHtml}`;
+}
+
+function renderTerminologyPreviewError(config) {
+  return _terminologyPreviewLine(config, "Couldn't check just now.");
+}
+
+// Fetches and fills in one terminology-code preview block. Called once right after the field
+// table it belongs to is inserted — so the preview appears immediately, for the as-extracted
+// value, not only after a first edit — and again by a delegated 'change' listener whenever the
+// field it watches is edited. Purely advisory: whether this call is made, succeeds, or fails has
+// zero effect on extraction, confidence, or save — save computes the real value itself,
+// independently, every time, whether or not a preview was ever shown for it.
+//
+// The dataset.forValue check guards against a slow, now-superseded response clobbering a newer
+// one: a second call (from a second edit) overwrites previewEl.dataset.forValue synchronously
+// before its own fetch even starts, so when a slower first call's fetch finally resolves, it sees
+// a value that no longer matches what IT was for, and discards itself instead of writing stale
+// content over the newer result.
+async function refreshTerminologyPreview(container, type, previewIdSuffix = "") {
+  const config = TERMINOLOGY_PREVIEW[type];
+  if (!config) return;
+
+  const previewEl = document.getElementById(`terminology-preview${previewIdSuffix}`);
+  const input = container.querySelector(`input[data-field="${config.field}"]`);
+  const body = previewEl && previewEl.querySelector("[data-preview-body]");
+  if (!body || !input) return;
+
+  const value = input.value.trim();
+  previewEl.dataset.forValue = value;
+  body.innerHTML = _terminologyPreviewLine(config, "Checking…");
+
+  try {
+    const response = await fetch(
+      `${API_BASE}/terminology/preview?report_type=${encodeURIComponent(type)}&value=${encodeURIComponent(value)}`
+    );
+    const entry = await response.json();
+    if (previewEl.dataset.forValue !== value) return;
+    body.innerHTML = renderTerminologyPreviewResult(config, entry);
+  } catch (err) {
+    if (previewEl.dataset.forValue !== value) return;
+    body.innerHTML = renderTerminologyPreviewError(config);
+  }
 }
 
 // container scopes the query to just this one review surface — the
@@ -334,7 +443,7 @@ extractBtn.addEventListener("click", async () => {
 
     resultArea.innerHTML = `
       <div style="width:100%;">
-        ${renderFieldsTable(lastFields, lastConfidence, FIELD_TYPES[selectedType] || {})}
+        ${renderFieldsTable(lastFields, lastConfidence, FIELD_TYPES[selectedType] || {}, selectedType)}
         <div style="margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
           <label for="batch-select" style="display:block; font-size:12px; color:var(--ink-soft); margin-bottom:5px;">
             Save to
@@ -357,6 +466,7 @@ extractBtn.addEventListener("click", async () => {
     `;
 
     populateBatchSelect();
+    refreshTerminologyPreview(resultArea, selectedType);
     document.getElementById("save-btn").addEventListener("click", saveRecord);
   } catch (err) {
     resultArea.innerHTML = `
@@ -365,6 +475,18 @@ extractBtn.addEventListener("click", async () => {
         (uvicorn app.main:app --reload)?
       </span>
     `;
+  }
+});
+
+// Delegated (not attached per-render) so it survives resultArea's innerHTML being replaced by
+// every new extraction — same reasoning as Batch Upload's own delegated 'change' listener on
+// batchProgressGrid, further down. Recomputes on blur-with-a-real-change (the native 'change'
+// event on a text input), not on every keystroke. A fresh extraction's first preview is handled
+// separately, by the explicit refreshTerminologyPreview() call right above.
+resultArea.addEventListener("change", (e) => {
+  const config = TERMINOLOGY_PREVIEW[selectedType];
+  if (config && e.target.matches(`input[data-field="${config.field}"]`)) {
+    refreshTerminologyPreview(resultArea, selectedType);
   }
 });
 
@@ -856,26 +978,34 @@ const batchProgressGrid = document.getElementById("batch-progress-grid");
 
 let pendingBatchFiles = [];
 
+// Accumulates onto whatever is already pending, so a second Browse/drop ADDS to the first
+// selection instead of replacing it. A native <input type="file"> always hands back only the
+// LATEST picker result as its own .files — true regardless of whether the picker was opened via
+// a scripted .click() or (as here) a native <label for>, since that only changes how the picker
+// is OPENED, never what the browser reports once it closes — so remembering earlier selections
+// across repeat Browse/drop actions has to be this function's job, not the input's.
 function showBatchSelection(fileList) {
-  const files = Array.from(fileList);
+  const newFiles = Array.from(fileList);
+  const combined = pendingBatchFiles.concat(newFiles);
+
   batchSelectionSummary.hidden = false;
   batchProgressGrid.innerHTML = "";
   batchOverallProgress.hidden = true;
 
-  if (files.length > BATCH_FILE_LIMIT) {
+  if (combined.length > BATCH_FILE_LIMIT) {
     pendingBatchFiles = [];
     batchStartBtn.hidden = true;
     batchSelectionList.innerHTML =
-      `<span class="batch-selection-warning">Selected ${files.length} files — ` +
+      `<span class="batch-selection-warning">Selected ${combined.length} files — ` +
       `pick ${BATCH_FILE_LIMIT} or fewer.</span>`;
     return;
   }
 
-  pendingBatchFiles = files;
+  pendingBatchFiles = combined;
   batchStartBtn.hidden = false;
   batchSelectionList.innerHTML =
-    `<strong>${files.length} file${files.length === 1 ? "" : "s"} selected:</strong> ` +
-    files.map((f) => f.name).join(", ");
+    `<strong>${combined.length} file${combined.length === 1 ? "" : "s"} selected:</strong> ` +
+    combined.map((f) => f.name).join(", ");
 }
 
 // No click handler on purpose: the dropzone is a <label for>, so the browser activates the input natively.
@@ -984,7 +1114,7 @@ function renderReadyCardBody(item) {
       <span class="batch-progress-filename" title="${item.filename}">${item.filename}</span>
       <span class="batch-type-pill">${label}</span>
     </div>
-    ${renderFieldsTable(item.extractedFields, item.confidence, fieldTypes)}
+    ${renderFieldsTable(item.extractedFields, item.confidence, fieldTypes, item.selectedType, `-${item.id}`)}
     <label class="batch-reviewed-label">
       <input type="checkbox" class="batch-reviewed-checkbox">
       <span>Reviewed — ready to save</span>
@@ -1030,6 +1160,14 @@ function updateBatchCard(item) {
   const el = document.getElementById(`batch-card-${item.id}`);
   if (!el) return;
   el.innerHTML = renderBatchCardBody(item);
+
+  // Fires exactly once per card: item.status only ever transitions INTO "ready" a single time
+  // (see renderReadyCardBody's own comment — nothing rebuilds a ready card's HTML again after
+  // this), so this is the one moment this card's preview placeholder exists to fill in, mirroring
+  // the single-report flow's own refreshTerminologyPreview() call right after its table renders.
+  if (item.status === "ready") {
+    refreshTerminologyPreview(el, item.selectedType, `-${item.id}`);
+  }
 }
 
 const TERMINAL_STATUSES = ["ready", "error", "needs-type"];
@@ -1076,11 +1214,32 @@ batchProgressGrid.addEventListener("click", async (e) => {
 batchProgressGrid.addEventListener("change", (e) => {
   if (e.target.classList.contains("batch-reviewed-checkbox")) {
     updateBatchSaveButton();
+    return;
+  }
+
+  // Same terminology-preview recompute as the single-report flow's own delegated listener, scoped
+  // to just the one card being edited via closest() — the exact isolation mechanism the type-button
+  // and remove-button handlers above already use to find "which item does this event belong to",
+  // so editing one card's field can never touch a sibling card's preview.
+  const card = e.target.closest(".batch-progress-card");
+  if (!card) return;
+  const item = currentBatchItems.find((i) => `batch-card-${i.id}` === card.id);
+  if (!item) return;
+  const config = TERMINOLOGY_PREVIEW[item.selectedType];
+  if (config && e.target.matches(`input[data-field="${config.field}"]`)) {
+    refreshTerminologyPreview(card, item.selectedType, `-${item.id}`);
   }
 });
 
 batchStartBtn.addEventListener("click", async () => {
   if (!pendingBatchFiles.length) return;
+
+  // This run's files are now spoken for. Now that showBatchSelection() genuinely accumulates
+  // (see its own comment) rather than replacing, pendingBatchFiles has to be cleared here too —
+  // otherwise a LATER, separate selection (after this run finishes and the dropzone unlocks)
+  // would silently pick up where this one left off and re-submit these same files alongside it.
+  const filesToProcess = pendingBatchFiles;
+  pendingBatchFiles = [];
 
   batchStartBtn.disabled = true;
   batchDropzone.classList.add("batch-dropzone-locked");
@@ -1094,7 +1253,7 @@ batchStartBtn.addEventListener("click", async () => {
   updateBatchSaveButton();
 
   let gridInitialized = false;
-  await processBatchFiles(pendingBatchFiles, (item, items) => {
+  await processBatchFiles(filesToProcess, (item, items) => {
     currentBatchItems = items;
     if (!gridInitialized) {
       // First callback fires with every item still "queued" — the
