@@ -1,18 +1,182 @@
 # Current Status — read this first in any new chat
 
-Last updated: 2026-08-06
+Last updated: 2026-09-21
+
+## MedNexus Seven — cross-project architecture status (added 2026-08-16)
+
+This project is Track B (Domain Intelligence) of the broader MedNexus
+Seven architecture (`UNDERSTAND → PROTECT → EXTRACT → STANDARDIZE →
+ANALYZE → VISUALIZE → INDICATORS` — INGEST is part of UNDERSTAND, not a
+separate stage). See `CLAUDE.md` for the short orientation version and
+`docs/mednexus-integration/` for the full authoritative documents:
+architecture crosswalk v1.1, Clinical Semantic Context Contract v0.1,
+Clinical Extraction Contract v0.1, and the Domain Intelligence Track
+Roadmap. **These are APPROVED ARCHITECTURE / CURRENT ROADMAP, not yet
+IMPLEMENTED** — this project still runs its own lightweight report-type
+detection and has no PROTECT stage; the contracts describe the target
+integration shape for later, not current behavior.
+
+**Current checkpoint target: Public Health Stable Scope Checkpoint
+v0.1.0** — approved name, a *scope* checkpoint specifically (not
+"Complete," "Production Ready," or "Real-World Validated"). Required to
+reach it:
+- Three report types (Notifiable Disease, Immunization, Laboratory) — IMPLEMENTED.
+- Indicators layer — IMPLEMENTED.
+- ICD-10 terminology — IMPLEMENTED.
+- LOINC terminology — IMPLEMENTED, end-to-end save verification CONFIRMED (2026-08-16: Measles IgM Serology → 21503-8, Poliovirus Stool PCR → null, both as designed).
+- CVX (vaccine) terminology — IMPLEMENTED, end-to-end save verification CONFIRMED (2026-08-17: BCG → 19, Rota → 116, both as designed).
+- pytest coverage for everything built after the 126-test baseline (`indicators.py`, `load_icd10_lookup`, `load_loinc_lookup`, `load_cvx_lookup`, `/indicators/dashboard-data`) — NOT YET STARTED.
+- Synchronized `CURRENT_STATUS.md`/`docs/decisions-log.md` — this update.
+- GitHub `v0.1.0` release tag — NOT YET CREATED.
+
+Explicitly OUT of this checkpoint's scope (tracked, not blocking):
+CSV ingestion and OCR (text-layer PDF upload has since been built, but
+this checkpoint never required it), Syndromic/Outbreak report types,
+deployed frontend, lower-priority extraction fields, the three
+documented multi-observation schema gaps (GeneXpert MTB/RIF, Lyme
+Two-Tier, Widal H-antigen), and any real-world (non-synthetic)
+validation.
+
+**Next domain after this checkpoint: Laboratory** — per the roadmap,
+this generalizes the existing Laboratory implementation (already
+built) rather than starting fresh; explicitly not a rebuild.
+
+**Cross-Track Synchronization Policy** (standing, from the roadmap
+approval): a formal Cross-Track Sync Brief is required when a shared
+contract/schema assumption changes, when this checkpoint is reached,
+when a change here affects MedNexus Main, when a MedNexus Main
+dependency becomes necessary, and before the future "MedNexus
+Integrated Domain Checkpoint" (contract-conformance with a real,
+implemented `MedNexusDocumentContext`/`ProtectionContext` from MedNexus
+Main — distinct from, and later than, the "Domain Development
+Checkpoint" this project can reach independently on synthetic data with
+its own local detection). Routine internal changes that don't affect
+shared contracts do not require one.
 
 ## Where we are right now
 
 Notifiable Disease, Immunization, AND Laboratory are all end-to-end
 complete, each with a measured 100% field-accuracy figure on their own
-full 500-report run, PLUS a working document-upload pipeline with
-automatic (3-way) report-type detection, a batch/cohort system, data
-export, an Indicators layer sitting above all three report types, and a
-fully redesigned frontend (landing page, four dashboards, brand
+full 500-report run, PLUS a working document-upload pipeline (DOCX, TXT
+and text-layer PDF) with automatic (3-way) report-type detection, a
+batch/cohort system, data export, an Indicators layer sitting above all
+three report types, and a fully redesigned frontend (landing page, four
+dashboards, brand
 identity). Same extraction pipeline shape for all three report types:
 raw text -> GLiNER NER + gazetteer(s) + rule-based fields -> confidence
 report -> save to Postgres.
+
+**PDF document upload built (2026-09-20/21) — ingestion only; own-browser
+check CONFIRMED.** `POST /reports/parse-document` now accepts `.pdf`
+next to DOCX/TXT, for BOTH Single and Batch upload, with zero changes to
+detect → extract → confidence → review → save: PDF is an ingestion
+change (bytes in, text out) and the response is still `{"text": ...}`.
+Text layer only, via `pypdf` 6.19.0 (pinned in `requirements.txt`, with
+`httpx` for the endpoint tests). There is no OCR, so a scanned/image-only
+PDF is refused with a clear message instead of returning nothing.
+Limits for EVERY format: 10 MB and 30 pages (DOCX/TXT have no pages, so
+they are judged at about 3,000 characters per page). Each failure has its
+own approved message — not a real PDF, damaged, password-protected
+(AES-encrypted PDFs are refused as protected on purpose: no crypto
+package is installed), no text layer, over the page or size limit — and a
+corrupt `.docx`, which used to escape as a raw 500, now gets the same
+clean 422. Frontend: only the two file inputs' `accept` attributes and
+the dropzone hint changed. **Own-browser check CONFIRMED (2026-09-21):**
+Dr. Sameh verified directly in his own Chrome that PDF upload works
+correctly in both Single report and Batch upload, real file-picker
+filtering included. pypdf was kept over pypdfium2 after a side-by-side
+on the local 60-file test set (identical text on all 10 compared) plus
+one Edge-printed synthetic report (the only differences are hyphens:
+pypdf splits soft-hyphenated words, PDFium mangles a hyphen at a line
+wrap — one artifact traded for another) — full reasoning in
+decisions-log.md, 2026-09-21. Tests: 126 in the last commit → 138 when
+this work began → **220 passed + 2 expected xfails** now, and a
+24-deliberate-break mutation pass (against a scratch copy, not the repo)
+caught every break. **Not done / not verified:** PDF text on Render (no
+deploy run); ANY field-level accuracy measurement on PDFs
+(extraction and detect-type were deliberately not run on the 60 test
+PDFs — a separate, later step); Arabic/right-to-left PDFs and producers
+other than ReportLab and Edge. **Recorded for that accuracy step**
+(detail in decisions-log.md): a browser-printed PDF's default header and
+footer stamp a date on every page (M/D/YY in this machine's en-US
+locale), while the date rules read slash dates day-first and try them
+before month-name dates — a stamp like `9/3/26` becomes 9 March and
+beats a correct body date, with no review flag; and a PDF that mixes
+typed and scanned pages is read WITHOUT any warning that the scanned
+pages contributed nothing (only a fully image-only PDF is refused).
+Separately, while measuring 10 MB uploads, an earlier note blaming the
+environment for intermittent stalls was corrected: `python-multipart`
+0.0.9's boundary search is slow (about 2 s per MB) only when the
+payload's bytes also occur in the request's random hex boundary;
+realistic files parse at 0.01-0.05 s per MB. Pre-existing, no action
+taken.
+
+**Python environment recovery + LOINC end-to-end verification CONFIRMED +
+requirements split decision (2026-08-16).** `backend/venv`'s linked Python
+3.10 install (`AppData\Local\Programs\Python\Python310`) lost its
+`python.exe` (an external machine issue, unrelated to this project).
+Rather than repair the machine-wide install or borrow anything from the
+sibling MedNexus Main project (kept strictly isolated throughout), a
+fully independent, project-local environment was built: `.runtime/Python310`
+(python.org's official embeddable 3.10.11 package, MD5-verified against
+python.org's published hash) bootstrapped with pip via the official PyPA
+`get-pip.py`, then `virtualenv` (the embeddable distribution ships
+without the stdlib `venv`/`ensurepip` modules) to create
+`backend/venv_recovery`. Both `.runtime/` and `backend/venv_recovery/`
+are gitignored. `start_backend.ps1` now invokes `venv_recovery`'s
+interpreter by its explicit full path instead of activating it — see the
+updated "Key ground rules" entry below. Full 126-test baseline
+reconfirmed on the new environment first; `backend/venv` (broken) kept
+in place, untouched, as a rollback artifact. With the environment
+working again, LOINC auto-population was run end-to-end through the
+real UI for the first time: Measles IgM Serology → `test_code:
+"21503-8"`, Poliovirus Stool PCR → `test_code: null` (the deliberate
+REJECTED_MISMATCH entry, not a bug) — both confirmed via a real save +
+Export JSON pull, matched by full record content (not just test name,
+since the export also holds 500+ pre-existing synthetic records with
+overlapping facility/test-name combinations). **Requirements split
+decision:** running real extraction surfaced that `backend/requirements.txt`
+has never included the extraction stack (`openmed[gliner]` — torch,
+transformers, spaCy, ~89 packages) — this was already true before the
+environment recovery, just newly visible. Decision: keep them split
+rather than merge. `requirements.txt` stays the lightweight API/DB/
+dashboard/test surface (also exactly what Render's `buildCommand`
+installs, and what pytest's fake `ner_fn` needs — GLiNER is never
+required for tests or for the Render trial, where `/extract`
+deliberately 503s per `render.yaml`'s existing note). A new
+`backend/requirements-extraction.txt` will hold the local-only
+extraction stack starting with `openmed[gliner]` (installed versions
+confirmed: openmed 2.1.0, gliner 0.2.28, torch 2.13.0, transformers
+5.13.1, tokenizers 0.22.2). No full transitive lock file yet — deferred
+to a future environment-governance milestone.
+
+**LOINC for Laboratory + MedNexus cross-project architecture work
+(2026-08-16).** `backend/data/lab_tests.json` expanded from 15 tests
+(originally mirroring only 10 diseases) to 71, covering 53 of 54
+notifiable diseases (Tetanus excluded — no confirmatory lab test
+exists; diagnosis is clinical), sourced from CDC NNDSS laboratory
+criteria and then corrected against direct clinical review (adding
+confirmatory/molecular tests alongside screening tests for TB, HIV,
+Hepatitis B/C, Malaria, Meningococcal, Diphtheria, Brucellosis,
+Leptospirosis, Rabies). `backend/data/loinc_codes.json` maps all 71 to
+LOINC codes with a 7-value mapping-status taxonomy per entry (EXACT
+through REJECTED_MISMATCH) rather than a flat code-or-nothing model —
+see "What's already working" below for the three tests deliberately
+left uncoded. Wired into the Laboratory save endpoint the same way
+ICD-10 was wired into Notifiable Disease's.
+
+Separately: this project's relationship to the broader MedNexus Seven
+architecture (a parallel enterprise platform by the same owner) was
+formalized this session — an Architecture Crosswalk, two frozen
+contracts (Clinical Semantic Context Contract v0.1, Clinical Extraction
+Contract v0.1), and an approved Domain Intelligence Track Roadmap now
+live in `docs/mednexus-integration/`. This project is Track B (Domain
+Intelligence) — full detail in the "MedNexus Seven" section at the top
+of this file and in `CLAUDE.md`. No code changed as a result of this
+architecture work; it establishes the target integration shape for
+later, and this project's current checkpoint (Public Health Stable
+Scope Checkpoint v0.1.0) is explicitly scoped to NOT require any of it
+to be implemented yet.
 
 **Indicators layer built end-to-end (2026-08-06).** New
 `backend/app/services/indicators.py` holds two cross-cutting metrics,
@@ -107,8 +271,9 @@ aren't covered yet).
 
 **Document upload + auto-detection (2026-07-29).** The "Upload a
 document" button is no longer a placeholder — `POST
-/reports/parse-document` extracts text from DOCX/TXT (python-docx;
-PDF/CSV still not built), and `POST /reports/detect-type` guesses which
+/reports/parse-document` extracts text from DOCX/TXT (python-docx; PDF
+was added 2026-09-20/21 — see the top of this section — CSV is still
+not built), and `POST /reports/detect-type` guesses which
 report type it is by reusing the SAME gazetteers extraction already
 relies on (disease vs vaccine vocabulary + a few structural keywords) —
 no separate model. Tested 100% correct on all 1000 real synthetic
@@ -247,35 +412,49 @@ Recovery steps documented in the ground rules below; the same steps
 apply regardless of root cause if it recurs — and now there's an Export
 button to reduce what a repeat would cost.
 
-126 backend tests passing.
+220 backend tests passing, plus 2 expected xfails (126 in the last
+commit; 138 when the PDF work began — see the PDF entry above).
 
-**IMMEDIATE NEXT STEP:** Confirm ICD-10 auto-population actually works
-end-to-end (extract/save a real Notifiable Disease report, check
-icd10_code in Export JSON) — done in code, not yet verified against a
-real save as of this update. After that, rough priority order:
-1. Terminology normalization, continued: LOINC codes for the 15 lab
-   tests (data/lab_tests.json also still needs the real-source review
-   that notifiable_diseases.json already got — it's still a synthetic
-   placeholder), then vaccine codes (likely CVX) for the 12 vaccines.
-   Same pattern as ICD-10: separate lookup file, doesn't touch gazetteer
-   matching, populated at save time.
-2. No pytest coverage yet for the newest code (indicators.py,
-   load_icd10_lookup, the /indicators/dashboard-data endpoint) — the 126
-   passing tests predate all of it. Worth closing before this drifts
-   further from "everything measured."
-3. Syndromic/Outbreak report types (schemas exist, no extraction logic).
-4. PDF/CSV document upload (currently DOCX/TXT only).
+**IMMEDIATE NEXT STEP:** Confirmed — ICD-10 auto-population verified
+end-to-end against a real save (Influenza → J11 confirmed in Export
+JSON, 2026-08-06), LOINC auto-population verified end-to-end the same
+way (Measles IgM Serology → 21503-8, Poliovirus Stool PCR → null,
+2026-08-16 — see the entry above), AND CVX auto-population verified
+end-to-end the same way (BCG → 19, Rota → 116, 2026-08-17 — see the
+entry below). Notifiable Disease's `lab_test_type` field and
+Immunization's `vaccine_code` field were previously listed as
+unattempted extraction targets and are both superseded by this work;
+not separately tracked. Remaining, in order:
+1. No pytest coverage yet for the newest code (indicators.py,
+   load_icd10_lookup, load_loinc_lookup, load_cvx_lookup, the
+   /indicators/dashboard-data endpoint) — the 126 passing tests predate
+   all of it. Worth closing before this drifts further from "everything
+   measured," and required before the v0.1.0 checkpoint (see the
+   MedNexus Seven section above).
+2. First GitHub release tag (`v0.1.0`) — see the MedNexus Seven section
+   above for exactly what it should and shouldn't claim.
+3. Syndromic/Outbreak report types (schemas exist, no extraction logic)
+   — explicitly OUT of the v0.1.0 checkpoint; begins after it, and after
+   Laboratory (next domain vertical, see MedNexus Seven section above).
+4. CSV document upload (DOCX, TXT and text-layer PDF are done; OCR for
+   scanned PDFs is not) — also OUT of the v0.1.0 checkpoint.
 5. Point the frontend at the deployed Render URL instead of
-   `http://127.0.0.1:8001` (still hardcoded in `app.js` and all four
+   `http://127.0.0.1:8002` (still hardcoded in `app.js` and all four
    dashboards) — more relevant now that indicators-dashboard.html exists
    too. Deploying the frontend itself as a Render Static Site (raised
    2026-08-06, not yet done) would make demos to decision-makers a
    shared link instead of a two-terminal local setup.
 6. Lower-priority extraction fields still not attempted: Notifiable
    Disease's occupation/travel_related/travel_country/vaccination_status/
-   outcome, and Immunization's vaccine_code/lot_number (the latter will
-   naturally get picked up once vaccine terminology normalization
-   happens above).
+   outcome, and Immunization's `lot_number` (dose_number/route already
+   attempted rule-based fields, unaffected by this work).
+7. PDF field-level accuracy testing — run extraction on the 60 local
+   test PDFs and compare the fields to their `ground_truth.csv`. Kept
+   deliberately separate from the ingestion work and not started or
+   prioritized yet. Known things to measure or decide first are in the
+   PDF entry above and in decisions-log.md, 2026-09-21: browser print
+   stamps vs the day-first date rules, partly scanned PDFs, and
+   soft-hyphen/line-wrap splits.
 
 ## What's already working (locally)
 
@@ -286,7 +465,8 @@ real save as of this update. After that, rough priority order:
   GLiNER NER + vaccine/region gazetteers + rule-based fields (dose
   number, route, adverse event, patient_age_months) → confidence report
   → save to Postgres, plus its own dashboard.
-- **Document upload**: DOCX/TXT parsing (`services/document_parsing.py`)
+- **Document upload**: DOCX/TXT/PDF parsing (`services/document_parsing.py`;
+  PDF is text layer only — see the PDF bullet below)
   + automatic report-type detection (`services/report_type_detection.py`,
   100% correct on all 1000 real synthetic reports) — the frontend
   dropzone is fully wired, not a placeholder.
@@ -296,7 +476,8 @@ real save as of this update. After that, rough priority order:
 - **Export**: JSON/CSV download per batch (or everything) on both
   dashboards — the safety net for manually-saved records with no other
   backup.
-- 126 backend tests passing (`pytest tests/ -v` from `backend/`).
+- 220 backend tests passing plus 2 expected xfails (`pytest tests/ -v`
+  from `backend/`); 126 in the last commit.
 - Negation-aware extraction in BOTH directions ("ruled out dengue" and
   "dengue was ruled out"), bounded to the sentence so a negation can't leak
   onto a neighbouring diagnosis — applies to both NER entities and
@@ -311,12 +492,40 @@ real save as of this update. After that, rough priority order:
   mapped in `backend/data/icd10_codes.json`, auto-populated at save time
   via `load_icd10_lookup()` — separate from the gazetteer, doesn't touch
   extraction matching. 9 entries flagged for Dr. Sameh's clinical review
-  (see 2026-08-06 entry above); not yet verified against a real save.
+  (see 2026-08-06 entry above). End-to-end save verification CONFIRMED
+  (Influenza → J11 in Export JSON, 2026-08-06 — see the IMMEDIATE NEXT
+  STEP paragraph above).
 - **Indicators layer** (2026-08-06): `services/indicators.py`
   (vaccination coverage % by region, test positivity % by region),
   combined `GET /indicators/dashboard-data`, and
   `frontend/prototype/indicators-dashboard.html` — linked from all four
   dashboards' nav.
+- **LOINC codes for Laboratory** (2026-08-16): all 71 lab tests mapped
+  in `backend/data/loinc_codes.json` (richer than the ICD-10 lookup —
+  each entry carries a `status` from a 7-value mapping taxonomy: EXACT,
+  ACCEPTABLE_GENERIC_SPECIMEN, ACCEPTABLE_GENUS_LEVEL, PROXY, COMPOSITE,
+  NO_DIRECT_LOINC, REJECTED_MISMATCH), auto-populated at save time via
+  `get_loinc_code()` — same separated-lookup pattern as ICD-10. Three
+  tests deliberately left uncoded after clinical review (Poliovirus
+  Stool PCR, Hantavirus IgM Serology, Leprosy Skin Biopsy) rather than
+  forced to a wrong/misleading code. `lab_tests.json` itself was
+  expanded 15→71 in the same pass (see 2026-08-16 entry below) — the
+  "still a synthetic placeholder" note that used to be here is resolved.
+  End-to-end save verification CONFIRMED (2026-08-16, see entry above):
+  Measles IgM Serology → 21503-8, Poliovirus Stool PCR → null.
+- **CVX codes for Immunization** (2026-08-16/17): all 12 vaccines mapped
+  in `backend/data/cvx_codes.json` — 8 EXACT (single unambiguous active
+  CDC code) and 4 ACCEPTABLE_GENERIC_FORMULATION, each clinically
+  reviewed against the Kuwait 2025 Childhood Immunization Schedule
+  (Dr. Sameh, 2026-08-16) and carrying a `confirmed_by_schedule` flag —
+  `true` where the schedule itself confirms the specific default
+  (Hepatitis B's birth-dose timing, Rota's 3-dose pentavalent pattern),
+  `false` where the schedule confirms only the vaccine family, not the
+  exact product (Meningococcal ACWY's carrier protein, Pneumococcal's
+  valency) — a provisional default, not forced false precision.
+  Auto-populated at save time via `get_cvx_code()` — same
+  separated-lookup pattern as ICD-10/LOINC. End-to-end save verification
+  CONFIRMED (2026-08-17, see entry below): BCG → 19, Rota → 116.
 - Rule-based patient_age, patient_sex, onset_date (Notifiable Disease),
   and patient_age_months, dose_number, route, adverse_event_* fields
   (Immunization) — all in `rule_based.py`, all 100% on their full
@@ -336,25 +545,113 @@ real save as of this update. After that, rough priority order:
   and `indicators-dashboard.html` — combined filters including Batch,
   Chart.js charts, count/rate toggle, Export buttons (Indicators page is
   filter-free for now — see 2026-08-06 entry above for why).
+- **Batch Upload** (2026-09-17): drag-and-drop or multi-select up to 10
+  files at once, any mix of the three report types, processed
+  sequentially through the same parse/detect/extract endpoints the
+  single-report flow already used — zero new backend endpoints anywhere
+  in this feature. Progress is cold/warm-aware: the first extraction
+  call of the session shows a slower amber "loading the model, up to a
+  minute" indicator, every call after it (same batch or a later one)
+  shows a fast, light indicator instead — timed directly against the
+  real backend before any UI was built (~29-58s cold, ~0.2-0.6s warm),
+  which is also what ruled out needing concurrent processing. Each file
+  becomes its own editable review card via `renderFieldsTable()` and
+  `collectEditedRecord()` — factored out of the single-report flow and
+  shared, not duplicated — with a "Reviewed — ready to save" checkbox
+  that starts unchecked on every card, always: editing a field or a
+  successful detection never checks it, and there is deliberately no
+  select-all/mark-all-reviewed control anywhere, confirmed absent by
+  design and by live test. A file that can't be confidently classified
+  shows a five-type mini-picker and blocks only that one card; every
+  other file keeps processing regardless. The batch-wide save step
+  unions all three types' existing `/batches` endpoints client-side (one
+  shared picker, not per-card) so a mixed batch can target one batch
+  label spanning multiple tables, then saves only the checked cards
+  through their own type's existing `/save` endpoint, updating each card
+  with its own ✓/✗ result — one failed card (e.g. an edited value the
+  schema rejects) never blocks or loses the others, and stays
+  reviewed/retryable without resaving anything already successful. Two
+  real bugs found and fixed via live testing, not just written and
+  assumed correct: a CSS `[hidden]` specificity bug that showed the Save
+  button before any file was selected (a same-specificity class rule was
+  beating the attribute's own `display:none`), and a FastAPI 422
+  validation error rendering as `[object Object]` because `detail` is a
+  structured array, not a string — fixed with a shared
+  `formatSaveError()` helper that also quietly fixed the identical
+  latent bug already sitting in the pre-existing single-report
+  `saveRecord()`, which had never actually been exercised by a real
+  validation failure before.
+- **Upload page layout and save-step conveniences** (2026-09-18/20,
+  frontend only — no backend change, no change to extraction, review or
+  saving): a **Single report / Batch upload mode switch** (two
+  alternative paths; it only shows/hides the two panes, and `#batch` in
+  the URL opens Batch); **read-only report-type cards** in the Batch pane
+  ("nothing to select" — Batch detects each file's type); post-save
+  **"View <Type> Dashboard" links** (Single: one; Batch: one per saved
+  type; they carry `?batch=<label>` when a batch was used, the three
+  per-type dashboards read `?batch=` on first load, and they open in a
+  new tab); and a **Batch "Save to" picker filtered by the ticked
+  reports' types** (a client-side union of the three `/batches`
+  endpoints; convenience only — saving is unchanged, and a pick that
+  stops matching stays selected, marked "— no matching records"). No
+  select-all/mark-all-reviewed control exists or was added. Checked by
+  DOM inspection and headless-Edge screenshots against the real backend;
+  own-browser confirmation isn't recorded here. Detail: decisions-log.md,
+  2026-09-20.
+- **PDF upload** (2026-09-20/21): `extract_text_from_pdf` and
+  `normalize_pdf_text` in `services/document_parsing.py` (pypdf, text
+  layer only), behind the same `POST /reports/parse-document` that
+  DOCX/TXT already used — Single and Batch upload both accept `.pdf`, and
+  the only frontend change is the file inputs' `accept` attributes and
+  the dropzone hint. Limits for every format: 10 MB and 30 pages
+  (DOCX/TXT at about 3,000 characters per page). Status codes: 415
+  unsupported type, 413 over 10 MB, 422 for every unreadable or
+  over-length file, each with its own message, shown verbatim in both
+  flows. Parsing runs in a worker thread so a slow PDF can't stall other
+  requests. Tests: `test_document_parsing.py`, `test_pdf_static_fixtures.py`
+  and `test_parse_document_endpoint.py`, with `tests/pdf_fixtures.py` (a
+  stdlib PDF builder) and `tests/fixtures/` (an Edge-printed synthetic
+  report and three tiny AES-encrypted files; README inside). Diagnostic:
+  `python scripts/pdf_ingestion_profile.py <folder>` from `backend/`
+  (census of a folder of PDFs; `--compare FILE...` against
+  pypdfium2/pdfminer.six when those are on PYTHONPATH) — statistics and
+  short excerpts only. Own-browser check CONFIRMED by Dr. Sameh
+  (2026-09-21): PDF upload works correctly in both Single report and
+  Batch upload, real file-picker filtering included.
 
 ## What's not built yet
 
 - Syndromic, Outbreak report types (schemas exist in
   `backend/app/schemas/`, no extraction logic yet — reuse
   `entity_selection.py` and `confidence.py`, don't reimplement them).
-- Terminology normalization: ICD-10 done for Notifiable Disease
-  (2026-08-06, 9 entries still need clinical sign-off). LOINC (lab
-  tests) and vaccine codes (likely CVX) not started — includes
-  Immunization's vaccine_code and lot_number fields.
-- `lab_tests.json` is still a synthetic placeholder (mirrors the original
-  10 diseases, not sourced from anything real) — needs the same
-  real-source review notifiable_diseases.json already got, ideally
-  alongside the LOINC work above rather than as a separate pass.
-- No pytest coverage yet for indicators.py, load_icd10_lookup(), or
-  /indicators/dashboard-data — the 126 passing tests predate all of it.
-- PDF and CSV document upload — only DOCX and TXT are parsed today.
+- Terminology normalization: ICD-10 (2026-08-06), LOINC (2026-08-16),
+  and CVX (2026-08-17) all done — see "What's already working" above.
+  Immunization's `lot_number` remains a separate, still-unattempted field.
+- No pytest coverage yet for indicators.py, load_icd10_lookup(),
+  load_loinc_lookup(), load_cvx_lookup(), or /indicators/dashboard-data —
+  the 126 passing tests predate all of it. Required before the v0.1.0
+  checkpoint.
+- Two Indicators layer improvements identified while comparing our
+  design against the WHO Immunization Data portal
+  (immunizationdata.who.int), 2026-08-17: (1) a time dimension —
+  coverage/positivity trends over time (by month or year), not just the
+  current single-snapshot-per-region view. This is the more valuable of
+  the two for real decision-making; the WHO portal centers on
+  trendlines rather than point-in-time numbers. (2) A vaccine-specific
+  filter dropdown on the Indicators dashboard UI —
+  `vaccination_coverage_by_region()` already accepts a `vaccine_name`
+  parameter, but no frontend control exposes it yet; a small UI
+  addition, not new backend work. Both deferred until after the current
+  round of blind-testing/bug-fixing wraps up — not urgent, not part of
+  the v0.1.0 checkpoint scope, just tracked so they aren't lost.
+- CSV document upload. PDF upload reads the text layer only: no OCR
+  (a scanned/image-only PDF is refused with a clear message), a PDF that
+  mixes typed and scanned pages is read without any warning about the
+  scanned pages, and no field-level accuracy pass has been run on PDFs
+  yet. Also untested: Arabic/right-to-left PDFs and producers other than
+  ReportLab and Edge. See the 2026-09-21 PDF entry in decisions-log.md.
 - Frontend is not yet pointed at the deployed Render URL — still
-  hardcoded to `http://127.0.0.1:8001` in `app.js` and all four
+  hardcoded to `http://127.0.0.1:8002` in `app.js` and all four
   dashboard pages. Frontend itself also isn't deployed anywhere yet
   (still local-only via `python -m http.server`) — raised 2026-08-06 as
   worth doing (Render Static Site, free) once there's something ready to
@@ -369,7 +666,8 @@ real save as of this update. After that, rough priority order:
 
 ## Local dev routine (two terminals running servers, every session)
 
-See `README.md`. Terminal 1 (backend, port 8001) needs `$env:DATABASE_URL`
+See `README.md`. Terminal 1 (backend, port 8002 — 8001 is reserved for
+MedNexus Main, changed 2026-08-16) needs `$env:DATABASE_URL`
 set to the Render external connection string before starting uvicorn, so
 saves and dashboard queries hit the same database — otherwise it falls
 back to a local Postgres URL that isn't set up. Terminal 2: frontend
@@ -392,8 +690,12 @@ commands somewhere.
   optional adapters layered on top, never a dependency.
 - Never put real patient data on Render or any shared/cloud service —
   synthetic data only until access control is properly designed.
-- `backend/models/` (GLiNER weights) and `venv/` are gitignored —
-  reproducible via `scripts/download_gliner_model.py`, not committed.
+- `backend/models/` (GLiNER weights), `venv/`, `venv_recovery/`, and the
+  project-local `.runtime/` (portable Python interpreter, see the
+  2026-08-16 environment-recovery entry above) are all gitignored —
+  models reproducible via `scripts/download_gliner_model.py`,
+  environments reproducible from `requirements.txt` (+
+  `requirements-extraction.txt` once added) — none of it committed.
 - Commit after every complete, tested change — not at end of day. See
   decisions-log.md's most recent entries for exactly what's changed and why.
 - `init_db()` (`Base.metadata.create_all()`) only creates MISSING tables —
@@ -415,6 +717,13 @@ commands somewhere.
   duplicated rows behind (hit and fixed 2026-08-06). Run
   `python -m scripts.clear_immunization_and_lab_records` before any full
   reload that follows a limited trial run, every time.
+- Real PDFs never go in git: `.gitignore` ignores `*.pdf` everywhere
+  except directly inside `backend/tests/fixtures/` (synthetic fixtures
+  only), and ignores `backend/data/Test Reports/` and
+  `backend/data/pdf_test_reports/` (the 60 local test PDFs and their
+  `ground_truth.csv`). After pulling the PDF change, re-run
+  `pip install -r requirements.txt` once — it adds `pypdf`, and `httpx`
+  for the endpoint tests.
 - PowerShell one-liners with nested double-quoted strings inside
   `python -c "..."` are fragile — PowerShell doesn't treat `\"` as an
   escaped quote the way bash does. Write a short `.py` file instead of a
@@ -422,9 +731,12 @@ commands somewhere.
 - Local startup no longer needs `$env:DATABASE_URL` typed per session —
   `backend/.env` (gitignored; copy from `.env.example`) holds it, loaded
   automatically by `app/db.py` via python-dotenv. Starting the backend is
-  now just `cd backend` then `.\start_backend.ps1` (that script activates
-  the venv AND starts uvicorn itself — no separate `Activate.ps1` step
-  needed). Two one-time local machine settings this depended on, both
+  now just `cd backend` then `.\start_backend.ps1` — that script invokes
+  `venv_recovery`'s interpreter directly by its full path and starts
+  uvicorn itself (no `Activate.ps1` step, no PATH dependency; changed
+  2026-08-16 from the old venv-activation pattern as part of the
+  environment recovery — see the entry above). Two one-time local machine
+  settings this depended on, both
   already done as of 2026-07-30 but worth knowing if set up on a NEW
   machine: `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy
   RemoteSigned` (PowerShell blocks running any local .ps1 by default),

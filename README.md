@@ -12,16 +12,21 @@ de-identification tool.
 Notifiable Disease, Immunization, AND Laboratory report types are all
 end-to-end complete and measured: extraction (GLiNER + gazetteers +
 rule-based fields), confidence reporting, save to Postgres, each with
-its own dashboard — all backed by 126 passing tests and a confirmed
-100% field accuracy across each type's own 500-report synthetic run.
-An Indicators layer sits above all three (vaccination coverage % and
-test positivity % by region), with its own dashboard page. The frontend
-also has real document upload (DOCX/TXT) with automatic report-type
-detection, a batch/cohort system for grouping saved records, JSON/CSV
-export, and a full visual redesign (brand identity, landing page, four
-dashboards). ICD-10 terminology normalization is in progress for
-Notifiable Disease; LOINC and vaccine codes are next. See
-`CURRENT_STATUS.md` for exactly where things stand and what's next.
+its own dashboard — all backed by 220 passing tests (plus 2 expected
+failures that mark known PDF text limits) and a confirmed 100% field
+accuracy across each type's own 500-report synthetic run. An Indicators
+layer sits above all three (vaccination coverage % and test positivity %
+by region), with its own dashboard page. The frontend also has real
+document upload (DOCX, TXT, and text-based PDF — no OCR, so scanned
+PDFs aren't read) with automatic report-type detection, a batch/cohort
+system for grouping saved records, JSON/CSV export, and a full visual
+redesign (brand identity, landing page, four
+dashboards). Terminology normalization is done for all three report
+types: ICD-10 (Notifiable Disease), LOINC (Laboratory) and CVX
+(Immunization) codes are filled in at save time, each confirmed against
+a real save (9 of the 54 ICD-10 entries are still flagged for clinical
+review). See `CURRENT_STATUS.md` for exactly where things stand and
+what's next.
 
 ## Run the prototype locally
 
@@ -34,7 +39,7 @@ won't accept typed input while running.
 
 ### Every time you reopen VSCode
 
-**Terminal 1 — backend (port 8001):**
+**Terminal 1 — backend (port 8002):**
 ```powershell
 cd C:\mednexus-public-health\backend
 .\start_backend.ps1
@@ -72,15 +77,24 @@ Also one-time on a new machine: `Set-ExecutionPolicy -Scope CurrentUser
 default) and `Unblock-File -Path .\start_backend.ps1` (Windows flags
 downloaded `.ps1` files as untrusted even after that policy change).
 
+After pulling the PDF-upload change, re-run
+`pip install -r requirements.txt` once: it adds `pypdf` (PDF text
+extraction) and `httpx` (needed by the endpoint tests).
+`backend/venv_recovery` already has both.
+
 ## Project structure
 
 ```
 docs/                  Living architecture docs, decisions log, report type definitions
 frontend/prototype/    Static UI prototype (HTML/CSS/JS, no build step) + four dashboards
 backend/               FastAPI app, extraction pipeline, gazetteers, scripts, tests
-backend/tests/         126 pytest tests covering extraction, negation, gazetteers, schema
-                        (does not yet cover the Indicators layer or ICD-10 lookup — see
-                        CURRENT_STATUS.md "What's not built yet")
+backend/tests/         220 pytest tests (+2 expected xfails) covering extraction, negation,
+                        gazetteers, schema, and document ingestion (DOCX/TXT/PDF parsing
+                        and the /reports/parse-document endpoint); does not yet cover the
+                        Indicators layer or ICD-10 lookup — see CURRENT_STATUS.md
+                        "What's not built yet"
+backend/tests/fixtures/ Synthetic PDF fixtures (README inside). Real PDFs are gitignored
+                        everywhere else.
 ```
 
 ## Documentation

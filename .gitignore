@@ -17,6 +17,13 @@ backend/models/
 # ground_truth.json would just be noise in every diff.
 backend/data/synthetic_reports/
 
+# PDFs stay local — real/test reports must never be committed. Only the
+# synthetic fixtures under backend/tests/fixtures/ are allowed.
+*.pdf
+!backend/tests/fixtures/*.pdf
+backend/data/Test Reports/
+backend/data/pdf_test_reports/
+
 # Environment/secrets — never commit these
 .env
 *.env

@@ -1182,3 +1182,682 @@ list itself).
 lookup logic was checked directly against the real data files, but an
 actual extract → save → confirm-icd10_code-in-Export-JSON pass hasn't
 been run yet. That's the next immediate step before starting LOINC.
+
+### 2026-08-16 — LOINC for Laboratory: lab_tests.json expanded 15→71, then mapped
+Verified the ICD-10 auto-population end-to-end (Influenza → J11
+confirmed in Export JSON) before starting this — the prior entry's
+open item is closed.
+
+**First attempt at LOINC mapping was scoped wrong, caught and
+corrected.** Initial pass mapped LOINC codes onto the *existing* 15
+test names without re-examining whether those 15 were the right tests
+for the (by then) 54-disease list — a repeat of exactly the shortcut
+already avoided once for the disease list itself. Corrected after
+direct feedback: real-source review of the test LIST had to happen
+first, same as `notifiable_diseases.json` got against CDC's disease
+list. Rebuilt `lab_tests.json` from CDC NNDSS "Laboratory Criteria for
+Diagnosis" per disease (53 of 54 — Tetanus has no confirmatory lab
+test at all; diagnosis is clinical, discovered via direct source
+verification, not assumed), then corrected against direct clinical
+review: added confirmatory/molecular tests alongside initial screening
+picks for TB (GeneXpert MTB/RIF alongside sputum culture), HIV (RNA
+PCR alongside the antigen/antibody screen), Hepatitis B/C (RNA/DNA PCR
+alongside serology), Malaria (RDT alongside blood smear), Meningococcal
+(blood culture + PCR alongside CSF culture/Gram stain), Diphtheria
+(PCR alongside culture), Brucellosis (serology alongside culture), and
+Leptospirosis (PCR alongside serology). Net: 15 → 71 test names, still
+covering the original 10 diseases' exact original test names
+unchanged (existing 500-report Laboratory data stays 100% valid, no
+reload needed).
+
+**LOINC mapping needed a genuinely different structure than ICD-10's.**
+A LOINC code identifies analyte + specimen + method together, not just
+the analyte — one test name can correspond to 5-8 real LOINC codes
+depending on specimen/method. `icd10_codes.json`'s flat
+name-to-code-string format couldn't honestly represent this, so
+`loinc_codes.json` uses a richer per-entry object (`{loinc, status,
+notes}`) with a 7-value mapping-status taxonomy — `EXACT`,
+`ACCEPTABLE_GENERIC_SPECIMEN`, `ACCEPTABLE_GENUS_LEVEL`, `PROXY`,
+`COMPOSITE`, `NO_DIRECT_LOINC`, `REJECTED_MISMATCH` — replacing a
+simpler flag-string approach after review. Three tests deliberately
+left uncoded (`loinc: null`) rather than forced to a technically-present
+but wrong/misleading code: **Poliovirus Stool PCR** (the only LOINC
+code found is a CULTURE method — a genuine method mismatch, not a
+granularity compromise, rejected outright rather than accepted as
+"close enough"), **Hantavirus IgM Serology** (the only code found is
+Sin-Nombre-subtype-specific; defaulting to it would silently narrow
+every case to one viral subtype with no evidence that's correct), and
+**Leprosy Skin Biopsy** (histopathology, not a discrete lab analyte —
+no LOINC code should exist for this by design, not by gap).
+
+Wired into `main.py`'s laboratory save endpoint via a new
+`get_loinc_code()` helper in `vocabularies.py`, same separated-lookup/
+save-time-only pattern as `load_icd10_lookup()` — extraction-time
+gazetteer matching is untouched regardless of any mapping decision
+here.
+
+### 2026-08-16 — MedNexus Seven: architecture crosswalk, frozen contracts, approved roadmap
+This project's owner is developing a second, parallel platform
+("MedNexus" — an enterprise medical-document-intelligence system,
+currently strongest at document UNDERSTANDING and a Clinical Privacy
+Policy Engine for de-identification, via a different Claude
+conversation). A cross-project architecture session this session
+produced four documents, now the authoritative cross-project reference,
+placed in `docs/mednexus-integration/`:
+
+- **Architecture Crosswalk v1.1** — stage-by-stage comparison. Key
+  finding from direct inspection of both codebases (not just each
+  project's own documentation): MedNexus Main has NO persistence layer
+  at all, so ANALYZE/VISUALIZE/INDICATORS aren't things to "merge" —
+  this project is simply ahead there, unopposed. The real integration
+  surface is UNDERSTAND/PROTECT (MedNexus Main's strength) meeting
+  EXTRACT/STANDARDIZE (this project's strength). Also surfaced a real
+  naming collision: MedNexus's existing `PUBLIC_HEALTH` domain
+  recognition signals ("case notification," "epidemiological
+  investigation") describe this project's Notifiable Disease report
+  type well but NOT Immunization or Laboratory — resolved by keeping
+  `PUBLIC_HEALTH` narrow (surveillance/notification only), routing
+  Laboratory through MedNexus's existing separate `LABORATORY` domain,
+  and giving Immunization its own new `IMMUNIZATION` domain.
+- **Clinical Semantic Context Contract v0.1** and **Clinical Extraction
+  Contract v0.1** — the frozen (not-yet-implemented) shape of what
+  MedNexus's UNDERSTAND/PROTECT stages will eventually hand to this
+  project's EXTRACT stage, and what EXTRACT must/must-not do with it.
+  Notable ratified rule: **EXTRACT must remain terminology-independent
+  — a terminology mapping error must never affect extraction
+  recognition or confidence.** This project's existing separated ICD-10/
+  LOINC-lookup-at-save-time pattern is cited in the contract itself as
+  the working proof this separation holds in production (specifically:
+  Poliovirus Stool PCR's rejected LOINC mapping never touched
+  extraction accuracy for that field).
+- **Domain Intelligence Track Roadmap** — this project continues as
+  "Track B," finishing its current checkpoint before starting a
+  Laboratory-domain vertical (which generalizes, not rebuilds, this
+  project's existing Laboratory work), then Pathology, then Radiology.
+
+**Governance decisions from this session, now standing:** the
+checkpoint is named **Public Health Stable Scope Checkpoint v0.1.0** —
+explicitly a *scope* checkpoint, never to be described as "complete,"
+"production ready," or "real-world validated." A **Cross-Track
+Synchronization Policy** now applies — a formal sync brief is required
+when a shared contract assumption changes, at each stable checkpoint,
+or before any real convergence work; routine internal changes don't
+need one. Two checkpoint *levels* were distinguished: a **Domain
+Development Checkpoint** (reachable independently, synthetic data, this
+project's own lightweight report-type detection as a temporary
+bootstrap) versus a **MedNexus Integrated Domain Checkpoint** (requires
+real contract-conformance with an implemented `MedNexusDocumentContext`
+from MedNexus Main) — this project is not blocked on the latter to keep
+working. Real PHI remains prohibited on this project's infrastructure
+regardless of any of this, until a real PROTECT implementation AND a
+separate Ministry-level infrastructure decision are both in place —
+unchanged from the existing standing rule, just reaffirmed in the new
+cross-project context.
+
+No code changed as a result of this session — architecture and
+governance only, per explicit instruction.
+
+### 2026-08-16 — CVX vaccine codes started
+Same pattern as ICD-10/LOINC: sourced from CDC's official `cvx_list.pdf`
+(not memory) for all 12 vaccines in `vaccines.json`. 8 resolved with a
+single unambiguous active CVX code (BCG, DTaP, Hexa, MMR, MMRV, OPV,
+Tdap, Varicella) — notably OPV required catching that the trivalent
+formulation code (CVX 02) is INACTIVE (retired after the 2016 global
+OPV switch); the correct current code is the bivalent formulation (CVX
+178). 4 flagged `ACCEPTABLE_GENERIC_FORMULATION` because CDC currently
+has multiple genuinely different active codes for the same vaccine
+concept and `vaccines.json`'s naming doesn't specify which: Hepatitis B
+(pediatric vs. adult dose — defaulted pediatric, matching this being a
+childhood-schedule context), Meningococcal ACWY (conjugate vs.
+polysaccharide vs. tetanus-protein-conjugate — defaulted conjugate),
+Pneumococcal (PCV13 vs. newer PCV15/20/21 vs. non-US PCV10 — defaulted
+PCV13), Rotavirus (monovalent vs. pentavalent — defaulted monovalent).
+Saved to `backend/data/cvx_codes.json`; not yet wired into the
+Immunization save endpoint (blocked on the 4 flagged decisions, not a
+technical blocker — the wiring itself is a direct copy of the ICD-10/
+LOINC pattern once the defaults are confirmed or corrected).
+
+### 2026-08-16 — Python environment recovery: backend/venv_recovery replaces broken backend/venv
+`backend/venv`'s linked Python 3.10 install
+(`AppData\Local\Programs\Python\Python310`) lost its `python.exe` — an
+external machine issue, unrelated to this project. Rather than repair
+the machine-wide install or borrow anything from the sibling MedNexus
+Main project (kept strictly isolated throughout — never read from,
+written to, or bootstrapped through), a fully independent, project-local
+environment was built: `.runtime/Python310` (python.org's official
+embeddable 3.10.11 package, MD5-verified against python.org's published
+hash for that file) bootstrapped with pip via the official PyPA
+`get-pip.py`, then `virtualenv` (the embeddable distribution ships
+without the stdlib `venv`/`ensurepip` modules, so stdlib `venv` can't
+create environments from it directly) to create `backend/venv_recovery`.
+Both `.runtime/` and `backend/venv_recovery/` are gitignored.
+`start_backend.ps1` now invokes `venv_recovery`'s interpreter by its
+explicit full path instead of activating it first — a deliberate change
+from the old "activate then run `python`" pattern, since explicit-path
+invocation can't silently pick up whatever `python` happens to resolve
+to on a given machine. Full 126-test baseline reconfirmed on the new
+environment before any further work proceeded; `backend/venv` (broken)
+kept in place, untouched, as a rollback artifact — not deleted.
+
+### 2026-08-16 — Requirements split: backend/requirements.txt stays lightweight, extraction stack moves to a separate file
+Running the real extraction path (GLiNER via `openmed[gliner]`) on the
+newly-recovered environment surfaced that `backend/requirements.txt`
+(9 packages: fastapi, uvicorn, pydantic, pytest, sqlalchemy,
+psycopg2-binary, python-docx, python-multipart, python-dotenv) has never
+included the extraction stack — `pip install "openmed[gliner]"` has
+always been a separate, undocumented-in-any-requirements-file step
+(README already described it this way; this was true before the
+environment recovery too, just newly visible once a clean environment
+needed rebuilding from scratch). Decision: keep them split rather than
+merge. `requirements.txt` stays the lightweight API/DB/dashboard/test
+surface — it's also exactly what Render's `buildCommand` installs, and
+pytest's fake `ner_fn` means the test suite never needs GLiNER either,
+matching `render.yaml`'s existing note that `/extract` deliberately
+503s on Render without the model. A new
+`backend/requirements-extraction.txt` will hold the local-only
+extraction stack starting with `openmed[gliner]` (installed versions
+confirmed: openmed 2.1.0, gliner 0.2.28, torch 2.13.0, transformers
+5.13.1, tokenizers 0.22.2, ~89 packages total including the ML/NLP
+tree). No full transitive lock file yet — deferred to a future
+environment-governance milestone; the file will pin just the direct
+`openmed[gliner]` line, the same level of pinning the rest of the
+project's dependency declarations use today.
+
+### 2026-08-16 — LOINC end-to-end verification CONFIRMED
+Test cases prepared earlier (see the LOINC dataset entry above) were
+finally run through the real UI once the environment was working again:
+Measles IgM Serology extracted and saved → `test_code: "21503-8"`;
+Poliovirus Stool PCR extracted and saved → `test_code: null` (the
+deliberate `REJECTED_MISMATCH` entry from `loinc_codes.json`, working as
+designed, not a bug). Both confirmed by matching full record content
+(not just test name) against `GET /reports/laboratory/export?format=json`,
+since that endpoint also returns 500+ pre-existing synthetic records
+with overlapping facility/test-name combinations. Re-confirmed again
+unchanged after the `openmed[gliner]` install (126/126 tests, `/health`,
+both records still correct). LOINC is now IMPLEMENTED and verified,
+matching ICD-10's status.
+
+### 2026-08-16 — Local dev port convention: MedNexus Main = 8001, Public Health = 8002
+With both projects now under active local development side by side,
+port 8001 (this project's port since 2026-07-xx — see that entry above)
+was reassigned to MedNexus Main, and Public Health moved to **8002** to
+avoid the two servers colliding. `backend/start_backend.ps1` now binds
+`--port 8002` (a comment there records the convention); the frontend's
+`API_BASE` in `app.js` and all four dashboard HTML files moved from
+`http://127.0.0.1:8001` to `http://127.0.0.1:8002`, including the
+on-screen "backend unreachable" error text in each dashboard. Verified
+live: backend health check, all four dashboards' data-load requests,
+and a real extraction POST all confirmed reaching `8002` successfully
+through the actual running servers. A repo-wide sweep afterward found
+and corrected the remaining stale `8001` references describing this
+project's own setup — `README.md` and `docs/mednexus-integration/
+README.md`'s "Terminal 1" instructions, three port mentions in
+`CURRENT_STATUS.md` (two "not yet pointed at Render" notes, the Local
+dev routine section), and two in `Claud+OpenAi/MedNexus_Public_Health_
+Authoritative_Handoff.md`. Left untouched deliberately: historical
+entries in this file describing the port as it was at the time
+(2026-07-xx's original 8001 choice, the 2026-07-28 incident report),
+and `3 terminals.txt` (a literal terminal-session transcript, not
+living instructions — editing it would falsify a historical record).
+
+### 2026-08-17 — CVX end-to-end verification CONFIRMED
+Same verification shape as ICD-10 and LOINC: a BCG Immunization report
+(Central District Hospital, Al Asimah) and a Rota Immunization report
+(Ardiya Clinic, Farwaniya) were run through the real extraction UI on
+the current `venv_recovery` environment, backend confirmed running on
+`127.0.0.1:8002` (current port convention), and saved. Both confirmed
+via `GET /reports/immunization/export?format=json`, matched by full
+record content (id, facility, date, age — not just vaccine name):
+BCG → `vaccine_code: "19"`; Rota → `vaccine_code: "116"`. Both exactly
+match `get_cvx_code()`'s direct-lookup result from the earlier wiring
+sanity check, now confirmed through the real save path rather than a
+bare function call. First attempt at this verification hit unrelated
+process hygiene debt — multiple stale backend/frontend server processes
+from earlier turns were still running and had never been fully
+terminated, one of them silently holding port 8002 already, which
+caused a fresh backend launch to fail to bind while an old process kept
+answering `/health`. All `venv_recovery` processes were killed and a
+single clean backend + frontend pair started before repeating the test
+cleanly. Two unrelated field-level gaps noticed in passing, not fixed
+here since they're outside CVX's scope: the BCG record's `route` came
+back `"unknown"` instead of `"Intradermal"` (a rule-based extraction
+miss on that phrasing), and neither record's `dose_number` populated
+despite being stated in the source text. CVX is now IMPLEMENTED and
+verified, matching ICD-10 and LOINC's status — terminology
+normalization (ICD-10/LOINC/CVX) is complete for this checkpoint.
+
+### 2026-09-17 — Batch Upload: planned first, built in 5 verified milestones, hard constraint held throughout
+Requested as "a written technical plan first, for review, before any
+code changes" — backend design, frontend design, confirmation that
+existing systems (batch_label, confidence/needs_review) would be reused
+rather than forked, a milestone breakdown, and named risks, all reviewed
+and approved before a single line of implementation code existed. The
+plan's central recommendation held for the whole build: no new backend
+endpoints — the frontend loops the existing single-file
+`parse-document`/`detect-type`/`{type}/extract`/`{type}/save` endpoints
+once per file. Batch Upload ships with zero new backend code.
+
+The one non-negotiable requirement, stated at the start and restated
+before Milestone 4 specifically: per-report human review before save,
+exactly as the single-report flow already enforces, with no path —
+not even a convenience one — that bulk-approves review. This is why
+every card's "Reviewed — ready to save" checkbox starts unchecked,
+always, and is never programmatically checked by anything (a successful
+detection doesn't check it, an edit doesn't check it, there is no
+select-all/mark-all-reviewed control anywhere in the code), and why a
+needs-type card (ambiguous detection) blocks only itself rather than
+silently defaulting. Verified live, not just by design: editing a field
+on one ready card was confirmed not to check its own or any other
+card's box (same DOM node before and after, proving the card hadn't
+even been re-rendered), and three ready cards' checkboxes were
+confirmed independent — `[true, false, false]` after checking exactly
+one of them.
+
+Milestone 1 was a throwaway script (never shipped) driving 8-10 real
+mixed-type files through the real endpoint chain before any frontend
+code existed, specifically to get real timing instead of guessing: a
+cold GLiNER load (the first extraction call after a fresh backend
+start) measured 29-58s across two separate runs; every warm call after
+it measured well under a second (0.16-0.92s). This is what ruled out
+concurrency as worth building — a warm-dominated batch of ~10 files
+costs one ~30-60s wait plus a handful of sub-second calls, sequentially,
+and concurrent requests to the same process wouldn't obviously help
+anyway given GLiNER's inference is CPU-bound work of uncertain
+GIL-release behavior. The same script caught a real bug in itself on
+its first run: building extract URLs from detect-type's raw label
+("notifiable") instead of translating to the actual path segment
+("notifiable-disease"). That exact mistake was carried forward as an
+explicit warning into every later milestone — route through the same
+`ENDPOINTS` map the single-report flow already uses, never build a URL
+from the raw label.
+
+Built in the order the plan proposed, specifically so each piece could
+be verified against the real backend before the next was built on top
+of it: Milestone 2 (sequential orchestration + per-file error isolation,
+proven via a temporary diagnostic scaffold before any real UI existed —
+a deliberately-empty file was used to force a real parse failure and
+confirm the file after it still processed normally); Milestone 3 (the
+real dropzone/multi-select and a live, cold/warm-aware progress grid,
+replacing the scaffold — the cold card's amber "loading the model, up
+to a minute" state was caught on screen mid-flight, not just inferred
+from the end result); Milestone 4 (the editable review card grid,
+factoring `renderFieldsTable()` and `collectEditedRecord()` out of the
+single-report flow's own inline code so both use one implementation,
+not two); Milestone 5 (the batch-wide save step, unioning all three
+types' existing `/batches` endpoints client-side into one merged picker
+rather than adding a combined backend endpoint, keeping the
+zero-new-backend-code story intact through the very last piece).
+
+Two real bugs were found this way — via live testing, not code review —
+and both fixed immediately and re-verified rather than left as known
+issues. (1) Milestone 3: `.batch-selection-summary { display: flex; }`
+had the same CSS specificity as the `hidden` attribute's own
+`display:none`, and an author stylesheet rule beats the UA stylesheet
+at equal specificity, so the "Process Files" button was visible before
+any file was ever selected — fixed with `:not([hidden])`. (2) Milestone
+5: the save-error handling assumed FastAPI's `detail` field is always a
+string, but a 422 validation error's `detail` is a structured array of
+`{type, loc, msg}` objects — interpolated directly into a template
+literal, it rendered as `"[object Object]"`. Fixed with a shared
+`formatSaveError()` helper, which also quietly fixed the identical
+latent bug already sitting in the pre-existing single-report
+`saveRecord()` — that code used the exact same unsafe pattern since
+before Batch Upload existed, it had just never been exercised by a real
+validation failure until Milestone 5's forced-failure test (an
+intentionally invalid `route` edit, chosen as a plausible real
+reviewer-typo scenario rather than a network-failure mock) went
+looking for one.
+
+The finished save step was verified against the real database, not
+just the UI: a 3-file mixed batch (one of each report type) saved into
+a brand-new batch label, confirmed via each type's own
+`/batches`/export endpoints; the same forced validation failure
+confirmed the other two cards saved successfully while the failed one
+stayed checked and retryable; retrying re-sent exactly one save request
+(confirmed via the backend's own access log), leaving the two
+already-saved records' ids unchanged, since a saved card's inputs are
+disabled and `reviewedUnsavedItems()` skips anything already
+`saveStatus: "saved"`; and selecting that same batch label again (not
+"+ New batch...") on a second run correctly summed record counts across
+tables — `"Milestone5-Test-Batch (2)"` shown before the run, correct
+totals of 2 (notifiable) / 1 (immunization — the two failed attempts
+correctly persisted nothing) / 2 (laboratory) after — rather than
+creating a duplicate batch entry.
+
+Batch Upload is now IMPLEMENTED: no new backend endpoints, no parallel
+implementation of extraction/confidence/save logic, hard constraint on
+mandatory individual review held and verified at every layer rather
+than just asserted.
+
+### 2026-09-20 — Upload page: Single/Batch mode switch, read-only type cards, dashboard links, filtered Save-to picker
+Four small frontend changes to the extraction page, built between
+2026-09-18 and 09-20 as separate, individually specified requests
+(`index.html`, `app.js`, `style.css`, and a small `?batch=` read in each
+per-type dashboard). No backend change, and nothing about how reports
+are extracted, reviewed or saved changed.
+
+- **Mode switch.** Single and Batch are alternative paths, not steps of
+  one 1-2-3-4 sequence: Batch never reads Step 1 (type) or Step 2
+  (input) because it detects each file's type itself. The page now has a
+  two-button switch ("Single report" / "Batch upload"), and each shows
+  only its own pane. Switching only hides and shows the panes, so
+  nothing typed or reviewed in either is reset. `#batch` in the URL
+  opens Batch directly; Single is the default.
+- **Read-only type cards in Batch.** A non-selectable twin of the Step 1
+  cards (Notifiable Disease, Immunization and Laboratory as Live;
+  Syndromic and Outbreak/Cluster dimmed as Coming next) with the line
+  "Each file's type is recognised automatically. Nothing to select
+  here", so Batch doesn't suggest a choice it doesn't offer.
+- **"View <Type> Dashboard" after a save.** Single shows one link for
+  the saved type; Batch shows one per report type that had a saved
+  record. If a batch label was used the link carries `?batch=<label>`
+  (in Batch, only when all saved records of that type went to the same
+  label, otherwise the plain dashboard). The Notifiable Disease,
+  Immunization and Laboratory dashboards read `?batch=` on first load and
+  select that batch if it exists. Links open in a new tab so unsaved
+  review work on the page isn't lost.
+- **Batch "Save to" picker narrowed by report type.** One batch label
+  can span all three tables, so the picker unions the three existing
+  `/batches` endpoints client-side and keeps which report types each
+  label holds. While cards are ticked as reviewed it lists only labels
+  that already hold at least one record of a ticked type (nothing
+  ticked: all labels) and says so in a note; "Original data" and
+  "+ New batch..." are always offered. It is a convenience filter only:
+  saving still uses whatever is selected, each card still saves through
+  its own type's existing `/save` endpoint, and a picked label that
+  stops matching stays selected and is marked "— no matching records"
+  instead of being switched silently. Single mode needed no change: its
+  batch list was already limited to the selected type.
+
+The hard rule from the Batch Upload entry is unchanged, and was
+re-checked in the code: there is no select-all or mark-all-reviewed
+control anywhere, and nothing ever sets a card's "Reviewed" checkbox to
+checked — only the reviewer's own click does. Also on record: the Batch
+dropzone is a native `<label for>` because a scripted `.click()` version
+did not open the file picker in one real Chrome profile (cause not
+established); the Single dropzone still uses a scripted click. Checked by
+DOM inspection and headless-Edge screenshots against the real backend in
+the development environment; own-browser confirmation of these four
+changes is not recorded here.
+
+### 2026-09-21 — PDF upload: ingestion only, pypdf over pypdfium2, planned first, built in 4 verified milestones
+Requested as a written plan first, with no implementation code until it
+was reviewed, and approved in full on 2026-09-20 as nine numbered
+decisions (D1-D9 below). The scope was deliberately narrow: PDF support
+for BOTH Single and Batch upload with zero changes to the pipeline
+behind it. PDF is an ingestion change — bytes in, text out — so
+everything after `POST /reports/parse-document` (detect-type → extract →
+confidence → review → save) is untouched, the response is still
+`{"text": ...}`, and neither upload flow needed new logic; on the
+frontend only two `accept` attributes and the dropzone hint changed.
+Built as four milestones, each reported and approved before the next:
+M1 backend ingestion, M2 frontend wiring, M3 the permanent pytest suite,
+M4 this documentation. Out of scope by design: OCR, and any field-level
+accuracy measurement on PDFs (last section).
+
+**The nine decisions, all approved before code.**
+- D1 — Library: `pypdf` 6.19.0 primary, `pypdfium2` as the named
+  fallback pending M1's side-by-side check (next section).
+- D2 — Dependencies in `backend/requirements.txt`: `pypdf==6.19.0`, and
+  `httpx==0.28.1` only because `fastapi.testclient` needs it for the
+  endpoint tests.
+- D3 — Limits, applied to EVERY format rather than only PDF (same code
+  path, so the protection is free): 10 MB per file and 30 pages. PDFs
+  are counted from real page objects; DOCX/TXT have no pages, so their
+  length is judged by an estimate of 3,000 characters per page (90,000
+  characters).
+- D4 — No crypto package. pypdf reads AES-encrypted PDFs only with an
+  optional package (`cryptography` or PyCryptodome), so every
+  AES-encrypted PDF is refused as password-protected — including an
+  "owner-only" file (restrictions but no open password) that WOULD open
+  if a package were installed. RC4-encrypted owner-only files are read:
+  pypdf handles RC4 itself and an empty user password opens them.
+- D5 — A deliberately small text clean-up, nothing more: ligatures
+  (ff, fi, fl, ffi, ffl, st) expanded; exotic spaces (no-break, thin,
+  ideographic) become plain spaces; soft hyphens, zero-width characters
+  and the BOM removed; line/paragraph separators become newlines; the
+  Symbol-font bullet becomes a real bullet; whitespace tidied. NOT done,
+  on purpose: unwrapping hard-wrapped lines, de-hyphenating, stripping
+  repeated headers/footers. Each is a guess about layout, and the
+  accuracy pass should show which are worth building before any is.
+- D6 — Every failure mode has its own honest message, worded and
+  approved before implementation: not a real PDF (empty, damaged, or
+  another file type renamed .pdf), damaged/unsupported PDF,
+  password-protected, no selectable text (a scan — OCR isn't
+  supported), over the page limit, over the size limit. The same pass
+  fixed an existing bug: a corrupt `.docx` escaped as an unhandled 500
+  whose body was the raw exception text, and now returns the same clean
+  422 as the rest.
+- D7 — Dropzone hint that sets the scanned-PDF expectation up front:
+  "DOCX, TXT and PDF supported (PDFs need selectable text; scans aren't
+  read yet). CSV planned for a later phase."
+- D8 — Test strategy: a stdlib-only PDF builder (`tests/pdf_fixtures.py`)
+  for everything constructible, PLUS one realistic static fixture from a
+  different producer, so the suite isn't only tested on PDFs the project
+  wrote itself. `.gitignore` now ignores `*.pdf` everywhere except
+  directly inside `backend/tests/fixtures/`, and ignores
+  `backend/data/Test Reports/` and `backend/data/pdf_test_reports/`.
+- D9 — The 60 test PDFs Dr. Sameh supplied (20 per report type) and their
+  `ground_truth.csv` live in `backend/data/pdf_test_reports/`: local
+  only, gitignored, never committed, never quoted at length. M1 could
+  read them for ingestion profiling only (statistics, short excerpts).
+  Comparing extracted FIELDS to `ground_truth.csv` was kept as a
+  separate later step and has not been started.
+
+**pypdf vs pypdfium2: what the comparison showed, and why pypdf.** M1
+profiled the 60-file set (20 per report type): every file is
+single-page ReportLab output with standard non-embedded Helvetica/Times
+fonts, 2.5-3.6 KB; none encrypted, none with form fields, none scanned,
+no ligatures or odd characters; ingestion took 8.5 ms per file on
+average and 14 ms at worst when re-measured on 2026-09-21 (M1's first
+measurement said 21 ms and 44 ms — timings vary with machine load). On
+the 10 files compared side by side, pypdf and pypdfium2 produced
+IDENTICAL text (word-level and content-only agreement 1.000 on all 10,
+re-confirmed on 2026-09-21). pdfminer.six, tried as well, reorders
+blocks and form-style tables (word-level agreement with pypdf 0.69-0.90
+on the 2026-09-21 re-run; M1 reported 0.20-0.90) and was dropped. Since
+all 60 files come from one producer, a second "flavor" was built on
+purpose: a 3-page synthetic report printed by headless Edge
+(Chromium/Skia, embedded subset fonts) with a letterhead and footer on
+every page, a form-style table, a wrapped `9-year-old` and a
+soft-hyphenated paragraph. On it pypdf and PDFium agree on every letter
+and digit and differ only on hyphens. pypdf (and pdfminer) split
+soft-hyphenated words ("influ enza", "vacci nation", "coordin ator")
+where PDFium keeps them whole. But where a real hyphen falls at a line
+end, PDFium drops it and joins the lines around a stray noncharacter
+(`9-year<U+FFFE>old`), while pypdf keeps `9-year-` and `old` on two
+lines; the age rule reads neither form. Switching engines would trade
+one hyphen artifact for another.
+
+Decision, confirmed by Dr. Sameh after M1: stay with pypdf. It is pure
+Python, so there is nothing native to install or ship in the
+project-local embeddable Python 3.10 environment or on Render; it
+matched PDFium on every file of the 60-file set; and the one observed
+difference appears only in browser-printed documents with hyphenation,
+which none of the 60 are. Swapping in a native PDFium binary now would
+trade a dependency for a problem not yet seen on a real document.
+Revisit only if a real PDF surfaces the soft-hyphen split — a
+strict-xfail test (below) keeps that decision visible.
+
+**What was built.** `services/document_parsing.py` gained
+`extract_text_from_pdf` (text layer only), `normalize_pdf_text` and the
+shared limits; `extract_text` checks size first, then dispatches by
+extension. `POST /reports/parse-document` returns 200 `{"text": ...}` as
+before, 415 for an unsupported extension, 413 over 10 MB, and 422 for
+every unreadable or over-length case plus the existing empty-text
+check. The specific message travels in `detail`, which both upload flows
+show verbatim (Single's red status line, Batch's per-file error card),
+so the wording is the user-facing contract. The endpoint reads at most
+10 MB + 1 byte into memory, and parsing runs in a worker thread
+(`run_in_threadpool`): PDF parsing is CPU-bound Python and would
+otherwise stall every other request, `/health` included. Whatever the
+third-party parser throws on untrusted input becomes the "damaged"
+message and is logged by exception TYPE only, never its text — parser
+messages can quote file content, and none belongs in logs.
+`scripts/pdf_ingestion_profile.py` is the M1 diagnostic, kept for reuse:
+a census of a folder of PDFs (encryption, form fields, scans,
+ligatures, repeated headers, timing) and a `--compare` mode against
+pypdfium2/pdfminer.six when those are on PYTHONPATH; it prints
+statistics and short excerpts only.
+
+**Two real problems found by testing, not by inspection.** (1) The
+first AES fixtures came back as "damaged" instead of "password-
+protected" in 3 of 4 cases. Only AES-128 with an open password was
+caught (pypdf's `decrypt("")` reports NOT_DECRYPTED). With no crypto
+package installed, pypdf raises its `DependencyError` from two other
+places depending on the variant — the constructor for AES-256, and only
+later, inside `extract_text()`, for AES-128 with just an owner
+password — and the first version caught neither. Fixed by catching it
+around the whole read, and by calling it "password-protected" only when
+the message names AES: the same exception class is also raised for
+other missing optional pieces (e.g. JBIG2 images), and those must stay
+"damaged/unsupported".
+(2) The first "does parsing block the server?" test passed for the wrong
+reason: its clock started only after the blocked event loop had
+resumed, so a blocked server looked fast. Replaced with a deterministic
+test — a stubbed parser that can finish early only if the loop keeps
+serving another request meanwhile — which the mutation pass below
+confirms fails when the threadpool is removed.
+
+**Tests: 126 → 138 → 220.** The last commit's suite has 126 tests. When
+PDF work began the working tree stood at 138 — those 126 plus 12 tests
+added since for the rule-based `found` flag on date fallbacks and one
+report-type-detection fix, uncommitted and not yet written up in these
+docs. It now stands at **220 passed plus 2 expected xfails** (about 4
+seconds; no database, server or network needed; runs from `backend/`,
+the repo root or `backend/tests`): 84 new tests — 53 added to
+`test_document_parsing.py` (now 60), 12 in the new
+`test_pdf_static_fixtures.py`, 19 in the new
+`test_parse_document_endpoint.py`. They cover what comes out of a PDF
+(page order and joining, repeated letterheads kept, no unwrapping); 17
+text clean-up cases; every failure mode with its exact message; every
+limit at its boundary for every format; corrupt DOCX; the endpoint's
+status codes and messages, CORS headers on error responses (so the
+browser can read the message), the bounded read and the non-blocking
+parse; PDF text detected as the same report type as the same text
+pasted (all three types, with a term straddling a line break); and the
+realistic Edge-printed report (section order, form-table rows one per
+line, dates and units, no leftover ligature or invisible characters).
+The approved limits (D3) and message wording (D6) are pinned in tests,
+so changing either is a deliberate act.
+
+Whether the tests actually bite was checked, not assumed: 24 deliberate
+breaks — a limit boundary flipped, the threadpool removed, the
+unbounded read restored, 413/422/415 remapped to 400, individual
+clean-up rules removed, the header and encryption checks removed, the
+CORS origin changed, a message reworded, and others — were applied one
+at a time to a scratch copy of `app/` (never the repo). Every one was
+caught by at least one test, and the unmodified copy was clean. The
+harness was not kept in the repo. This pass is also why the limits and
+wording are pinned: it showed both could change silently.
+
+Two tests are strict xfails, marking limits accepted under D5:
+soft-hyphenated words come out split, and a hyphenated compound wrapped
+at a line end stays split. They go red the day something fixes either —
+the reminder to remove the marker, update this note and, for the first,
+revisit D1. Three tiny AES fixtures are committed as static files
+because pypdf cannot WRITE AES without the crypto package this project
+deliberately doesn't ship; regeneration steps are in
+`backend/tests/fixtures/README.md`. The owner-only AES test skips itself
+if a crypto package is ever installed, since such files then become
+readable.
+
+**A finding that corrected an earlier note: the "stalling" large
+uploads.** During M1, intermittent stalls on 9-11 MB test uploads —
+including against a plain read-everything control endpoint — were put
+down to the local environment. That was wrong. The cause, found when
+M3's first 10 MB endpoint test took 21 seconds: `python-multipart`
+0.0.9 parses the upload before our endpoint runs, and its boundary
+search drops to a byte-by-byte Python loop (about 2 s per MB) whenever
+the payload's bytes also occur in the random hex boundary the client
+chose (0-9, a-f, dash, CR, LF). The test payloads were runs of `0`/`a`,
+and a random boundary contains such a character in roughly 87% of
+requests, so most were slow and a few fast, which looked intermittent.
+Confirmed by holding size and code fixed and changing only the
+payload/boundary pairing: 0.01-0.02 seconds against 2.1-2.4 seconds.
+Realistic content is not affected: random/compressed bytes and a
+text-heavy PDF structure repeated to 4 MB parsed at 0.01-0.05 s per MB.
+The behavior pre-dates PDF support (same parser for DOCX/TXT), was not
+changed and needs no action; the 413 test uses a `z`-filled payload, a
+byte that never occurs in a boundary, so it runs in 0.1 s. Worth
+knowing: the 10 MB limit (D3) is applied by our code AFTER the framework
+has received and parsed the whole upload — it bounds what is read and
+processed, not what is accepted. A front-door limit (proxy or
+Content-Length check) or a newer python-multipart would be separate
+decisions; none was made here.
+
+**Recorded for the later accuracy-testing step.** Not addressed now,
+and none of it measured on the 60 test PDFs, which contain none of these
+situations.
+1. Browser-printed PDFs and the M/D/YY vs D/M/YY date risk. The default
+   print-to-PDF of Chromium-based browsers (verified with Edge) stamps a
+   header and footer on every page — on this machine, in the en-US
+   locale, `9/21/26, 9:19 AM <page title>` and `file:///... 1/3` — and
+   they land in the extracted text at every page boundary (shown on a
+   default-print of the synthetic fixture; the committed fixture is
+   printed WITHOUT them, so it does not exercise this). The date rules
+   read slash dates DAY-first (D/M/YYYY, D/M/YY) and `extract_first_date`
+   tries patterns in a fixed order — ISO, then slash forms, then
+   month-name forms — returning the first PATTERN that matches anywhere,
+   not the earliest date by position. So a stamp printed on the 1st-12th
+   of a month, such as `9/3/26`, is read as 9 March 2026 and outranks a
+   correct body date written "September 3, 2026" (shown directly on the
+   function: 2026-09-03 without the stamp, 2026-03-09 with it). A stamp
+   whose second number is above 12, as on the 21st, cannot parse
+   day-first, so it yields no wrong date — but as the first slash-shaped
+   match it hides a later valid slash date such as `15/6/26` (the rule
+   returns nothing and the date falls back to today's, which the
+   `found: false` flag does mark); a month-name body date still parses.
+   The exposed fields are the two that read the whole text — Notifiable
+   Disease's `report_date` and Immunization's `administration_date`;
+   onset, specimen and result dates use keyword-anchored windows, though
+   an onset stated as a duration ("x12d") is computed from `report_date`
+   and inherits the error. Because a stamp that DOES parse counts as a
+   genuinely found date, the `found: false` fallback flag does not fire
+   for it: the reviewer sees a filled date with no warning. The same
+   fixed pattern order returns 2026-09-04 (an ISO date
+   later in the body) on the CLEAN fixture although "September 3, 2026"
+   comes first — harmless on the 500 synthetic reports, which use one
+   format each, but relevant to real narrative reports with mixed
+   formats. Options to weigh then, none decided: strip print-stamp lines,
+   prefer position over pattern order, or tell users to print without
+   headers and footers.
+2. Partly scanned PDFs pass silently. Only a PDF with NO text layer at
+   all is refused. A PDF that mixes typed and scanned pages is read from
+   its typed pages and returned with no warning that the scanned pages
+   contributed nothing, so the reviewer sees a plausible but incomplete
+   text, and fields that lived on those pages come back empty or
+   low-confidence. A test records this as current behavior
+   (`test_partly_scanned_pdf_returns_only_the_text_it_has`). Options to
+   weigh then: detect a text-less page and warn, or add OCR.
+3. Text-level limits accepted under D5 (the two strict-xfail tests):
+   soft-hyphenated words split ("influ enza"), and a hyphenated compound
+   wrapped at a line end stays split. The second has a concrete
+   consequence: `9-year-` / `old` on two lines is NOT read by the age
+   rule (no age, against 9 for the same sentence on one line; a wrap
+   after "year" with no hyphen reads fine). Repeated letterheads and
+   footers are also kept, by design.
+4. Not tested at all: Arabic and other right-to-left or non-Latin-script
+   PDFs; producers other than ReportLab and Edge (Word "Save as PDF",
+   LibreOffice, scanners with an OCR text layer); multi-column layouts.
+
+**What is verified, and what is not.** Verified: the 220-test suite and
+the mutation pass (both in this machine's `venv_recovery` only); real
+HTTP requests against the running local backend during M1; for M2, the
+real `index.html`/`app.js`/`style.css` driven in headless Edge against
+the real backend with the save endpoint blocked — both flows accepted a
+valid PDF and displayed the backend's messages for files that failed;
+and, CONFIRMED by Dr. Sameh directly in his own Chrome on 2026-09-21,
+PDF upload working correctly in both Single report and Batch upload,
+real file-picker filtering included. NOT verified: PDF upload on Render
+(`render.yaml` builds from `requirements.txt`, so `pypdf` should arrive
+with the next deploy, but no deploy or test was run); field-level
+accuracy on any PDF (extraction and detect-type were deliberately not
+run on the 60 test PDFs); anything listed under item 4 above; Python
+versions other than the project's 3.10.11 environment.
+
+PDF upload is now IMPLEMENTED as ingestion only: text-layer PDFs go
+through the same detect → extract → review → save path as DOCX/TXT and
+nothing downstream changed. Own-browser confirmation: CONFIRMED
+(2026-09-21). OCR, CSV upload and PDF accuracy testing are not built or
+run.
