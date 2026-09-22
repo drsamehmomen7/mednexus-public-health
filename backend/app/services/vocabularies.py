@@ -48,6 +48,11 @@ _LOINC_LOOKUP_PATH = Path(__file__).resolve().parents[2] / "data" / "loinc_codes
 _CVX_LOOKUP_PATH = Path(__file__).resolve().parents[2] / "data" / "cvx_codes.json"
 
 _icd10_lookup_cache: Optional[Dict[str, str]] = None
+# Populated alongside _icd10_lookup_cache by the same load_icd10_lookup() read pass: the '*_flag'
+# reviewer-note keys that function already strips out of the disease -> code lookup, indexed by
+# the disease name they belong to. Only read by get_icd10_entry() (below); load_icd10_lookup()'s
+# own return value is unaffected by this cache existing.
+_icd10_flag_cache: Optional[Dict[str, str]] = None
 _loinc_lookup_cache: Optional[Dict[str, dict]] = None
 _cvx_lookup_cache: Optional[Dict[str, dict]] = None
 
@@ -129,8 +134,12 @@ def load_icd10_lookup(refresh: bool = False) -> Dict[str, str]:
     names to look up. Returns an empty dict (not an error) if the file is
     missing or malformed, so icd10_code is simply left unpopulated rather
     than breaking saves — same fail-safe pattern as the other loaders here.
+
+    Also builds _icd10_flag_cache from those same '*_flag' keys, for
+    get_icd10_entry() below — one file read serves both caches; this
+    function's own signature and return value are unchanged either way.
     """
-    global _icd10_lookup_cache
+    global _icd10_lookup_cache, _icd10_flag_cache
 
     if _icd10_lookup_cache is not None and not refresh:
         return _icd10_lookup_cache
@@ -144,7 +153,43 @@ def load_icd10_lookup(refresh: bool = False) -> Dict[str, str]:
         k: v for k, v in raw.items()
         if k != "_comment" and not k.endswith("_flag")
     }
+    _icd10_flag_cache = {
+        k[: -len("_flag")]: v for k, v in raw.items() if k.endswith("_flag")
+    }
     return _icd10_lookup_cache
+
+
+def get_icd10_entry(disease_name: str) -> Dict[str, object]:
+    """
+    Preview-only helper for GET /terminology/preview: what icd10_code
+    would resolve to for this disease name right now, via the SAME
+    load_icd10_lookup() the save endpoint calls directly — this never
+    duplicates that lookup, only reshapes its result plus the reviewer
+    note a handful of entries carry (see load_icd10_lookup()'s '*_flag'
+    handling just above).
+
+    Always returns a dict with the same four keys — never None, never a
+    KeyError — so the preview endpoint has one uniform shape across all
+    three terminology systems:
+        code: the ICD-10 code, or None if disease_name doesn't resolve.
+        status: always None today — there's no per-entry ICD-10 mapping
+            status the way LOINC/CVX have (EXACT, NO_DIRECT_LOINC, ...).
+            Adding that taxonomy is a separate, later task needing
+            Dr. Sameh's own clinical review of all 54 entries, not
+            something to retrofit here.
+        note: the disease's reviewer-flag text (see above), when
+            disease_name resolves to one of the 9 flagged entries; None
+            otherwise (including when it doesn't resolve at all).
+        in_vocabulary: True iff disease_name matched a known disease name
+            at all — lets a caller tell "this wording doesn't match a
+            known disease name yet" (in_vocabulary False) apart from
+            "this disease has no ICD-10 code" (in_vocabulary True, code
+            None — doesn't occur in today's 54-disease data, every one
+            has a code, but the shape stays honest if that ever changes).
+    """
+    code = load_icd10_lookup().get(disease_name)
+    note = (_icd10_flag_cache or {}).get(disease_name) if code is not None else None
+    return {"code": code, "status": None, "note": note, "in_vocabulary": code is not None}
 
 
 def load_loinc_lookup(refresh: bool = False) -> Dict[str, dict]:
@@ -202,6 +247,36 @@ def get_loinc_code(test_name: str) -> Optional[str]:
     return entry["loinc"] if entry else None
 
 
+def get_loinc_entry(test_name: str) -> Dict[str, object]:
+    """
+    Preview-only helper for GET /terminology/preview: the full LOINC
+    entry for a test name — code, mapping status, and the reviewer note
+    — via the SAME load_loinc_lookup() get_loinc_code() already reads,
+    never a second lookup implementation. get_loinc_code() itself is
+    unchanged and still what the save endpoint uses.
+
+    Same four-key shape and in_vocabulary reasoning as get_icd10_entry():
+    lets a caller tell "test_name doesn't match a known test yet"
+    (in_vocabulary False, no note) apart from "matched, but no LOINC code
+    exists for it" (in_vocabulary True, code None, note explaining why —
+    true today for exactly 3 of the 71 tests: Poliovirus Stool PCR,
+    Hantavirus IgM Serology, Leprosy Skin Biopsy — see
+    load_loinc_lookup()'s docstring for the reasoning behind each). Also
+    guards against a malformed (non-dict) raw entry rather than raising —
+    see get_cvx_entry() below for why that's a real, not just
+    theoretical, possibility in this file shape.
+    """
+    entry = load_loinc_lookup().get(test_name)
+    if not isinstance(entry, dict):
+        return {"code": None, "status": None, "note": None, "in_vocabulary": False}
+    return {
+        "code": entry.get("loinc"),
+        "status": entry.get("status"),
+        "note": entry.get("notes"),
+        "in_vocabulary": True,
+    }
+
+
 def load_cvx_lookup(refresh: bool = False) -> Dict[str, dict]:
     """
     Build (or return the cached) vaccine-name -> CVX mapping, from
@@ -245,6 +320,40 @@ def get_cvx_code(vaccine_name: str) -> Optional[str]:
     """
     entry = load_cvx_lookup().get(vaccine_name)
     return entry["cvx"] if entry else None
+
+
+def get_cvx_entry(vaccine_name: str) -> Dict[str, object]:
+    """
+    Preview-only helper for GET /terminology/preview: the full CVX entry
+    for a vaccine name — code, mapping status, and the reviewer note —
+    via the SAME load_cvx_lookup() get_cvx_code() already reads, never a
+    second lookup implementation. get_cvx_code() itself is unchanged and
+    still what the save endpoint uses.
+
+    Same four-key shape and in_vocabulary reasoning as get_icd10_entry()
+    and get_loinc_entry().
+
+    The isinstance() guard below matters concretely here, not just
+    defensively: load_cvx_lookup() returns cvx_codes.json's raw dict
+    UNFILTERED, which includes a top-level '_comment' key whose value is
+    a plain STRING, not a {cvx, status, notes} object (unlike
+    load_icd10_lookup(), which already filters its own '_comment' key
+    out before caching). get_cvx_code() has this exact same gap today —
+    an unguarded entry["cvx"] on that string would raise — it has simply
+    never been hit, because no real vaccine is named '_comment'. Fixing
+    get_cvx_code()/load_cvx_lookup() themselves is out of scope here
+    (save logic stays untouched), but this new function shouldn't carry
+    the same risk forward, so it checks the shape before reading it.
+    """
+    entry = load_cvx_lookup().get(vaccine_name)
+    if not isinstance(entry, dict):
+        return {"code": None, "status": None, "note": None, "in_vocabulary": False}
+    return {
+        "code": entry.get("cvx"),
+        "status": entry.get("status"),
+        "note": entry.get("notes"),
+        "in_vocabulary": True,
+    }
 
 
 def load_vaccine_gazetteer(aliases: Optional[Dict[str, str]] = None,

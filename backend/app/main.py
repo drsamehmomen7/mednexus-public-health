@@ -37,7 +37,10 @@ from app.services.ner_client import NerBackendUnavailable
 from app.services.report_type_detection import detect_report_type
 from app.services.vocabularies import (
     get_cvx_code,
+    get_cvx_entry,
+    get_icd10_entry,
     get_loinc_code,
+    get_loinc_entry,
     load_disease_gazetteer,
     load_icd10_lookup,
     load_lab_test_gazetteer,
@@ -229,6 +232,43 @@ def detect_type(request: DetectTypeRequest):
         lab_test_gazetteer=load_lab_test_gazetteer(),
     )
     return {"detected_type": detected_type, "scores": scores}
+
+
+# report_type -> (terminology system name, the get_*_entry() lookup for that type). All three
+# get_*_entry() functions live in vocabularies.py and are built directly on the SAME lookups the
+# save endpoints already call (get_cvx_code/get_loinc_code, or load_icd10_lookup().get()) — this
+# dict only decides WHICH one to call for a given report type; it holds no lookup logic itself.
+_TERMINOLOGY_PREVIEW_LOOKUPS = {
+    "notifiable": ("ICD-10", get_icd10_entry),
+    "immunization": ("CVX", get_cvx_entry),
+    "laboratory": ("LOINC", get_loinc_entry),
+}
+
+
+@app.get("/terminology/preview")
+def terminology_preview(report_type: str, value: str = ""):
+    """
+    Read-only preview of what icd10_code / vaccine_code / test_code would
+    resolve to right now for a value the reviewer is looking at or has
+    just edited — so the review table can show the terminology code
+    earlier than save time, without EXTRACT ever becoming
+    terminology-aware (see docs/mednexus-integration/clinical-extraction-
+    contract-v0.1.md Section 3's hard rule on this). Calls the exact same
+    get_*_entry() functions the save endpoints' own lookups are built on;
+    this endpoint holds no lookup logic of its own. Whether this is
+    called, succeeds, or fails has zero effect on extraction, confidence,
+    or save — save computes the real value itself, independently, every
+    time, whether or not a preview was ever requested for it.
+    """
+    if report_type not in _TERMINOLOGY_PREVIEW_LOOKUPS:
+        raise HTTPException(
+            status_code=422,
+            detail=f"'{report_type}' isn't a report type with a terminology lookup.",
+        )
+
+    system, lookup = _TERMINOLOGY_PREVIEW_LOOKUPS[report_type]
+    entry = lookup((value or "").strip())
+    return {"system": system, **entry}
 
 
 @app.post("/reports/notifiable-disease/validate")
