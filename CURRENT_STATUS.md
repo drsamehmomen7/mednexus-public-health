@@ -1,6 +1,6 @@
 # Current Status — read this first in any new chat
 
-Last updated: 2026-09-22
+Last updated: 2026-09-30
 
 ## MedNexus Seven — cross-project architecture status (added 2026-08-16)
 
@@ -65,6 +65,20 @@ dashboards, brand
 identity). Same extraction pipeline shape for all three report types:
 raw text -> GLiNER NER + gazetteer(s) + rule-based fields -> confidence
 report -> save to Postgres.
+
+**Moved to a new laptop; verified before any new work (2026-09-30).**
+The project's only path is now `D:\mednexus-public-health`. Checked:
+clean tree at `92b4730` (= origin/main), 263 passed + 2 expected xfails,
+backend and frontend up on 8002/5500, and one real extraction per report
+type through the running backend on synthetic text — `facility_name`
+came back with `source: "model"` (scores 0.96-0.99), first call 23.9 s
+including the GLiNER load, later calls about 0.1 s. The frontend dev
+server is now `frontend/serve_dev.py` (see README). `venv_recovery` on
+this laptop had been rebuilt from a machine-wide Python 3.10.11, not from
+the project-local `.runtime\Python310` described in the 2026-08-16 entry
+below; switching it back was approved the same day and is done as a
+separate environment step after this commit. Detail: decisions-log.md,
+2026-09-30.
 
 **Batch Upload regression fixed: file selection now accumulates again
 (2026-09-22).** Found by Dr. Sameh's own testing: selecting files a
@@ -749,7 +763,7 @@ not separately tracked. Remaining, in order:
 - Frontend is not yet pointed at the deployed Render URL — still
   hardcoded to `http://127.0.0.1:8002` in `app.js` and all four
   dashboard pages. Frontend itself also isn't deployed anywhere yet
-  (still local-only via `python -m http.server`) — raised 2026-08-06 as
+  (still local-only, served by `frontend/serve_dev.py`) — raised 2026-08-06 as
   worth doing (Render Static Site, free) once there's something ready to
   demo, not urgent before that.
 - Lower-priority extraction fields: Notifiable Disease's
@@ -762,13 +776,15 @@ not separately tracked. Remaining, in order:
 
 ## Local dev routine (two terminals running servers, every session)
 
-See `README.md`. Terminal 1 (backend, port 8002 — 8001 is reserved for
-MedNexus Main, changed 2026-08-16) needs `$env:DATABASE_URL`
-set to the Render external connection string before starting uvicorn, so
-saves and dashboard queries hit the same database — otherwise it falls
-back to a local Postgres URL that isn't set up. Terminal 2: frontend
-static server, port 5500 (serves `index.html` and all four dashboard
-pages). Never open the HTML files as a `file://` path (CORS/private-network
+See `README.md`. Terminal 1: backend, port 8002 (8001 is reserved for
+MedNexus Main, changed 2026-08-16), started with `.\start_backend.ps1`
+from `backend\`. The Render connection string comes from `backend\.env`
+(gitignored; copy from `backend\env.example` on a new machine), so saves
+and dashboard queries hit the same database with nothing typed per
+session — see the `.env` entry under "Key ground rules" below.
+Terminal 2: frontend static server, port 5500 — `frontend/serve_dev.py`,
+command in README (serves `index.html` and all four dashboard pages).
+Never open the HTML files as a `file://` path (CORS/private-network
 blocking). Metabase (Terminal 3) is no longer part of the routine.
 
 A third terminal is still needed whenever typing an actual command (git,
@@ -792,6 +808,10 @@ commands somewhere.
   models reproducible via `scripts/download_gliner_model.py`,
   environments reproducible from `requirements.txt` (+
   `requirements-extraction.txt` once added) — none of it committed.
+  Known gap (2026-09-30): `openmed` isn't installed in this laptop's
+  `venv_recovery` — the app doesn't need it, but
+  `scripts/download_gliner_model.py` does, so install
+  `"openmed[gliner]"` first if the model ever needs re-downloading here.
 - Commit after every complete, tested change — not at end of day. See
   decisions-log.md's most recent entries for exactly what's changed and why.
 - `init_db()` (`Base.metadata.create_all()`) only creates MISSING tables —
@@ -825,7 +845,7 @@ commands somewhere.
   escaped quote the way bash does. Write a short `.py` file instead of a
   multi-statement inline command, every time.
 - Local startup no longer needs `$env:DATABASE_URL` typed per session —
-  `backend/.env` (gitignored; copy from `.env.example`) holds it, loaded
+  `backend/.env` (gitignored; copy from `backend/env.example`) holds it, loaded
   automatically by `app/db.py` via python-dotenv. Starting the backend is
   now just `cd backend` then `.\start_backend.ps1` — that script invokes
   `venv_recovery`'s interpreter directly by its full path and starts

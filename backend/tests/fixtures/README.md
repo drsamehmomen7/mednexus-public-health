@@ -26,8 +26,8 @@ Chromium report (PowerShell; needs Microsoft Edge):
 ```powershell
 & "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --headless=new --disable-gpu --no-first-run `
   --user-data-dir="$env:TEMP\edge_pdf_profile" --no-pdf-header-footer `
-  --print-to-pdf="C:\mednexus-public-health\backend\tests\fixtures\chromium_case_report.pdf" `
-  "file:///C:/mednexus-public-health/backend/tests/fixtures/chromium_case_report.html"
+  --print-to-pdf="D:\mednexus-public-health\backend\tests\fixtures\chromium_case_report.pdf" `
+  "file:///D:/mednexus-public-health/backend/tests/fixtures/chromium_case_report.html"
 ```
 
 AES files: pypdf needs a crypto package only to WRITE them, so use a throwaway

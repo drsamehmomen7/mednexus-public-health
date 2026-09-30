@@ -2167,3 +2167,47 @@ reported scenario plus the over-cap and cross-run cases it implied.
 Batch Upload's original 2026-09-17 entry remains accurate for
 everything else about that feature; this entry documents only what
 changed here.
+
+### 2026-09-30 — New laptop: verified at D:\mednexus-public-health; serve_dev.py adopted as the frontend dev server
+The project moved to a new laptop, and `D:\mednexus-public-health` is now
+its only path. A fresh session checked it before any new work: clean
+tree at `92b4730` (= origin/main), `venv_recovery` on Python 3.10.11,
+backend on 8002 and frontend on 5500 both answering, 263 passed + 2
+expected xfails, and one real extraction per report type through the
+running backend, on synthetic text, extract only (nothing saved). GLiNER
+loaded from `backend/models`: the first call took 23.9 s including that
+load, later calls 0.08-0.10 s, and `facility_name` came back with
+`source: "model"` and real scores (0.96-0.99) in all three reports —
+the proof the migrated model runs, not just that the server starts.
+
+`frontend/serve_dev.py` — `python -m http.server` plus
+`Cache-Control: no-cache`, written earlier as an untracked
+cache-debugging helper — is now committed and documented as the
+frontend command, because it was already the one actually in use. A
+normal reload now picks up edited CSS/JS. It adds no live-reload, so the
+stale-tab gotcha in the 2026-09-21/22 entry still applies to a tab that
+is never reloaded. The remaining `C:\mednexus-public-health` paths
+(README, the comment in `start_backend.ps1`, the fixtures README's
+rebuild command) now point at D:. Three stale doc spots found along the
+way were fixed in the same commit: README's test count (220 → 263),
+its one-time setup (a plain `python -m venv venv`, replaced by the
+`.runtime` + virtualenv steps), and CURRENT_STATUS's local-dev routine
+(still asking for `$env:DATABASE_URL` per session, long since replaced by
+`backend\.env`). The committed template is `backend/env.example`, with no
+leading dot — the browser-download rename described on 2026-07-30 — so
+README and CURRENT_STATUS now name it that way; two code comments
+(`start_backend.ps1`, `app/db.py`) still say `.env.example`.
+
+Recorded, not changed here: `venv_recovery` on this laptop was rebuilt
+on 2026-09-27 with the standard `venv` module from a machine-wide Python
+3.10.11 install, not from the project-local `.runtime\Python310` the
+2026-08-16 entry describes. Restoring that isolation was approved the
+same day, as a separate environment step after this commit: the
+`.runtime` interpreter was checked first and is complete (same CPython
+3.10.11 build as the machine-wide one), and a throwaway virtualenv built
+from it imported the installed compiled stack, torch 2.13.0+cpu
+included. `openmed` isn't installed in `venv_recovery` — the app
+doesn't need it, but `scripts/download_gliner_model.py` does. And one
+synthetic Immunization line, "Patient age: 2 months", came back as
+`patient_age: 2` with `patient_age_months` empty: a rule-based gap for
+that wording (the code is unchanged from origin/main), not fixed here.

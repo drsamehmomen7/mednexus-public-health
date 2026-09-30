@@ -1,6 +1,6 @@
 # One command to start the backend, every time.
 #
-# Usage: from C:\mednexus-public-health\backend, run:
+# Usage: from D:\mednexus-public-health\backend, run:
 #     .\start_backend.ps1
 #
 # What it does, in order:
